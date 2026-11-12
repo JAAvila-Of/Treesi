@@ -66,6 +66,7 @@ public sealed partial class MainWindow : Window
                 _status.Text = "Motion preference changed for this session; it could not be saved.";
         };
         InitializeDiffWorkspace();
+        InitializePresentation();
         _themes.ItemsSource = ThemeCatalog.All;
         _themes.SelectedItem = appearance.Current;
         _themes.SelectionChanged += (_, _) =>
@@ -89,13 +90,24 @@ public sealed partial class MainWindow : Window
             {
                 NavigateBlock(args.Key == Key.Up ? -1 : 1); args.Handled = true; return;
             }
-            if (args.Key == Key.Escape) { Cancel(); args.Handled = true; }
+            if (args.Key == Key.Escape)
+            {
+                if (_focusMode) SetFocusMode(false);
+                else Cancel();
+                args.Handled = true;
+                return;
+            }
             if ((args.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) == 0) return;
             switch (args.Key)
             {
                 case Key.O: args.Handled = true; await PickAsync(false); break;
                 case Key.R: args.Handled = true; if (_snapshot is not null) await OpenRepositoryAsync(_snapshot.Root); break;
-                case Key.F: args.Handled = true; _search.Focus(); break;
+                case Key.B: args.Handled = true; ToggleFilesPanel(); break;
+                case Key.F:
+                    args.Handled = true;
+                    if ((args.KeyModifiers & KeyModifiers.Shift) != 0) SetFocusMode(!_focusMode);
+                    else _search.Focus();
+                    break;
             }
         };
         Closed += (_, _) =>

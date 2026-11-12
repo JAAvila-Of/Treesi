@@ -101,6 +101,24 @@ public sealed class NativeWorkspaceTests
     private AppiumElement Element(string id) => _driver!.FindElement(new ByAccessibilityId(id));
 
     [Test]
+    public void NativeFocusAndFilePanelRestoreTheWorkingSelection()
+    {
+        bool Visible(string id) => _driver!.FindElements(new ByAccessibilityId(id)).Any(item => item.Displayed);
+        Element("ToggleFilesButton").Click();
+        WaitUntil(() => !Visible("ChangedFiles"));
+        Element("FocusWorkspaceButton").Click();
+        WaitUntil(() => !Visible("OpenFolderButton"));
+        Element("DiffSearch").SendKeys("changed"); Element("FindNextButton").Click();
+        WaitUntil(() => Element("OperationStatus").Text == "Match selected in diff");
+        Element("FocusWorkspaceButton").Click();
+        WaitUntil(() => Visible("OpenFolderButton"));
+        Visible("ChangedFiles").Test().BeFalse();
+        Element("ToggleFilesButton").Click();
+        WaitUntil(() => Visible("ChangedFiles"));
+        Element("FileTitle").Text.Test().Be("sample.txt");
+    }
+
+    [Test]
     public void NativeSplitLayoutExposesBlockNavigationAndSearch()
     {
         Element("SplitModeButton").Click();

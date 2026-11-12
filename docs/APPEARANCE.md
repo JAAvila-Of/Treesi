@@ -2,7 +2,11 @@
 
 The workspace provides Light and Dark themes with a restrained green accent, clear type hierarchy, compact actions, and distinct repository, file-list, and diff surfaces. Theme changes apply immediately and preserve the current file, comparison, filter, and text selection.
 
-The visual shell uses a rounded workspace frame, a compact repository card, a clear file heading, colored addition/removal counters, and a framed diff canvas. A segmented layout control exposes Unified and Side by side directly. Selected files and keyboard focus have explicit outlines; color is accompanied by status text and diff prefixes.
+The visual shell uses a rounded workspace frame, a compact repository card, a small file heading, colored addition/removal counters, and a framed diff canvas. A single-row toolbar exposes endpoints, Unified and Side by side, file-panel visibility and change-block navigation. Search stays beside the file heading. Selected files and keyboard focus have explicit outlines; color is accompanied by status text and diff prefixes.
+
+The diff is the primary surface. Geometry checks require it to occupy at least 80% of the workspace body's height and 60% of its area in both layouts and themes, at 900 × 560 and 1180 × 740. These are layout checks, not accessibility or performance acceptance. Long headings are trimmed rather than allowed to shrink the code area; editor text remains 13 px.
+
+Ctrl+B folds the files; Ctrl+Shift+F or the footer's Focus button folds the application header and files together. Search and comparison tools remain available. Escape restores the workspace before cancelling an inspection. Exiting focus restores the prior file-panel state; showing files while focused exits focus and opens the panel. Hiding a focused navigation panel moves keyboard focus to the active editor's text area. Selection, filter, search, mode and loaded content survive without another Git query. Panel and focus choices are session-only.
 
 ## Motion
 

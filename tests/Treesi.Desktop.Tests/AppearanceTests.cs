@@ -23,6 +23,94 @@ public sealed class AppearanceTests
     private const string Patch = "diff --git a/src/ChangeSummary.cs b/src/ChangeSummary.cs\nindex 20f9d32..fe89263 100644\n--- a/src/ChangeSummary.cs\n+++ b/src/ChangeSummary.cs\n@@ -1,7 +1,10 @@\n namespace Treesi;\n \n public static class ChangeSummary\n {\n-    public static string Describe(int files) => $\"Changes: {files}\";\n+    public static string Describe(int files)\n+    {\n+        ArgumentOutOfRangeException.ThrowIfNegative(files);\n+        return files == 1 ? \"1 changed file\" : $\"{files} changed files\";\n+    }\n }\n";
 
     [AvaloniaTest]
+    public async Task CodeCanvasDominatesBothLayoutsAndThemesAtCompactAndWideSizes()
+    {
+        var themes = new ThemeController(Avalonia.Application.Current!, new MemoryPreferences());
+        var window = new MainWindow(new FixtureInspector(), null, themes);
+        try
+        {
+            window.Show(); await window.OpenRepositoryAsync(Root);
+            window.FindControl<CheckBox>("ReduceMotionToggle")!.IsChecked = true;
+            window.FindControl<TextBlock>("FileTitle")!.Text = new string('x', 240) + ".cs";
+            window.FindControl<TextBlock>("ComparisonDescription")!.Text = string.Concat(Enumerable.Repeat("nested/directory/", 40));
+            foreach (var size in new[] { new Size(900, 560), new Size(1180, 740) })
+                foreach (var theme in new[] { ThemeCatalog.Dark, ThemeCatalog.Light })
+                    foreach (var mode in new[] { 0, 1 })
+                    {
+                        window.Width = size.Width; window.Height = size.Height;
+                        themes.Apply(theme);
+                        window.FindControl<TabStrip>("DiffModeSelector")!.SelectedIndex = mode;
+                        using var frame = window.CaptureRenderedFrame();
+                        var canvas = window.FindControl<Control>("DiffSurface")!;
+                        var body = window.FindControl<Grid>("WorkspaceColumns")!;
+                        (canvas.Bounds.Height / body.Bounds.Height >= 0.80).Test().BeTrue();
+                        (canvas.Bounds.Width * canvas.Bounds.Height / (body.Bounds.Width * body.Bounds.Height) >= 0.60).Test().BeTrue();
+                        (canvas.Bounds.Height >= 370).Test().BeTrue();
+                        foreach (var name in new[] { "ComparisonSelector", "DiffModeSelector", "ToggleFilesButton", "BlockPosition", "PreviousBlockButton", "NextBlockButton", "DiffSearch", "FindNextButton", "FocusWorkspaceButton" })
+                        {
+                            var control = window.FindControl<Control>(name)!;
+                            var position = control.TranslatePoint(default, window)!.Value;
+                            (position.X >= 0 && position.X + control.Bounds.Width <= window.ClientSize.Width + 1).Test().BeTrue();
+                            (position.Y >= 0 && position.Y + control.Bounds.Height <= window.ClientSize.Height + 1).Test().BeTrue();
+                        }
+                    }
+        }
+        finally { window.Close(); }
+    }
+
+    [AvaloniaTest]
+    public async Task FocusAndPanelShortcutsPreserveSelectionAndReturnFocusToVisibleContent()
+    {
+        var reader = new FixtureInspector();
+        var themes = new ThemeController(Avalonia.Application.Current!, new MemoryPreferences());
+        var window = new MainWindow(reader, null, themes) { Width = 900, Height = 560 };
+        void Key(Key key, KeyModifiers modifiers = KeyModifiers.None) =>
+            window.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = key, KeyModifiers = modifiers });
+        try
+        {
+            window.Show(); await window.OpenRepositoryAsync(Root);
+            var list = window.FindControl<ListBox>("ChangedFiles")!;
+            var filter = window.FindControl<TextBox>("FileFilter")!;
+            filter.Text = "ChangeSummary";
+            await window.PendingInspection;
+            var calls = reader.DiffCalls;
+            var selected = list.SelectedItem;
+            var editor = window.FindControl<TextEditor>("DiffEditor")!;
+            editor.Select(editor.Text.IndexOf("ThrowIfNegative", StringComparison.Ordinal), "ThrowIfNegative".Length);
+            var search = window.FindControl<TextBox>("DiffSearch")!;
+            search.Text = "ThrowIfNegative";
+            using var initialFrame = window.CaptureRenderedFrame();
+            filter.Focus().Test().BeTrue();
+            Key(Avalonia.Input.Key.B, KeyModifiers.Control);
+            window.FindControl<Control>("FilesPanel")!.IsVisible.Test().BeFalse();
+            editor.IsKeyboardFocusWithin.Test().BeTrue();
+            SaveFrame(window, "workspace-files-hidden.png");
+            Key(Avalonia.Input.Key.F, KeyModifiers.Control | KeyModifiers.Shift);
+            window.FindControl<Control>("WorkspaceHeader")!.IsVisible.Test().BeFalse();
+            SaveFrame(window, "workspace-focus-compact.png");
+            Key(Avalonia.Input.Key.F, KeyModifiers.Control);
+            search.IsFocused.Test().BeTrue();
+            Key(Avalonia.Input.Key.Escape);
+            window.FindControl<Control>("WorkspaceHeader")!.IsVisible.Test().BeTrue();
+            window.FindControl<Control>("FilesPanel")!.IsVisible.Test().BeFalse();
+            window.FindControl<Button>("ToggleFilesButton")!.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            window.FindControl<Control>("FilesPanel")!.IsVisible.Test().BeTrue();
+            window.FindControl<Button>("FocusWorkspaceButton")!.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            Key(Avalonia.Input.Key.Escape);
+            window.FindControl<Control>("FilesPanel")!.IsVisible.Test().BeTrue();
+            list.SelectedItem.Test().Be(selected);
+            filter.Text.Test().Be("ChangeSummary"); search.Text.Test().Be("ThrowIfNegative");
+            editor.SelectedText.Test().Be("ThrowIfNegative"); reader.DiffCalls.Test().Be(calls);
+            filter.Text = "missing";
+            await window.PendingInspection;
+            filter.Focus().Test().BeTrue();
+            Key(Avalonia.Input.Key.B, KeyModifiers.Control);
+            window.FindControl<Button>("ToggleFilesButton")!.IsFocused.Test().BeTrue();
+        }
+        finally { window.Close(); }
+    }
+
+    [AvaloniaTest]
     public async Task MotionPreferenceAndWorkspaceActionsPreserveTheLoadedDiff()
     {
         var reader = new FixtureInspector(); var preferences = new MotionPreferences();

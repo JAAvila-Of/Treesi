@@ -28,7 +28,9 @@ dotnet run --project src/Treesi.Desktop --configuration Release -- /path/to/repo
 
 The path is optional and may point to a file inside a working tree. Use Open repository or Open file, select a comparison, and choose a changed file. The prototype supports working tree versus index, index versus HEAD, and working tree versus HEAD. Additions and removals describe the current working/index side relative to its base.
 
-Ctrl+O opens a folder, Ctrl+R refreshes, Ctrl+F focuses diff search, and Escape cancels inspection. On macOS the primary modifier can also be Command. The read-only unified viewer uses AvaloniaEdit virtualization, selectable text, full-width change backgrounds, and original/new line numbers. Side-by-side comparison and advanced diff navigation are not implemented yet.
+Ctrl+O opens a folder, Ctrl+R refreshes, and Ctrl+F focuses diff search. Ctrl+B folds the file panel; Ctrl+Shift+F toggles focus mode. Escape exits focus mode first, or cancels inspection otherwise. On macOS the primary modifier can also be Command. Unified and side-by-side viewers use AvaloniaEdit virtualization, selectable text, change backgrounds, and original/new line numbers. Alt+Up/Alt+Down navigate change blocks. Layout changes preserve the loaded comparison without querying Git again.
+
+Compact headers and a single comparison toolbar give the diff most of the working area, including at 900 × 560. Focus mode folds the file panel and top application header while keeping comparison controls and search available. Leaving focus restores the previous panel visibility. These layout choices last for the current window; they are not persisted yet.
 
 Choose Light or Dark from the appearance selector in the upper right. Changes apply immediately without reloading the diff. The choice is stored in `Treesi/appearance.json` under the platform's local application data directory; an unwritable preference does not prevent switching for the current session. The first-run fallback is Dark. See [appearance and UI verification](docs/APPEARANCE.md).
 
