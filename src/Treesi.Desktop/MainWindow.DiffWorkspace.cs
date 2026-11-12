@@ -73,7 +73,8 @@ public sealed partial class MainWindow
                 foreach (var unused in result.Hunks[hunk++].Lines) { reader.ReadLine(); row++; }
             }
         }
-        _decoration.SetDiff(result);
+        _presentation = DiffPresentation.Create(result);
+        _decoration.SetDiff(result, _presentation);
         if (_unifiedBlocks.Count == 0) _diffMode.SelectedIndex = 0;
         _diffMode.IsEnabled = _unifiedBlocks.Count > 0;
         ToolTip.SetTip(_diffMode, _unifiedBlocks.Count == 0 ? "Side-by-side layout requires text change blocks." : "Diff layout");
@@ -107,7 +108,7 @@ public sealed partial class MainWindow
         if (split && _splitDiff is null)
         {
             _splitDiff = SplitDiff.Create(_currentDiff);
-            _beforeDecoration.SetDocument(_splitDiff.Before); _afterDecoration.SetDocument(_splitDiff.After);
+            _beforeDecoration.SetDocument(_splitDiff.Before, _presentation); _afterDecoration.SetDocument(_splitDiff.After, _presentation);
         }
         _diff.IsVisible = !split; _splitView.IsVisible = split;
         _motion.Reveal(Required<Control>("DiffSurface"));
@@ -159,6 +160,7 @@ public sealed partial class MainWindow
 
     private void ClearDiffWorkspace()
     {
+        _presentation = null;
         _currentDiff = null; _splitDiff = null; _unifiedBlocks.Clear(); _blockIndex = -1;
         _splitView.IsVisible = false;
         _diffMode.IsEnabled = _previousBlock.IsEnabled = _nextBlock.IsEnabled = false;

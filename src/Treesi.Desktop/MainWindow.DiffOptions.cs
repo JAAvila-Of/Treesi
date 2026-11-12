@@ -8,6 +8,8 @@ namespace Treesi.Desktop;
 public sealed partial class MainWindow
 {
     private DiffOptions _diffOptions = DiffOptions.Default;
+    private DiffViewOptions _viewOptions = new();
+    private DiffPresentation? _presentation;
 
     private static string DescribeWhitespace(WhitespaceMode mode) => mode switch
     {
@@ -22,16 +24,18 @@ public sealed partial class MainWindow
         Required<ComboBox>("WhitespaceSelector").ItemsSource = Enum.GetValues<WhitespaceMode>().Select(DescribeWhitespace).ToArray();
         Required<Button>("DiffOptionsButton").Click += (_, _) => OpenComparisonOptions();
         Required<Button>("CancelDiffOptionsButton").Click += (_, _) => CloseComparisonOptions();
-        Required<Button>("ResetDiffOptionsButton").Click += (_, _) => SetOptionsDraft(DiffOptions.Default);
+        Required<Button>("ResetDiffOptionsButton").Click += (_, _) => SetOptionsDraft(DiffOptions.Default, new());
         Required<Button>("ApplyDiffOptionsButton").Click += (_, _) => ApplyComparisonOptions();
         UpdateOptionsIndicator();
     }
 
-    private void SetOptionsDraft(DiffOptions options)
+    private void SetOptionsDraft(DiffOptions options, DiffViewOptions? view = null)
     {
         Required<TextBox>("ContextLinesInput").Text = options.ContextLines.ToString(CultureInfo.InvariantCulture);
         Required<ComboBox>("WhitespaceSelector").SelectedIndex = (int)options.Whitespace;
         Required<Control>("DiffOptionsError").IsVisible = false;
+        Required<CheckBox>("CodeColorsToggle").IsChecked = (view ?? _viewOptions).CodeColors;
+        Required<CheckBox>("InlineChangesToggle").IsChecked = (view ?? _viewOptions).InlineChanges;
     }
 
     private void OpenComparisonOptions()
@@ -62,6 +66,9 @@ public sealed partial class MainWindow
             return;
         }
         var options = new DiffOptions(value, whitespace);
+        _viewOptions = new(Required<CheckBox>("CodeColorsToggle").IsChecked == true, Required<CheckBox>("InlineChangesToggle").IsChecked == true);
+        _decoration.SetViewOptions(_viewOptions); _beforeDecoration.SetViewOptions(_viewOptions); _afterDecoration.SetViewOptions(_viewOptions);
+        UpdateOptionsIndicator();
         CloseComparisonOptions();
         if (_diffOptions == options) return;
         _diffOptions = options; UpdateOptionsIndicator();
@@ -78,6 +85,7 @@ public sealed partial class MainWindow
     {
         var filtered = _diffOptions.Whitespace != WhitespaceMode.Exact;
         var description = $"Context: {_diffOptions.ContextLines} lines. Whitespace: {DescribeWhitespace(_diffOptions.Whitespace)}.";
+        description += $" Code colors: {(_viewOptions.CodeColors ? "on" : "off")}. Inline changes: {(_viewOptions.InlineChanges ? "on" : "off")}.";
         var notice = Required<Control>("WhitespaceNotice");
         notice.IsVisible = filtered;
         ToolTip.SetTip(notice, description + " Differences may be hidden; return to Exact to verify.");

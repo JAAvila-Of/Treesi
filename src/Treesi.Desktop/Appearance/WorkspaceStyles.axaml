@@ -26,6 +26,12 @@
           <SolidColorBrush x:Key="Diff.RemoveText">#A02E40</SolidColorBrush>
           <SolidColorBrush x:Key="Diff.HunkBackground">#EDF2FC</SolidColorBrush>
           <SolidColorBrush x:Key="Diff.HunkText">#375B91</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.AddInline">#BFE3CB</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.RemoveInline">#F1BEC9</SolidColorBrush>
+          <SolidColorBrush x:Key="Code.Keyword">#52318C</SolidColorBrush>
+          <SolidColorBrush x:Key="Code.String">#70451A</SolidColorBrush>
+          <SolidColorBrush x:Key="Code.Number">#135368</SolidColorBrush>
+          <SolidColorBrush x:Key="Code.Comment">#3D5864</SolidColorBrush>
           <SolidColorBrush x:Key="Status.Warning">#8A550B</SolidColorBrush>
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
@@ -51,6 +57,12 @@
           <SolidColorBrush x:Key="Diff.RemoveText">#FFADB9</SolidColorBrush>
           <SolidColorBrush x:Key="Diff.HunkBackground">#1B2B42</SolidColorBrush>
           <SolidColorBrush x:Key="Diff.HunkText">#B3CBF8</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.AddInline">#28533E</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.RemoveInline">#653342</SolidColorBrush>
+          <SolidColorBrush x:Key="Code.Keyword">#CBB9FF</SolidColorBrush>
+          <SolidColorBrush x:Key="Code.String">#E9CD98</SolidColorBrush>
+          <SolidColorBrush x:Key="Code.Number">#A6DFF2</SolidColorBrush>
+          <SolidColorBrush x:Key="Code.Comment">#BECBD4</SolidColorBrush>
           <SolidColorBrush x:Key="Status.Warning">#ECC180</SolidColorBrush>
         </ResourceDictionary>
       </ResourceDictionary.ThemeDictionaries>

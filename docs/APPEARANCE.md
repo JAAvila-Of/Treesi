@@ -78,4 +78,8 @@ dotnet test tests/Treesi.Desktop.Tests --configuration Release
 
 For local visual review, optionally set `TREESI_RENDER_OUTPUT` to an explicit directory before running the tests. The suite saves in-memory renders of Light, Dark, empty, and compact workspaces there. No native screen capture or input automation is involved. Image files are diagnostics, not accepted visual baselines; inspect them before adopting a baseline.
 
+## Source presentation
+
+Code token colors and inline edit backgrounds use semantic theme resources and one cached presentation model across unified/before/after editors. Options drafts include two display toggles; Apply changes presentation without another repository request, Cancel discards drafts, and Defaults restores both to enabled. Display choices last for the process session across repositories and are not persisted in recents. Search, selection and loaded text remain unchanged. The document model and its limits are described in [source presentation](SOURCE_PRESENTATION.md).
+
 Primary references: [Avalonia headless platform](https://docs.avaloniaui.net/docs/testing/setting-up-the-headless-platform), [dynamic theme resources](https://docs.avaloniaui.net/docs/app-development/resources), [AvaloniaEdit](https://github.com/AvaloniaUI/AvaloniaEdit).

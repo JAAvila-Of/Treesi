@@ -15,6 +15,8 @@ public sealed class DiffDecoration : DocumentColorizingTransformer, IBackgroundR
     private readonly TextEditor _editor;
     private readonly LineNumbers _numbers;
     private readonly Dictionary<int, DiffLine> _lines = [];
+    private DiffPresentation? _presentation;
+    private DiffViewOptions _viewOptions = new();
     private int _digits = 4;
     private readonly int _numberColumn;
     public KnownLayer Layer => KnownLayer.Background;
@@ -29,8 +31,9 @@ public sealed class DiffDecoration : DocumentColorizingTransformer, IBackgroundR
         editor.TextArea.LeftMargins.Add(_numbers);
     }
 
-    public void SetDiff(FileDiff diff)
+    public void SetDiff(FileDiff diff, DiffPresentation? presentation = null)
     {
+        _presentation = presentation ?? DiffPresentation.Create(diff);
         _lines.Clear();
         using var reader = new StringReader(diff.Patch);
         var documentLine = 0;
@@ -53,9 +56,10 @@ public sealed class DiffDecoration : DocumentColorizingTransformer, IBackgroundR
         Refresh();
     }
 
-    public void Clear() { _lines.Clear(); _editor.Text = ""; Refresh(); }
-    public void SetDocument(DiffDocument document)
+    public void Clear() { _lines.Clear(); _presentation = null; _editor.Text = ""; Refresh(); }
+    public void SetDocument(DiffDocument document, DiffPresentation? presentation = null)
     {
+        _presentation = presentation;
         _lines.Clear();
         foreach (var entry in document.Lines) _lines[entry.Key] = entry.Value;
         _editor.Text = document.Text;
@@ -65,6 +69,7 @@ public sealed class DiffDecoration : DocumentColorizingTransformer, IBackgroundR
         Refresh();
     }
     public void Refresh() { _editor.TextArea.TextView.Redraw(); _numbers.InvalidateVisual(); }
+    public void SetViewOptions(DiffViewOptions options) { _viewOptions = options; Refresh(); }
     private IBrush Brush(string name) => _editor.FindResource(_editor.ActualThemeVariant, name) as IBrush ?? _editor.Foreground ?? Brushes.Gray;
 
     protected override void ColorizeLine(DocumentLine line)
@@ -78,6 +83,26 @@ public sealed class DiffDecoration : DocumentColorizingTransformer, IBackgroundR
             _ => "Text.Primary"
         } : text.StartsWith("@@", StringComparison.Ordinal) ? "Diff.HunkText" : "Text.Subtle";
         if (line.Length > 0) ChangeLinePart(line.Offset, line.EndOffset, element => element.TextRunProperties.SetForegroundBrush(Brush(key)));
+        if (entry is null || entry.Kind == DiffLineKind.Metadata || _presentation?.ForLine(entry) is not { } style) return;
+        var start = line.Offset + 1;
+        if (_viewOptions.CodeColors && _presentation.Language != FragmentLanguage.Plain)
+        {
+            if (start < line.EndOffset) ChangeLinePart(start, line.EndOffset, element => element.TextRunProperties.SetForegroundBrush(Brush("Text.Primary")));
+            foreach (var token in style.Tokens)
+                Part(token.Start, token.Length, () => Brush("Code." + token.Kind), false);
+        }
+        if (_viewOptions.InlineChanges)
+            foreach (var span in style.Changes)
+                Part(span.Start, span.Length, () => Brush(entry.Kind == DiffLineKind.Added ? "Diff.AddInline" : "Diff.RemoveInline"), true);
+        void Part(int offset, int length, Func<IBrush> brush, bool background)
+        {
+            if (length <= 0 || offset < 0 || start + offset + length > line.EndOffset) return;
+            ChangeLinePart(start + offset, start + offset + length, element =>
+            {
+                if (background) element.TextRunProperties.SetBackgroundBrush(brush());
+                else element.TextRunProperties.SetForegroundBrush(brush());
+            });
+        }
     }
 
     public void Draw(TextView textView, DrawingContext drawingContext)

@@ -44,6 +44,8 @@ Choose Light or Dark from the appearance selector in the upper right. Changes ap
 
 History at the bottom of the sidebar browses local repository or selected-file history. Go starts from a local revision (HEAD by default). Previous and Next reuse the first page's pinned commit; selecting an entry loads its changes directly in the main diff. Files restores file navigation for that commit. Click the endpoint button for the message, identities and parent selector. Merges default to their first parent; initial commits show an empty-tree base. Working changes returns to the current working view. History does not follow renames or fetch missing objects. See [history and CLI commands](docs/HISTORY.md).
 
+Code colors and Emphasize changed text in Options control local presentation. Both are enabled initially and apply without reloading Git. C#/C# script and JSON fragments receive lexical colors; other files retain plain diff colors. Paired removed/added lines receive bounded, Unicode-aware emphasis within each line in unified and split views. Signs, line numbers and added/removed row backgrounds remain visible. These are review hints rather than semantic parsing or a full-file reconstruction. See [source presentation and limits](docs/SOURCE_PRESENTATION.md).
+
 ## Use with tools and AI agents
 
 After building, run the CLI assembly directly to keep build output out of stdout:

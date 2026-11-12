@@ -259,6 +259,10 @@
         </StackPanel>
         <TextBlock Text="Ignoring whitespace can hide meaningful changes, including spaces inside strings. Use Exact to verify all changes." Foreground="{DynamicResource Status.Warning}" FontSize="11" TextWrapping="Wrap" />
         <TextBlock x:Name="DiffOptionsError" IsVisible="False" Foreground="{DynamicResource Status.Warning}" FontSize="11" TextWrapping="Wrap" />
+        <StackPanel Spacing="2">
+          <CheckBox x:Name="CodeColorsToggle" AutomationProperties.AutomationId="CodeColorsToggle" Content="Code colors (C#, JSON)" IsChecked="True" MinHeight="26" FontSize="11" ToolTip.Tip="Lexical colors for visible fragments. Context outside a change block is unknown." />
+          <CheckBox x:Name="InlineChangesToggle" AutomationProperties.AutomationId="InlineChangesToggle" Content="Emphasize changed text" IsChecked="True" MinHeight="26" FontSize="11" ToolTip.Tip="Bounded comparison of paired removed and added lines; display only." />
+        </StackPanel>
         <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="6">
           <Button x:Name="ResetDiffOptionsButton" AutomationProperties.AutomationId="ResetDiffOptionsButton" Content="Defaults" Classes="quiet" />
           <Button Grid.Column="2" x:Name="CancelDiffOptionsButton" AutomationProperties.AutomationId="CancelDiffOptionsButton" Content="Cancel" Classes="quiet" />

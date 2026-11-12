@@ -218,6 +218,20 @@ public sealed class NativeWorkspaceTests
         _driver!.FindElements(By.Name(option)).First(item => item.Displayed).Click();
     }
 
+    [Test]
+    public void NativeDisplayOptionsApplyWithoutDiscardingTheSearchOrFileSelection()
+    {
+        EnterText("DiffSearch", "changed"); Element("FindNextButton").Click();
+        WaitUntil(() => Element("OperationStatus").Text == "Match selected in diff");
+        Element("DiffOptionsButton").Click();
+        Element("CodeColorsToggle").Click(); Element("InlineChangesToggle").Click(); Element("ApplyDiffOptionsButton").Click();
+        WaitUntil(() => Element("DiffSearch").Enabled);
+        Element("DiffSearch").GetAttribute("Value").Test().Be("changed");
+        Element("FileTitle").Text.Test().Be("sample.txt");
+        Element("DiffOptionsButton").Click(); Element("ResetDiffOptionsButton").Click(); Element("ApplyDiffOptionsButton").Click();
+        Element("DiffSearch").GetAttribute("Value").Test().Be("changed");
+    }
+
     private void EnterText(string id, string value)
     {
         var input = Element(id); input.Click(); input.Clear(); input.SendKeys(value);
