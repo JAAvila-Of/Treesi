@@ -3,7 +3,7 @@ using Treesi.Domain;
 
 namespace Treesi.Desktop;
 
-public sealed record DiffDocument(string Text, IReadOnlyDictionary<int, DiffLine> Lines, IReadOnlyList<int> HunkLines);
+public sealed record DiffDocument(string Text, IReadOnlyDictionary<int, DiffLine> Lines, IReadOnlyList<int> HunkLines, IReadOnlyList<int>? ChangeLines = null);
 public sealed record SplitDiff(DiffDocument Before, DiffDocument After)
 {
     public static SplitDiff Create(FileDiff diff)
@@ -11,6 +11,7 @@ public sealed record SplitDiff(DiffDocument Before, DiffDocument After)
         var before = new StringBuilder(); var after = new StringBuilder();
         var oldLines = new Dictionary<int, DiffLine>(); var newLines = new Dictionary<int, DiffLine>();
         var headers = new List<int>();
+        var changes = new List<int>();
         var row = 0;
         void Append(DiffLine? left, DiffLine? right, string? header = null)
         {
@@ -27,6 +28,7 @@ public sealed record SplitDiff(DiffDocument Before, DiffDocument After)
                 var line = hunk.Lines[index];
                 if (line.Kind is DiffLineKind.Added or DiffLineKind.Removed)
                 {
+                    changes.Add(row + 1);
                     var removed = new List<DiffLine>(); var added = new List<DiffLine>();
                     var previousKind = line.Kind;
                     while (index < hunk.Lines.Count && hunk.Lines[index].Kind is DiffLineKind.Added or DiffLineKind.Removed or DiffLineKind.Metadata)
@@ -41,7 +43,7 @@ public sealed record SplitDiff(DiffDocument Before, DiffDocument After)
                 else { Append(line, line); index++; }
             }
         }
-        return new SplitDiff(new DiffDocument(before.ToString(), oldLines, headers), new DiffDocument(after.ToString(), newLines, headers));
+        return new SplitDiff(new DiffDocument(before.ToString(), oldLines, headers, changes), new DiffDocument(after.ToString(), newLines, headers, changes));
     }
 
     private static string Display(DiffLine? line) => line is null ? "" : (line.Kind switch

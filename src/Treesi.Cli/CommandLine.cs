@@ -38,7 +38,7 @@ public static partial class CommandLine
                     history = new { available = history is not null, maximumPageSize = HistoryQuery.MaximumPageSize, maximumOffset = HistoryQuery.MaximumOffset, followsRenames = false },
                     diffOptions = new
                     {
-                        context = new { minimum = 0, maximum = DiffOptions.MaximumContextLines, @default = 3 },
+                        context = new { minimum = 0, maximum = DiffOptions.MaximumContextLines, @default = 3, full = true },
                         whitespace = new[] { "exact", "ignore-trailing-space", "ignore-space-change", "ignore-all-space" },
                         defaultWhitespace = "exact"
                     },
@@ -120,9 +120,10 @@ public static partial class CommandLine
             {
                 case "--comparison": comparison = ParseComparison(value); break;
                 case "--context":
+                    if (value == "full") { options = options with { FullContext = true }; break; }
                     if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var context) || context > DiffOptions.MaximumContextLines)
-                        throw new InspectionException("usage", "Context must be a whole number between 0 and 50.");
-                    options = options with { ContextLines = context }; break;
+                        throw new InspectionException("usage", "Context must be full or a whole number between 0 and 50.");
+                    options = options with { ContextLines = context, FullContext = false }; break;
                 case "--whitespace":
                     options = options with
                     {
@@ -175,5 +176,5 @@ public static partial class CommandLine
         return await service.DiffAsync(endpoints, path, options, token);
     }
 
-    private static InspectionException Usage() => new("usage", "Usage: capabilities | inspect <path> | references <repository> | compare <repository> <base> <target> [--mode direct|merge-base] | revision-diff <repository> <base> <target> <relative-file> [--mode direct|merge-base] [--context 0..50] [--whitespace <mode>] | diff <repository> <relative-file> [--comparison working|staged|head] [--context 0..50] [--whitespace exact|ignore-trailing-space|ignore-space-change|ignore-all-space]");
+    private static InspectionException Usage() => new("usage", "Usage: capabilities | inspect <path> | references <repository> | compare <repository> <base> <target> [--mode direct|merge-base] | revision-diff <repository> <base> <target> <relative-file> [--mode direct|merge-base] [--context 0..50|full] [--whitespace <mode>] | diff <repository> <relative-file> [--comparison working|staged|head] [--context 0..50|full] [--whitespace exact|ignore-trailing-space|ignore-space-change|ignore-all-space]");
 }

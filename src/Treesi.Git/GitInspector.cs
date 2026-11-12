@@ -79,7 +79,8 @@ public sealed partial class GitInspector(string gitExecutable = "git", TimeSpan?
     {
         var args = new List<string> { "diff", "--no-ext-diff", "--no-textconv", "--no-color", "--no-renames", "--ignore-submodules=all",
             "--inter-hunk-context=0", "--output-indicator-new=+", "--output-indicator-old=-", "--output-indicator-context= ",
-            "--unified=" + options.ContextLines.ToString(System.Globalization.CultureInfo.InvariantCulture) };
+            // More lines than any patch can return within the byte limit, without overflowing Git's hunk arithmetic.
+            "--unified=" + (options.FullContext ? GitProcess.OutputLimit : options.ContextLines).ToString(System.Globalization.CultureInfo.InvariantCulture) };
         var flag = options.Whitespace switch
         {
             WhitespaceMode.IgnoreTrailingSpace => "--ignore-space-at-eol",

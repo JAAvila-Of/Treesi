@@ -250,6 +250,7 @@
         <TextBlock Text="Apply to the current comparison. Repository files remain unchanged." Classes="secondary" FontSize="11" TextWrapping="Wrap" />
         <StackPanel Spacing="5">
           <Label Target="{Binding #ContextLinesInput}" Content="Context lines" Padding="0" />
+          <CheckBox x:Name="FullContextToggle" AutomationProperties.AutomationId="FullContextToggle" Content="Full file context" MinHeight="24" FontSize="11" ToolTip.Tip="Include all surrounding lines of changed files, within preview limits. Does not load unchanged files." />
           <TextBox x:Name="ContextLinesInput" AutomationProperties.AutomationId="ContextLinesInput" AutomationProperties.Name="Context lines from 0 to 50" Text="3" MaxLength="3" />
           <TextBlock Text="0–50 lines around each change. Output limits still apply." Classes="secondary" FontSize="10" TextWrapping="Wrap" />
         </StackPanel>

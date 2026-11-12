@@ -232,6 +232,22 @@ public sealed class NativeWorkspaceTests
         Element("DiffSearch").GetAttribute("Value").Test().Be("changed");
     }
 
+    [Test]
+    public void NativeFullContextExpandsAndContractsTheCurrentComparison()
+    {
+        Element("DiffOptionsButton").Click(); Element("FullContextToggle").Click();
+        WaitUntil(() => !Element("ContextLinesInput").Enabled);
+        Element("ApplyDiffOptionsButton").Click();
+        WaitUntil(() => Element("DiffSearch").Enabled && Element("ComparisonDescription").Text.Contains("Full file context", StringComparison.Ordinal));
+        EnterText("DiffSearch", "first"); Element("FindNextButton").Click();
+        WaitUntil(() => Element("OperationStatus").Text == "Match selected in diff");
+        Element("DiffOptionsButton").Click(); Element("FullContextToggle").Click();
+        WaitUntil(() => Element("ContextLinesInput").Enabled);
+        Element("ApplyDiffOptionsButton").Click();
+        WaitUntil(() => Element("DiffSearch").Enabled && Element("ComparisonDescription").Text.Contains("Context 3", StringComparison.Ordinal));
+        Element("DiffSearch").GetAttribute("Value").Test().Be("first"); Element("FileTitle").Text.Test().Be("sample.txt");
+    }
+
     private void EnterText(string id, string value)
     {
         var input = Element(id); input.Click(); input.Clear(); input.SendKeys(value);

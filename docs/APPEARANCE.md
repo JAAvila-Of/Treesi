@@ -80,6 +80,8 @@ For local visual review, optionally set `TREESI_RENDER_OUTPUT` to an explicit di
 
 ## Source presentation
 
+Full file context is available in the same Options draft. Reloads retain the previous code on errors, cancellation or preview-limit refusal, with a source-line anchor on successful expansion/contraction. See [full-context review](FULL_CONTEXT.md). It adds no permanent toolbar or extra canvas row.
+
 Code token colors and inline edit backgrounds use semantic theme resources and one cached presentation model across unified/before/after editors. Options drafts include two display toggles; Apply changes presentation without another repository request, Cancel discards drafts, and Defaults restores both to enabled. Display choices last for the process session across repositories and are not persisted in recents. Search, selection and loaded text remain unchanged. The document model and its limits are described in [source presentation](SOURCE_PRESENTATION.md).
 
 Primary references: [Avalonia headless platform](https://docs.avaloniaui.net/docs/testing/setting-up-the-headless-platform), [dynamic theme resources](https://docs.avaloniaui.net/docs/app-development/resources), [AvaloniaEdit](https://github.com/AvaloniaUI/AvaloniaEdit).

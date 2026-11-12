@@ -289,27 +289,44 @@ public sealed partial class MainWindow : Window
         PendingInspection = LoadDiffAsync();
     }
 
-    private async Task LoadDiffAsync()
+    private async Task LoadDiffAsync(DiffOptions? rollbackOptions = null)
     {
         if (_closed) return;
         _loading?.Cancel(); _loading?.Dispose(); _loading = null;
         if (_snapshot is null || _files.SelectedItem is not ChangedFileItem item) return;
         var cancellation = _loading = new CancellationTokenSource();
+        var requestedOptions = _diffOptions;
+        var retain = rollbackOptions is not null && _currentDiff is not null;
         var comparison = _comparison.SelectedIndex switch { 1 => Comparison.Staged, 2 => Comparison.Head, _ => Comparison.WorkingTree };
         _fileTitle.Text = item.Name;
-        _comparisonLabel.Text = $"{item.Path} · Context {_diffOptions.ContextLines}";
-        ToolTip.SetTip(_comparisonLabel, item.Path);
-        ShowState("Loading differences…", "Reading the selected file and comparison.");
+        if (!retain)
+        {
+            UpdateComparisonDescription();
+            ShowState("Loading differences…", "Reading the selected file and comparison.");
+        }
+        else { _search.IsEnabled = _findNext.IsEnabled = false; }
+        Required<Button>("DiffOptionsButton").IsEnabled = false;
         _status.Text = "Loading diff…"; SetBusy(true);
         var start = Stopwatch.GetTimestamp();
         try
         {
             var revisions = _revisionComparison;
             var result = revisions is not null && _revisions is not null
-                ? await _revisions.DiffAsync(revisions.Endpoints, item.Path, _diffOptions, cancellation.Token)
-                : await _inspector.DiffAsync(_snapshot.Root, item.Path, comparison, cancellation.Token, _diffOptions);
+                ? await _revisions.DiffAsync(revisions.Endpoints, item.Path, requestedOptions, cancellation.Token)
+                : await _inspector.DiffAsync(_snapshot.Root, item.Path, comparison, cancellation.Token, requestedOptions);
             if (_closed || _loading != cancellation) return;
-            if (cancellation.IsCancellationRequested) { ShowCancelledDiff(); return; }
+            if (cancellation.IsCancellationRequested)
+            {
+                if (retain) RestoreComparisonOptions(rollbackOptions!, requestedOptions, "Reload cancelled."); else ShowCancelledDiff();
+                return;
+            }
+            if (retain && (result.Patch.Length > 200000 || result.IsBinary))
+            {
+                RestoreComparisonOptions(rollbackOptions!, requestedOptions, result.IsBinary ? "The new result is binary." : "The result exceeds the 200,000-character preview limit. Use narrower context or the CLI.");
+                return;
+            }
+            var anchor = retain ? CaptureSourceAnchor() : null;
+            UpdateComparisonDescription();
             if (result.Patch.Length > 200000)
                 ShowState("This change is too large to preview.", "The desktop preview is limited to 200,000 characters. Narrow your selection or use the structured CLI.");
             else if (result.IsBinary)
@@ -323,21 +340,38 @@ public sealed partial class MainWindow : Window
                 SetWorkspaceDiff(result);
                 _emptyState.IsVisible = false; _diffLabel.IsVisible = true;
                 _search.IsEnabled = true; _findNext.IsEnabled = true;
+                if (anchor is { } saved) RestoreSourceAnchor(saved, result);
             }
             var added = result.Hunks.Sum(hunk => hunk.Lines.Count(line => line.Kind == DiffLineKind.Added));
             var removed = result.Hunks.Sum(hunk => hunk.Lines.Count(line => line.Kind == DiffLineKind.Removed));
             _added.Text = $"+{added}"; _removed.Text = $"−{removed}";
-            _status.Text = $"{result.Hunks.Count} change {(result.Hunks.Count == 1 ? "block" : "blocks")} · {Stopwatch.GetElapsedTime(start).TotalMilliseconds:F0} ms";
+            var blocks = requestedOptions.FullContext ? _unifiedBlocks.Count : result.Hunks.Count;
+            _status.Text = $"{blocks} change {(blocks == 1 ? "block" : "blocks")} · {Stopwatch.GetElapsedTime(start).TotalMilliseconds:F0} ms";
         }
         catch (OperationCanceledException)
         {
             if (_loading == cancellation)
             {
-                ShowCancelledDiff();
+                if (retain) RestoreComparisonOptions(rollbackOptions!, requestedOptions, "Reload cancelled."); else ShowCancelledDiff();
             }
         }
-        catch (Exception exception) { if (_loading == cancellation && !cancellation.IsCancellationRequested) ShowError(exception); }
-        finally { if (_loading == cancellation) SetBusy(false); }
+        catch (Exception exception)
+        {
+            if (_loading == cancellation)
+            {
+                if (retain) RestoreComparisonOptions(rollbackOptions!, requestedOptions, cancellation.IsCancellationRequested ? "Reload cancelled." : exception is InspectionException known ? known.Message : "The comparison could not be reloaded.");
+                else if (cancellation.IsCancellationRequested) ShowCancelledDiff();
+                else ShowError(exception);
+            }
+        }
+        finally
+        {
+            if (_loading == cancellation)
+            {
+                SetBusy(false);
+                Required<Button>("DiffOptionsButton").IsEnabled = _snapshot is not null && !_isOpeningWorkspace && !_isComparingRevisions;
+            }
+        }
     }
 
     private void ShowState(string title, string description)

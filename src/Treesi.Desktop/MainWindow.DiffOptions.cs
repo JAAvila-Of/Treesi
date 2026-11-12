@@ -26,12 +26,14 @@ public sealed partial class MainWindow
         Required<Button>("CancelDiffOptionsButton").Click += (_, _) => CloseComparisonOptions();
         Required<Button>("ResetDiffOptionsButton").Click += (_, _) => SetOptionsDraft(DiffOptions.Default, new());
         Required<Button>("ApplyDiffOptionsButton").Click += (_, _) => ApplyComparisonOptions();
+        Required<CheckBox>("FullContextToggle").IsCheckedChanged += (_, _) => Required<TextBox>("ContextLinesInput").IsEnabled = Required<CheckBox>("FullContextToggle").IsChecked != true;
         UpdateOptionsIndicator();
     }
 
     private void SetOptionsDraft(DiffOptions options, DiffViewOptions? view = null)
     {
         Required<TextBox>("ContextLinesInput").Text = options.ContextLines.ToString(CultureInfo.InvariantCulture);
+        Required<CheckBox>("FullContextToggle").IsChecked = options.FullContext;
         Required<ComboBox>("WhitespaceSelector").SelectedIndex = (int)options.Whitespace;
         Required<Control>("DiffOptionsError").IsVisible = false;
         Required<CheckBox>("CodeColorsToggle").IsChecked = (view ?? _viewOptions).CodeColors;
@@ -45,7 +47,8 @@ public sealed partial class MainWindow
         SetOptionsDraft(_diffOptions);
         Required<Control>("DiffOptionsPanel").IsVisible = true;
         var input = Required<TextBox>("ContextLinesInput");
-        input.Focus(); input.SelectAll();
+        if (input.IsEnabled) { input.Focus(); input.SelectAll(); }
+        else Required<CheckBox>("FullContextToggle").Focus();
         _motion.Reveal(Required<Control>("DiffOptionsPanel"));
     }
 
@@ -59,20 +62,22 @@ public sealed partial class MainWindow
     {
         var text = Required<TextBox>("ContextLinesInput").Text;
         var whitespace = (WhitespaceMode)Required<ComboBox>("WhitespaceSelector").SelectedIndex;
-        if (!int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var value) || value > DiffOptions.MaximumContextLines || !Enum.IsDefined(whitespace))
+        var full = Required<CheckBox>("FullContextToggle").IsChecked == true;
+        var validContext = int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var value) && value <= DiffOptions.MaximumContextLines;
+        if ((!full && !validContext) || !Enum.IsDefined(whitespace))
         {
             var error = Required<TextBlock>("DiffOptionsError");
             error.Text = "Choose a whole context value from 0 to 50 and a whitespace mode."; error.IsVisible = true;
             return;
         }
-        var options = new DiffOptions(value, whitespace);
+        var options = new DiffOptions(validContext ? value : _diffOptions.ContextLines, whitespace, full);
         _viewOptions = new(Required<CheckBox>("CodeColorsToggle").IsChecked == true, Required<CheckBox>("InlineChangesToggle").IsChecked == true);
         _decoration.SetViewOptions(_viewOptions); _beforeDecoration.SetViewOptions(_viewOptions); _afterDecoration.SetViewOptions(_viewOptions);
         UpdateOptionsIndicator();
         CloseComparisonOptions();
         if (_diffOptions == options) return;
-        _diffOptions = options; UpdateOptionsIndicator();
-        PendingInspection = LoadDiffAsync();
+        var previous = _diffOptions; _diffOptions = options; UpdateOptionsIndicator();
+        PendingInspection = LoadDiffAsync(previous);
     }
 
     private void ResetWorkspaceDiffOptions()
@@ -84,7 +89,8 @@ public sealed partial class MainWindow
     private void UpdateOptionsIndicator()
     {
         var filtered = _diffOptions.Whitespace != WhitespaceMode.Exact;
-        var description = $"Context: {_diffOptions.ContextLines} lines. Whitespace: {DescribeWhitespace(_diffOptions.Whitespace)}.";
+        var context = _diffOptions.FullContext ? "Full file context" : $"{_diffOptions.ContextLines} lines";
+        var description = $"Context: {context}. Whitespace: {DescribeWhitespace(_diffOptions.Whitespace)}.";
         description += $" Code colors: {(_viewOptions.CodeColors ? "on" : "off")}. Inline changes: {(_viewOptions.InlineChanges ? "on" : "off")}.";
         var notice = Required<Control>("WhitespaceNotice");
         notice.IsVisible = filtered;

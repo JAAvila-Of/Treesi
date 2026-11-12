@@ -2,7 +2,7 @@ namespace Treesi.Domain;
 
 public enum WhitespaceMode { Exact, IgnoreTrailingSpace, IgnoreSpaceChange, IgnoreAllSpace }
 
-public sealed record DiffOptions(int ContextLines = 3, WhitespaceMode Whitespace = WhitespaceMode.Exact)
+public sealed record DiffOptions(int ContextLines = 3, WhitespaceMode Whitespace = WhitespaceMode.Exact, bool FullContext = false)
 {
     public const int MaximumContextLines = 50;
     public static DiffOptions Default { get; } = new();

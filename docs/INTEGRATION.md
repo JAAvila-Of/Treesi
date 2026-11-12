@@ -4,6 +4,8 @@ The first supported transport is a finite, read-only JSON CLI. Run one process p
 
 ## Commands
 
+All three diff commands also accept `--context full`. Responses set `options.fullContext=true`; the retained numeric `contextLines` is then inactive. Capabilities advertises `diffOptions.context.full`. See [full-context semantics and limits](FULL_CONTEXT.md).
+
 Local history, commit metadata and parent-specific diffs are also available through the same envelope and composition boundaries. See [history commands and semantics](HISTORY.md).
 
 | Command | Arguments | Result |

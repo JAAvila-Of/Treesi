@@ -18,6 +18,7 @@ public sealed partial class MainWindow
     private FileDiff? _currentDiff;
     private SplitDiff? _splitDiff;
     private readonly List<int> _unifiedBlocks = [];
+    private IReadOnlyDictionary<int, DiffLine> _unifiedLines = new Dictionary<int, DiffLine>();
     private int _blockIndex = -1;
     private bool _synchronizingScroll;
     private TextEditor _activeSplitEditor = null!;
@@ -62,6 +63,7 @@ public sealed partial class MainWindow
     {
         _currentDiff = result; _splitDiff = null; _blockIndex = -1;
         _unifiedBlocks.Clear();
+        _unifiedLines = DiffSourceMap.Unified(result);
         using var reader = new StringReader(result.Patch);
         var row = 0; var hunk = 0;
         while (reader.ReadLine() is { } text)
@@ -69,8 +71,19 @@ public sealed partial class MainWindow
             row++;
             if (hunk < result.Hunks.Count && text == result.Hunks[hunk].Header)
             {
-                _unifiedBlocks.Add(row);
-                foreach (var unused in result.Hunks[hunk++].Lines) { reader.ReadLine(); row++; }
+                if (result.Options?.FullContext != true) _unifiedBlocks.Add(row);
+                var changing = false;
+                foreach (var line in result.Hunks[hunk++].Lines)
+                {
+                    reader.ReadLine(); row++;
+                    if (result.Options?.FullContext != true) continue;
+                    if (line.Kind is DiffLineKind.Added or DiffLineKind.Removed)
+                    {
+                        if (!changing) _unifiedBlocks.Add(row);
+                        changing = true;
+                    }
+                    else if (line.Kind != DiffLineKind.Metadata) changing = false;
+                }
             }
         }
         _presentation = DiffPresentation.Create(result);
@@ -134,8 +147,10 @@ public sealed partial class MainWindow
     {
         if (_diffMode.SelectedIndex == 1 && _splitDiff is not null)
         {
-            SelectBlock(_before, _splitDiff.Before.HunkLines[_blockIndex]);
-            SelectBlock(_after, _splitDiff.After.HunkLines[_blockIndex]);
+            var before = _currentDiff?.Options?.FullContext == true ? _splitDiff.Before.ChangeLines! : _splitDiff.Before.HunkLines;
+            var after = _currentDiff?.Options?.FullContext == true ? _splitDiff.After.ChangeLines! : _splitDiff.After.HunkLines;
+            SelectBlock(_before, before[_blockIndex]);
+            SelectBlock(_after, after[_blockIndex]);
         }
         else SelectBlock(_diff, _unifiedBlocks[_blockIndex]);
         _blockPosition.Text = $"Block {_blockIndex + 1} of {_unifiedBlocks.Count}";
@@ -161,6 +176,7 @@ public sealed partial class MainWindow
     private void ClearDiffWorkspace()
     {
         _presentation = null;
+        _unifiedLines = new Dictionary<int, DiffLine>();
         _currentDiff = null; _splitDiff = null; _unifiedBlocks.Clear(); _blockIndex = -1;
         _splitView.IsVisible = false;
         _diffMode.IsEnabled = _previousBlock.IsEnabled = _nextBlock.IsEnabled = false;

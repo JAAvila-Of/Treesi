@@ -35,20 +35,7 @@ public sealed class DiffDecoration : DocumentColorizingTransformer, IBackgroundR
     {
         _presentation = presentation ?? DiffPresentation.Create(diff);
         _lines.Clear();
-        using var reader = new StringReader(diff.Patch);
-        var documentLine = 0;
-        var hunkIndex = 0;
-        while (reader.ReadLine() is { } text)
-        {
-            documentLine++;
-            if (hunkIndex >= diff.Hunks.Count || text != diff.Hunks[hunkIndex].Header) continue;
-            var hunk = diff.Hunks[hunkIndex++];
-            foreach (var line in hunk.Lines)
-            {
-                if (reader.ReadLine() is null) break;
-                _lines[++documentLine] = line;
-            }
-        }
+        foreach (var entry in DiffSourceMap.Unified(diff)) _lines[entry.Key] = entry.Value;
         _editor.Text = diff.Patch;
         _digits = Math.Max(4, _lines.Values.SelectMany(line => new[] { line.OldLine ?? 0, line.NewLine ?? 0 }).DefaultIfEmpty(0).Max().ToString(CultureInfo.InvariantCulture).Length);
         _numbers.InvalidateMeasure();

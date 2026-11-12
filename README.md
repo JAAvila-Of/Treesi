@@ -46,6 +46,8 @@ History at the bottom of the sidebar browses local repository or selected-file h
 
 Code colors and Emphasize changed text in Options control local presentation. Both are enabled initially and apply without reloading Git. C#/C# script and JSON fragments receive lexical colors; other files retain plain diff colors. Paired removed/added lines receive bounded, Unicode-aware emphasis within each line in unified and split views. Signs, line numbers and added/removed row backgrounds remain visible. These are review hints rather than semantic parsing or a full-file reconstruction. See [source presentation and limits](docs/SOURCE_PRESENTATION.md).
 
+Full file context in Options expands surrounding lines of changed files while preserving the review position. Turn it off to return to the retained 0–50 context-line setting. Historical comparisons reuse their pinned commits. Expansion is bounded by the existing limits; failed, cancelled or oversized option reloads retain the previous comparison and restore its diff options. This does not load unchanged files or bypass whitespace filtering. See [full-context review](docs/FULL_CONTEXT.md).
+
 ## Use with tools and AI agents
 
 After building, run the CLI assembly directly to keep build output out of stdout:

@@ -67,5 +67,5 @@ public static partial class CommandLine
         return await revisions.DiffAsync(detail.Comparison(parent), path, options, token);
     }
 
-    private static InspectionException HistoryUsage() => new("usage", "Usage: history <repository> [--start <revision>] [--path <literal-file>] [--offset 0..10000] [--limit 1..50] | commit <repository> <revision> | commit-files <repository> <revision> [--parent <one-based-index>] | commit-diff <repository> <revision> <literal-file> [--parent <one-based-index>] [--context 0..50] [--whitespace <mode>]");
+    private static InspectionException HistoryUsage() => new("usage", "Usage: history <repository> [--start <revision>] [--path <literal-file>] [--offset 0..10000] [--limit 1..50] | commit <repository> <revision> | commit-files <repository> <revision> [--parent <one-based-index>] | commit-diff <repository> <revision> <literal-file> [--parent <one-based-index>] [--context 0..50|full] [--whitespace <mode>]");
 }
