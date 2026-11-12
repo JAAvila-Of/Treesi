@@ -3,6 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Treesi.Application;
 using Treesi.Git;
 using Treesi.Desktop.Appearance;
+using Treesi.Desktop.Workspaces;
 
 namespace Treesi.Desktop;
 
@@ -24,7 +25,7 @@ public sealed class App : Avalonia.Application
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            desktop.MainWindow = new MainWindow(new InstrumentedInspectionService(new InspectionService(new GitInspector())), desktop.Args?.FirstOrDefault(), _appearance!, new JsonMotionPreferenceStore());
+            desktop.MainWindow = new MainWindow(new InstrumentedInspectionService(new InspectionService(new GitInspector())), desktop.Args?.FirstOrDefault(), _appearance!, new JsonMotionPreferenceStore(), new JsonWorkspaceHistoryStore());
         base.OnFrameworkInitializationCompleted();
     }
 }

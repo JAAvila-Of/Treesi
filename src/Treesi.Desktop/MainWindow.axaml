@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:editor="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
         xmlns:local="clr-namespace:Treesi.Desktop"
+        xmlns:workspaces="clr-namespace:Treesi.Desktop.Workspaces"
         x:Class="Treesi.Desktop.MainWindow" Classes="workspace"
         Title="Treesi — Change inspection" Width="1180" Height="740" MinWidth="900" MinHeight="560"
         WindowStartupLocation="CenterScreen">
@@ -14,9 +15,10 @@
         </Border>
         <TextBlock Text="treesi" FontSize="19" FontWeight="SemiBold" VerticalAlignment="Center" LetterSpacing="-0.6" />
         <Border Width="1" Height="18" Background="{DynamicResource Border.Default}" Margin="6,0" />
-        <TextBlock Text="Workspace" Classes="eyebrow" VerticalAlignment="Center" />
+        <TextBlock x:Name="WorkspaceContext" Text="Workspace" Classes="eyebrow" VerticalAlignment="Center" />
       </StackPanel>
       <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+        <Button x:Name="RecentWorkspacesButton" AutomationProperties.AutomationId="RecentWorkspacesButton" Content="Recents" Classes="quiet" ToolTip.Tip="Open a recent local workspace" />
         <Button x:Name="OpenFileButton" AutomationProperties.AutomationId="OpenFileButton" Content="Open file" Classes="quiet" ToolTip.Tip="Open a file inside a repository" />
         <Button x:Name="OpenFolderButton" AutomationProperties.AutomationId="OpenFolderButton" Classes="primary">
           <StackPanel Orientation="Horizontal" Spacing="8">
@@ -29,7 +31,7 @@
       </StackPanel>
     </Grid>
     <ProgressBar x:Name="BusyIndicator" Grid.Row="0" IsVisible="False" IsIndeterminate="False" Value="100" Height="2" VerticalAlignment="Bottom" Margin="12,0" Foreground="{DynamicResource Accent.Primary}" Background="Transparent" AutomationProperties.Name="Inspection in progress" />
-    <Border Grid.Row="1" Margin="6,0,6,2" CornerRadius="10" ClipToBounds="True" BorderThickness="1" BorderBrush="{DynamicResource Border.Default}" BoxShadow="0 8 30 0 #14000000">
+    <Border x:Name="WorkspaceFrame" Grid.Row="1" Margin="6,0,6,2" CornerRadius="10" ClipToBounds="True" BorderThickness="1" BorderBrush="{DynamicResource Border.Default}" BoxShadow="0 8 30 0 #14000000">
       <Grid x:Name="WorkspaceColumns" ColumnDefinitions="190,1,*">
         <Grid x:Name="FilesPanel" Grid.Column="0" RowDefinitions="Auto,Auto,Auto,*,Auto" Background="{DynamicResource Surface.Sidebar}">
           <Border Margin="8,8,8,12" Padding="10" CornerRadius="10" BorderThickness="1" BorderBrush="{DynamicResource Border.Default}" Background="{DynamicResource Surface.Control}">
@@ -144,6 +146,65 @@
           </Border>
         </Grid>
       </Grid>
+    </Border>
+    <Border x:Name="HomeSurface" Grid.Row="1" Margin="6,0,6,2" IsVisible="False" CornerRadius="10" BorderThickness="1" BorderBrush="{DynamicResource Border.Default}" Background="{DynamicResource Surface.Panel}">
+      <Grid RowDefinitions="Auto,*,Auto" Margin="28,18" MaxWidth="820">
+        <StackPanel Spacing="8" Margin="0,0,0,14">
+          <TextBlock Text="LOCAL WORKSPACES" Classes="eyebrow" />
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+            <TextBlock Text="Pick up where you left off." FontSize="25" FontWeight="SemiBold" />
+            <Button Grid.Column="1" x:Name="ReturnToWorkspaceButton" AutomationProperties.AutomationId="ReturnToWorkspaceButton" Content="Back to comparison" Classes="quiet" IsVisible="False" />
+          </Grid>
+          <TextBlock Text="Open a repository or a single file. Recent locations are inspected only when you choose one." Classes="secondary" TextWrapping="Wrap" />
+          <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,2">
+            <Button x:Name="HomeOpenRepositoryButton" AutomationProperties.AutomationId="HomeOpenRepositoryButton" Content="Open repository" Classes="primary" />
+            <Button x:Name="HomeOpenFileButton" AutomationProperties.AutomationId="HomeOpenFileButton" Content="Open a file" />
+          </StackPanel>
+          <TextBlock x:Name="HomeNotice" AutomationProperties.AutomationId="HomeNotice" IsVisible="False" TextWrapping="Wrap" Foreground="{DynamicResource Status.Warning}" />
+          <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+            <TextBlock Text="Recent repositories" FontWeight="SemiBold" VerticalAlignment="Center" />
+            <Button Grid.Column="1" x:Name="ClearRecentsButton" AutomationProperties.AutomationId="ClearRecentsButton" Content="Clear list" Classes="quiet" />
+          </Grid>
+        </StackPanel>
+        <Grid Grid.Row="1">
+          <ListBox x:Name="RecentRepositories" AutomationProperties.AutomationId="RecentRepositories" AutomationProperties.Name="Recent repositories" Background="Transparent" BorderThickness="0">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="workspaces:WorkspaceEntry">
+                <Grid ColumnDefinitions="28,*" ColumnSpacing="10">
+                  <TextBlock Text="↗" Foreground="{DynamicResource Accent.Primary}" FontSize="20" VerticalAlignment="Center" />
+                  <StackPanel Grid.Column="1" Spacing="3">
+                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Root}" Classes="secondary" FontSize="11" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Root}" />
+                    <TextBlock Text="{Binding View}" Classes="secondary" FontSize="10" />
+                  </StackPanel>
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <StackPanel x:Name="NoRecentWorkspaces" Spacing="10" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <TextBlock Text="Your next review starts here." FontSize="19" FontWeight="SemiBold" TextAlignment="Center" />
+            <TextBlock Text="Open a local repository to add a shortcut." Classes="secondary" TextAlignment="Center" />
+          </StackPanel>
+        </Grid>
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8" Margin="0,14,0,0">
+          <TextBlock Text="Shortcuts only. Removing an entry never deletes a repository." Classes="secondary" FontSize="10" TextWrapping="Wrap" VerticalAlignment="Center" />
+          <Button Grid.Column="1" x:Name="RetryOpenButton" AutomationProperties.AutomationId="RetryOpenButton" Content="Retry location" IsVisible="False" />
+          <Button Grid.Column="2" x:Name="RemoveRecentButton" AutomationProperties.AutomationId="RemoveRecentButton" Content="Remove shortcut" Classes="quiet" />
+          <Button Grid.Column="3" x:Name="ResumeWorkspaceButton" AutomationProperties.AutomationId="ResumeWorkspaceButton" Content="Resume selected" Classes="primary" />
+        </Grid>
+      </Grid>
+    </Border>
+    <Border x:Name="OpenRecoveryNotice" Grid.Row="1" IsVisible="False" ZIndex="10" Width="400" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="16" Padding="16" CornerRadius="10" Background="{DynamicResource Surface.Panel}" BorderBrush="{DynamicResource Status.Warning}" BorderThickness="1" BoxShadow="0 8 24 0 #30000000">
+      <StackPanel Spacing="10">
+        <TextBlock Text="The location could not be opened." FontWeight="SemiBold" />
+        <TextBlock x:Name="OpenRecoveryMessage" AutomationProperties.AutomationId="OpenRecoveryMessage" TextWrapping="Wrap" Classes="secondary" />
+        <TextBlock Text="Your current comparison is still available." Classes="secondary" FontSize="11" />
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <Button x:Name="RetryWorkspaceButton" AutomationProperties.AutomationId="RetryWorkspaceButton" Content="Retry" />
+          <Button x:Name="ChooseWorkspaceButton" AutomationProperties.AutomationId="ChooseWorkspaceButton" Content="Choose another" />
+          <Button x:Name="DismissRecoveryButton" AutomationProperties.AutomationId="DismissRecoveryButton" Content="Dismiss" Classes="quiet" />
+        </StackPanel>
+      </StackPanel>
     </Border>
     <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="12,0">
       <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">

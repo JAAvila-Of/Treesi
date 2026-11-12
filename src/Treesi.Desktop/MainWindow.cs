@@ -7,6 +7,7 @@ using Avalonia.Platform.Storage;
 using AvaloniaEdit;
 using Treesi.Application;
 using Treesi.Desktop.Appearance;
+using Treesi.Desktop.Workspaces;
 using Treesi.Domain;
 
 namespace Treesi.Desktop;
@@ -32,7 +33,7 @@ public sealed partial class MainWindow : Window
     public Task PendingInspection { get; private set; } = Task.CompletedTask;
     public Task PendingMotion => _motion.Pending;
 
-    public MainWindow(IInspectionService inspector, string? initialPath, ThemeController appearance, IMotionPreferenceStore? motionPreferences = null)
+    public MainWindow(IInspectionService inspector, string? initialPath, ThemeController appearance, IMotionPreferenceStore? motionPreferences = null, IWorkspaceHistoryStore? workspaceHistory = null)
     {
         _inspector = inspector;
         _appearance = appearance;
@@ -76,23 +77,26 @@ public sealed partial class MainWindow : Window
         };
         _appearance.Changed += OnThemeChanged;
         _files.SelectionChanged += (_, _) => { if (!_updatingFiles) PendingInspection = LoadDiffAsync(); };
-        _comparison.SelectionChanged += (_, _) => PendingInspection = LoadDiffAsync();
+        _comparison.SelectionChanged += (_, _) => { if (!_updatingFiles) PendingInspection = LoadDiffAsync(); };
         _filter.PropertyChanged += (_, args) => { if (args.Property == TextBox.TextProperty) FilterFiles(); };
         Required<Button>("OpenFolderButton").Click += async (_, _) => await PickAsync(false);
         Required<Button>("OpenFileButton").Click += async (_, _) => await PickAsync(true);
         _refresh.Click += async (_, _) => { if (_snapshot is not null) await OpenRepositoryAsync(_snapshot.Root); };
-        _cancel.Click += (_, _) => Cancel();
+        _cancel.Click += (_, _) => { Cancel(); _status.Text = _isOpeningWorkspace ? "Cancelling opening…" : "Cancelling inspection…"; };
         _findNext.Click += (_, _) => FindNext();
         _search.KeyDown += (_, args) => { if (args.Key == Key.Enter) { FindNext(); args.Handled = true; } };
         KeyDown += async (_, args) =>
         {
-            if ((args.KeyModifiers & KeyModifiers.Alt) != 0 && args.Key is Key.Up or Key.Down)
+            if (!Required<Control>("HomeSurface").IsVisible && (args.KeyModifiers & KeyModifiers.Alt) != 0 && args.Key is Key.Up or Key.Down)
             {
                 NavigateBlock(args.Key == Key.Up ? -1 : 1); args.Handled = true; return;
             }
             if (args.Key == Key.Escape)
             {
-                if (_focusMode) SetFocusMode(false);
+                if (Required<Control>("OpenRecoveryNotice").IsVisible) DismissOpenRecovery();
+                else if (_isOpeningWorkspace) Cancel();
+                else if (Required<Control>("HomeSurface").IsVisible && _snapshot is not null) ShowComparison();
+                else if (_focusMode) SetFocusMode(false);
                 else Cancel();
                 args.Handled = true;
                 return;
@@ -102,16 +106,21 @@ public sealed partial class MainWindow : Window
             {
                 case Key.O: args.Handled = true; await PickAsync(false); break;
                 case Key.R: args.Handled = true; if (_snapshot is not null) await OpenRepositoryAsync(_snapshot.Root); break;
-                case Key.B: args.Handled = true; ToggleFilesPanel(); break;
+                case Key.B:
+                    if (Required<Control>("HomeSurface").IsVisible) break;
+                    args.Handled = true; ToggleFilesPanel(); break;
                 case Key.F:
+                    if (Required<Control>("HomeSurface").IsVisible) break;
                     args.Handled = true;
                     if ((args.KeyModifiers & KeyModifiers.Shift) != 0) SetFocusMode(!_focusMode);
                     else _search.Focus();
                     break;
             }
         };
+        InitializeWorkspaces(workspaceHistory, initialPath);
         Closed += (_, _) =>
         {
+            SaveCurrentWorkspace();
             _closed = true;
             Cancel(); _appearance.Changed -= OnThemeChanged;
             _opening?.Dispose(); _opening = null;
@@ -147,35 +156,56 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    public async Task OpenRepositoryAsync(string path)
+    public Task OpenRepositoryAsync(string path) => OpenWorkspaceAsync(path, null);
+
+    private async Task OpenWorkspaceAsync(string path, WorkspaceEntry? resume)
     {
         Cancel();
+        SaveCurrentWorkspace();
         var previous = (_files.SelectedItem as ChangedFileItem)?.Path;
         var previousRoot = _snapshot?.Root;
+        var wasHome = Required<Control>("HomeSurface").IsVisible;
         _opening?.Dispose();
         var cancellation = _opening = new CancellationTokenSource();
-        _snapshot = null; _allFiles = []; _files.ItemsSource = null; _refresh.IsEnabled = false;
-        _filter.IsEnabled = false; _comparison.IsEnabled = false;
-        _repositoryName.Text = "Opening repository…"; _repositoryLabel.Text = path;
-        _fileCount.Text = "0";
-        ShowState("Opening repository…", "Reading the local working tree.");
-        SetBusy(true); _status.Text = "Inspecting repository…";
+        _isOpeningWorkspace = true;
+        _files.IsEnabled = false; _filter.IsEnabled = false; _comparison.IsEnabled = false;
+        Required<Control>("OpenRecoveryNotice").IsVisible = false;
+        Required<TextBlock>("HomeNotice").IsVisible = false;
+        Required<Button>("RetryOpenButton").IsVisible = false;
+        SetBusy(true); _status.Text = "Opening location…";
         try
         {
             var snapshot = await _inspector.InspectAsync(path, cancellation.Token);
-            if (cancellation.IsCancellationRequested) return;
+            if (_opening != cancellation || _closed) return;
+            if (cancellation.IsCancellationRequested)
+            {
+                _status.Text = "Opening cancelled; no new workspace was loaded.";
+                return;
+            }
+            _updatingFiles = true;
+            try
+            {
+                _files.ItemsSource = null;
+                _filter.Text = "";
+                if (resume is not null)
+                {
+                    _comparison.SelectedIndex = (int)resume.Comparison;
+                    _diffMode.SelectedIndex = resume.Split ? 1 : 0;
+                    _focusMode = false; _filesPanelVisible = resume.FilesVisible; ApplyPresentation();
+                }
+            }
+            finally { _updatingFiles = false; }
             _snapshot = snapshot; _allFiles = snapshot.Files;
-            var selected = snapshot.SelectedPath ?? (snapshot.Root == previousRoot ? previous : null);
+            var selected = snapshot.SelectedPath ?? resume?.SelectedPath ?? (snapshot.Root == previousRoot ? previous : null);
             if (selected is not null && !_allFiles.Any(item => item.Path == selected))
                 _allFiles = [new FileChange(selected, null, ".", "."), .. _allFiles];
             _repositoryName.Text = Path.GetFileName(snapshot.Root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
             _repositoryLabel.Text = snapshot.Root;
             ToolTip.SetTip(_repositoryLabel, snapshot.Root);
             _refresh.IsEnabled = true;
-            _filter.IsEnabled = true; _comparison.IsEnabled = true;
-            _updatingFiles = true;
-            _filter.Text = "";
-            _updatingFiles = false;
+            _isOpeningWorkspace = false;
+            ShowComparison();
+            _failedWorkspace = null;
             FilterFiles(selected);
             _fileCount.Text = snapshot.Files.Count.ToString(System.Globalization.CultureInfo.InvariantCulture);
             if (_allFiles.Count == 0)
@@ -185,11 +215,24 @@ public sealed partial class MainWindow : Window
                 ShowState("All clear.", "Your working tree has no reported changes. Refresh when you are ready to check again.");
                 _status.Text = "Inspection complete · Submodule contents excluded";
             }
+            var saved = CurrentWorkspace() is not { } current || _workspaceHistory.Remember(current);
             await PendingInspection;
+            if (wasHome && _opening == cancellation && !cancellation.IsCancellationRequested) FocusComparison();
+            if (_opening == cancellation && !cancellation.IsCancellationRequested && !saved)
+                _status.Text = "Workspace opened for this session; the recent shortcut could not be saved.";
         }
-        catch (OperationCanceledException) { if (_opening == cancellation) _status.Text = "Inspection cancelled"; }
-        catch (Exception exception) { if (_opening == cancellation && !cancellation.IsCancellationRequested) ShowError(exception); }
-        finally { if (_opening == cancellation) SetBusy(false); }
+        catch (OperationCanceledException) { if (_opening == cancellation) _status.Text = "Opening cancelled; no new workspace was loaded."; }
+        catch (Exception exception) { if (_opening == cancellation && !cancellation.IsCancellationRequested) ShowOpenFailure(path, resume, exception); }
+        finally
+        {
+            if (_opening == cancellation)
+            {
+                _isOpeningWorkspace = false;
+                _files.IsEnabled = true;
+                _filter.IsEnabled = _snapshot is not null; _comparison.IsEnabled = _snapshot is not null;
+                SetBusy(false);
+            }
+        }
     }
 
     private void FilterFiles(string? preferred = null)
@@ -230,7 +273,8 @@ public sealed partial class MainWindow : Window
         try
         {
             var result = await _inspector.DiffAsync(_snapshot.Root, item.Path, comparison, cancellation.Token);
-            if (cancellation.IsCancellationRequested) return;
+            if (_closed || _loading != cancellation) return;
+            if (cancellation.IsCancellationRequested) { ShowCancelledDiff(); return; }
             if (result.Patch.Length > 200000)
                 ShowState("This change is too large to preview.", "The desktop preview is limited to 200,000 characters. Narrow your selection or use the structured CLI.");
             else if (result.IsBinary)
@@ -248,7 +292,13 @@ public sealed partial class MainWindow : Window
             _added.Text = $"+{added}"; _removed.Text = $"−{removed}";
             _status.Text = $"{result.Hunks.Count} change {(result.Hunks.Count == 1 ? "block" : "blocks")} · {Stopwatch.GetElapsedTime(start).TotalMilliseconds:F0} ms";
         }
-        catch (OperationCanceledException) { if (_loading == cancellation) _status.Text = "Diff cancelled"; }
+        catch (OperationCanceledException)
+        {
+            if (_loading == cancellation)
+            {
+                ShowCancelledDiff();
+            }
+        }
         catch (Exception exception) { if (_loading == cancellation && !cancellation.IsCancellationRequested) ShowError(exception); }
         finally { if (_loading == cancellation) SetBusy(false); }
     }
@@ -287,12 +337,18 @@ public sealed partial class MainWindow : Window
 
     private void SetBusy(bool value)
     {
+        value |= _isOpeningWorkspace;
         _cancel.IsVisible = value;
         var progress = Required<ProgressBar>("BusyIndicator");
         progress.IsIndeterminate = value && !_motion.Reduced;
         progress.IsVisible = value;
     }
     private void Cancel() { _opening?.Cancel(); _loading?.Cancel(); }
+    private void ShowCancelledDiff()
+    {
+        ShowState("Comparison cancelled.", "No complete result is available. Select a file or refresh to try again.");
+        _status.Text = "Diff cancelled";
+    }
     private void ShowError(Exception exception)
     {
         ShowState("This selection could not be inspected.", exception is InspectionException inspection ? inspection.Message : "Check that the selected path is accessible and try again.");

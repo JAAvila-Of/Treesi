@@ -6,7 +6,19 @@ The visual shell uses a rounded workspace frame, a compact repository card, a sm
 
 The diff is the primary surface. Geometry checks require it to occupy at least 80% of the workspace body's height and 60% of its area in both layouts and themes, at 900 × 560 and 1180 × 740. These are layout checks, not accessibility or performance acceptance. Long headings are trimmed rather than allowed to shrink the code area; editor text remains 13 px.
 
-Ctrl+B folds the files; Ctrl+Shift+F or the footer's Focus button folds the application header and files together. Search and comparison tools remain available. Escape restores the workspace before cancelling an inspection. Exiting focus restores the prior file-panel state; showing files while focused exits focus and opens the panel. Hiding a focused navigation panel moves keyboard focus to the active editor's text area. Selection, filter, search, mode and loaded content survive without another Git query. Panel and focus choices are session-only.
+Ctrl+B folds the files; Ctrl+Shift+F or the footer's Focus button folds the application header and files together. Search and comparison tools remain available. Escape restores the workspace before cancelling an inspection. Exiting focus restores the prior file-panel state; showing files while focused exits focus and opens the panel. Hiding a focused navigation panel moves keyboard focus to the active editor's text area. Selection, filter, search, mode and loaded content survive without another Git query. File-panel visibility is remembered per recent workspace; focus mode is session-only.
+
+## Opening and resuming
+
+The home surface lists up to eight local recent repositories in most-recently-opened order. Select an entry and resume with its button or Enter; open-file and open-repository actions remain available. A command-line path takes precedence over the list. No recent location is inspected until explicitly opened. Returning to recents keeps the loaded comparison available through Back to comparison.
+
+`IWorkspaceHistoryStore` isolates presentation state from its JSON adapter; `WorkspaceHistory` owns ordering, deduplication, validation and removal. The version-1 document in local application data under `Treesi/workspaces.json` contains only roots, repository-relative selection, comparison, split/unified layout and file-panel visibility. Reads and writes are bounded to 64 KiB. Unknown versions, malformed or oversized documents and invalid entries are ignored. Writes replace the document atomically in its own directory. Multiple app instances currently use last-writer-wins settings; there is no cross-process merge.
+
+View state is updated when visiting recents, before switching locations, after a successful repository opening and on close, rather than writing on every selection or keystroke. Focus, filter, search text, patches and credentials are excluded. Removing or clearing entries only updates local shortcuts; closing the current workspace does not reinsert a forgotten entry. Save failures retain the in-memory session and report failures while the window is available.
+
+A new location's repository is inspected before replacing the current workspace. Failure or cancellation of that opening inspection keeps an existing comparison visible, with retry, another-location and dismissal actions. Once the repository is open, its selected diff is loaded separately and can be cancelled with an explicit incomplete-result state. Superseded responses cannot replace a newer workspace. A missing saved file produces an explicit inspection error; the file panel remains available to select another change. Opening failures with no previous workspace show recovery on Home, including missing Git. File/folder picker cancellation leaves the current view unchanged.
+
+Headless checks cover metadata round trips and limits, stale requests, cancellation, startup precedence, reopening a saved view, forgetting entries, save failures and keyboard recovery. The hosted native suite also resumes and removes a recent shortcut through accessibility controls, verifying that repository files remain present.
 
 ## Motion
 

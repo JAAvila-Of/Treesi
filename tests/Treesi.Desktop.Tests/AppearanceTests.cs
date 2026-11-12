@@ -339,19 +339,20 @@ public sealed class AppearanceTests
     }
 
     [AvaloniaTest]
-    public void EmptyStateRendersInBothThemesWithoutNativeWindows()
+    public void EmptyHomeRendersInBothThemesWithoutNativeWindows()
     {
         var themes = new ThemeController(Avalonia.Application.Current!, new MemoryPreferences());
         var window = new MainWindow(new FixtureInspector(), null, themes);
         try
         {
             window.Show();
-            window.FindControl<Control>("EmptyState")!.IsVisible.Test().BeTrue();
+            window.FindControl<Control>("HomeSurface")!.IsVisible.Test().BeTrue();
+            window.FindControl<Control>("NoRecentWorkspaces")!.IsVisible.Test().BeTrue();
             window.FindControl<TextEditor>("DiffEditor")!.IsVisible.Test().BeFalse();
-            SaveFrame(window, "empty-dark.png");
+            SaveFrame(window, "home-empty-dark.png");
             themes.Apply(ThemeCatalog.Light).Test().BeTrue();
             Dispatcher.UIThread.RunJobs();
-            SaveFrame(window, "empty-light.png");
+            SaveFrame(window, "home-empty-light.png");
         }
         finally { window.Close(); }
     }

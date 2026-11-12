@@ -31,7 +31,7 @@ public sealed class NativeWorkspaceTests
         options.AddAdditionalAppiumOption("appArguments", $"\"{_repository.SamplePath}\"");
         options.AddAdditionalAppiumOption("shouldCloseApp", true);
         _driver = new WindowsDriver(new Uri("http://127.0.0.1:4723"), options, TimeSpan.FromSeconds(60));
-        WaitUntil(() => Element("FileTitle").Text == "sample.txt");
+        WaitUntil(() => Element("FileTitle").Text == "sample.txt" && Element("DiffSearch").Enabled);
     }
 
     [TearDown]
@@ -99,6 +99,26 @@ public sealed class NativeWorkspaceTests
     }
 
     private AppiumElement Element(string id) => _driver!.FindElement(new ByAccessibilityId(id));
+
+    [Test]
+    public void NativeRecentsResumeTheSelectionAndForgetOnlyTheShortcut()
+    {
+        Element("SplitModeButton").Click();
+        Element("RecentWorkspacesButton").Click();
+        WaitUntil(() => Element("ResumeWorkspaceButton").Displayed && Element("ResumeWorkspaceButton").Enabled);
+        Element("ResumeWorkspaceButton").Click();
+        WaitUntil(() => Element("DiffSearch").Displayed && Element("DiffSearch").Enabled);
+        Element("FileTitle").Text.Test().Be("sample.txt");
+        Element("NextBlockButton").Click();
+        WaitUntil(() => Element("OperationStatus").Text == "Change block 1 of 1");
+        Element("RecentWorkspacesButton").Click();
+        WaitUntil(() => Element("RemoveRecentButton").Displayed);
+        Element("RemoveRecentButton").Click();
+        File.Exists(_repository!.SamplePath).Test().BeTrue();
+        Element("ReturnToWorkspaceButton").Click();
+        WaitUntil(() => Element("DiffSearch").Displayed);
+        Element("FileTitle").Text.Test().Be("sample.txt");
+    }
 
     [Test]
     public void NativeFocusAndFilePanelRestoreTheWorkingSelection()
