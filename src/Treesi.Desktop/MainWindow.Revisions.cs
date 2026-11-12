@@ -69,6 +69,11 @@ public sealed partial class MainWindow
         Required<Control>("RevisionReferencePicker").IsVisible = show;
         Required<Control>("RevisionReferenceActions").IsVisible = show;
         if (!show) _listingReferences?.Cancel();
+        if (Required<Control>("RevisionPanel").IsVisible)
+        {
+            if (show) Required<Button>("BackToRevisionDraftButton").Focus();
+            else Required<TextBox>("BaseRevisionInput").Focus();
+        }
     }
 
     private void UseReference(string input)
@@ -99,6 +104,7 @@ public sealed partial class MainWindow
             var references = await _revisions.ReferencesAsync(root, cancellation.Token);
             if (_closed || cancellation.IsCancellationRequested || _listingReferences != cancellation || _snapshot?.Root != root) return;
             list.ItemsSource = references.Items; list.SelectedIndex = references.Items.Count > 0 ? 0 : -1;
+            FocusReferencesAfterLayout();
             Required<TextBlock>("RevisionReferenceNotice").Text = references.HasMore ? "First 200 entries shown. Type a full ref or commit ID if omitted." :
                 references.Items.Count == 0 ? "No references are available locally. Return and enter an available commit ID." : "Choose a local reference. Its commit is resolved when you compare.";
         }

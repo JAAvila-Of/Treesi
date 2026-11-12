@@ -84,6 +84,7 @@ public sealed partial class MainWindow
 
     private void ShowRecentWorkspaces()
     {
+        Required<Control>("CommitDetailsPanel").IsVisible = false;
         CloseComparisonOptions(false);
         CloseRevisionPicker(true, false);
         Cancel(); SaveCurrentWorkspace(); SetFocusMode(false);
@@ -117,7 +118,7 @@ public sealed partial class MainWindow
 
     private void FocusHome()
     {
-        if (_workspaceHistory.Entries.Count > 0) _recents.Focus();
+        if (_workspaceHistory.Entries.Count > 0) ListRegion(_recents, Required<Button>("HomeOpenRepositoryButton")).Focus();
         else Required<Button>("HomeOpenRepositoryButton").Focus();
     }
 

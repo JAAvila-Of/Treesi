@@ -133,6 +133,9 @@
     <Setter Property="Foreground" Value="{DynamicResource Text.Secondary}" />
   </Style>
   <Style Selector="Button:focus-visible"><Setter Property="BorderBrush" Value="{DynamicResource Accent.Primary}" /></Style>
+  <Style Selector="TextBox:focus-visible, ComboBox:focus-visible, ListBoxItem:focus-visible"><Setter Property="BorderBrush" Value="{DynamicResource Accent.Primary}" /></Style>
+  <Style Selector="Border#DiffSurface"><Setter Property="BorderBrush" Value="{DynamicResource Border.Default}" /></Style>
+  <Style Selector="Border#DiffSurface:focus-within"><Setter Property="BorderBrush" Value="{DynamicResource Accent.Primary}" /></Style>
   <Style Selector="TextBox">
     <Setter Property="Background" Value="{DynamicResource Surface.Control}" />
     <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />

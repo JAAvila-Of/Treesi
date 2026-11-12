@@ -111,12 +111,14 @@ public sealed partial class MainWindow
             ToolTip.SetTip(Required<TextBlock>("AfterLabel"), $"{revisions.TargetName}: {revisions.TargetCommitId}");
         }
         ApplyDiffMode();
+        UpdateAccessibleComparison();
     }
 
     private void ApplyDiffMode()
     {
         if (_currentDiff is null) return;
         var split = _diffMode.SelectedIndex == 1;
+        var moveFocus = split ? _diff.IsKeyboardFocusWithin : _splitView.IsKeyboardFocusWithin;
         Required<TextBlock>("DiffLayoutLabel").Text = split ? "SPLIT" : "UNIFIED";
         if (split && _splitDiff is null)
         {
@@ -124,6 +126,14 @@ public sealed partial class MainWindow
             _beforeDecoration.SetDocument(_splitDiff.Before, _presentation); _afterDecoration.SetDocument(_splitDiff.After, _presentation);
         }
         _diff.IsVisible = !split; _splitView.IsVisible = split;
+        if (moveFocus)
+        {
+            var target = ActiveEditor.TextArea;
+            if (!target.Focus(Avalonia.Input.NavigationMethod.Tab)) Dispatcher.UIThread.Post(() =>
+            {
+                if (!_closed && target.IsEffectivelyVisible) target.Focus(Avalonia.Input.NavigationMethod.Tab);
+            }, DispatcherPriority.Loaded);
+        }
         _motion.Reveal(Required<Control>("DiffSurface"));
         if (_blockIndex >= 0)
         {
@@ -182,6 +192,7 @@ public sealed partial class MainWindow
         _diffMode.IsEnabled = _previousBlock.IsEnabled = _nextBlock.IsEnabled = false;
         _blockPosition.Text = "No change blocks";
         _beforeDecoration.Clear(); _afterDecoration.Clear();
+        UpdateAccessibleComparison();
     }
 
     private static void RevealMatch(TextEditor editor, int offset, int length)

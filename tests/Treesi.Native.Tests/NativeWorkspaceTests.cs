@@ -248,6 +248,37 @@ public sealed class NativeWorkspaceTests
         Element("DiffSearch").GetAttribute("Value").Test().Be("first"); Element("FileTitle").Text.Test().Be("sample.txt");
     }
 
+    [Test]
+    public void NativeCodePeersExposeReadOnlyValuesForUnifiedAndSplitViews()
+    {
+        var unified = Element("UnifiedDiffText");
+        var text = unified.GetAttribute("Value");
+        text.Contains("+changed", StringComparison.Ordinal).Test().BeTrue();
+        unified.GetAttribute("Value.IsReadOnly").Equals("true", StringComparison.OrdinalIgnoreCase).Test().BeTrue();
+        unified.GetAttribute("Name").Contains("sample.txt", StringComparison.Ordinal).Test().BeTrue();
+        Element("SplitModeButton").Click();
+        WaitUntil(() => Element("BeforeDiffText").Displayed && Element("AfterDiffText").Displayed);
+        Element("BeforeDiffText").GetAttribute("Value").Contains("-historical", StringComparison.Ordinal).Test().BeTrue();
+        Element("AfterDiffText").GetAttribute("Value").Contains("+changed", StringComparison.Ordinal).Test().BeTrue();
+        Element("AfterDiffText").GetAttribute("Value.IsReadOnly").Equals("true", StringComparison.OrdinalIgnoreCase).Test().BeTrue();
+    }
+
+    [Test]
+    public void NativeKeyboardMovesRegionsAndKeepsOptionDraftFocusInsideItsPanel()
+    {
+        Element("DiffSearch").SendKeys(Keys.F6);
+        WaitUntil(() => Element("UnifiedDiffText").GetAttribute("HasKeyboardFocus").Equals("true", StringComparison.OrdinalIgnoreCase));
+        Element("UnifiedDiffText").SendKeys(Keys.F6);
+        WaitUntil(() => Element("ReduceMotionToggle").GetAttribute("HasKeyboardFocus").Equals("true", StringComparison.OrdinalIgnoreCase));
+        Element("DiffOptionsButton").Click();
+        Element("ContextLinesInput").SendKeys(string.Concat(Enumerable.Repeat(Keys.Tab, 16)));
+        var focused = _driver!.SwitchTo().ActiveElement();
+        new[] { "FullContextToggle", "ContextLinesInput", "WhitespaceSelector", "CodeColorsToggle", "InlineChangesToggle", "ResetDiffOptionsButton", "CancelDiffOptionsButton", "ApplyDiffOptionsButton" }
+            .Contains(focused.GetAttribute("AutomationId"), StringComparer.Ordinal).Test().BeTrue();
+        focused.SendKeys(Keys.Escape);
+        WaitUntil(() => Element("DiffOptionsButton").GetAttribute("HasKeyboardFocus").Equals("true", StringComparison.OrdinalIgnoreCase));
+    }
+
     private void EnterText(string id, string value)
     {
         var input = Element(id); input.Click(); input.Clear(); input.SendKeys(value);

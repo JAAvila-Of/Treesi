@@ -48,6 +48,8 @@ Code colors and Emphasize changed text in Options control local presentation. Bo
 
 Full file context in Options expands surrounding lines of changed files while preserving the review position. Turn it off to return to the retained 0–50 context-line setting. Historical comparisons reuse their pinned commits. Expansion is bounded by the existing limits; failed, cancelled or oversized option reloads retain the previous comparison and restore its diff options. This does not load unchanged files or bypass whitespace filtering. See [full-context review](docs/FULL_CONTEXT.md).
 
+F6 and Shift+F6 move between visible header, navigation, search, code panes and footer regions. Tab leaves the read-only code; in Options, revision and commit panels it cycles inside the active panel. Escape closes the panel and returns focus. F3/Shift+F3 and Enter/Shift+Enter in search navigate matches in both directions. Comparison text has a read-only accessibility value with names describing its file, side, context and whitespace policy. This is an accessibility foundation, with manual screen-reader validation still pending; see [accessibility coverage](docs/ACCESSIBILITY.md).
+
 ## Use with tools and AI agents
 
 After building, run the CLI assembly directly to keep build output out of stdout:

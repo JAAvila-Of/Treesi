@@ -73,6 +73,7 @@ public sealed partial class MainWindow : Window
         InitializeDiffOptions();
         InitializeRevisions();
         InitializeHistory();
+        InitializeAccessibility();
         _themes.ItemsSource = ThemeCatalog.All;
         _themes.SelectedItem = appearance.Current;
         _themes.SelectionChanged += (_, _) =>
@@ -89,9 +90,10 @@ public sealed partial class MainWindow : Window
         _refresh.Click += (_, _) => PendingInspection = RefreshWorkspaceAsync();
         _cancel.Click += (_, _) => { Cancel(); _status.Text = _isOpeningWorkspace ? "Cancelling opening…" : "Cancelling inspection…"; };
         _findNext.Click += (_, _) => FindNext();
-        _search.KeyDown += (_, args) => { if (args.Key == Key.Enter) { FindNext(); args.Handled = true; } };
+        _search.KeyDown += (_, args) => { if (args.Key == Key.Enter) { FindNext((args.KeyModifiers & KeyModifiers.Shift) != 0); args.Handled = true; } };
         KeyDown += async (_, args) =>
         {
+            if (HandleReviewNavigation(args)) return;
             if (!Required<Control>("HomeSurface").IsVisible && (args.KeyModifiers & KeyModifiers.Alt) != 0 && args.Key is Key.Up or Key.Down)
             {
                 NavigateBlock(args.Key == Key.Up ? -1 : 1); args.Handled = true; return;
@@ -171,6 +173,7 @@ public sealed partial class MainWindow : Window
 
     private async Task OpenWorkspaceAsync(string path, WorkspaceEntry? resume)
     {
+        Required<Control>("CommitDetailsPanel").IsVisible = false;
         Cancel();
         CloseRevisionPicker(true, false);
         _comparingRevisions?.Dispose(); _comparingRevisions = null; _isComparingRevisions = false;
@@ -384,21 +387,22 @@ public sealed partial class MainWindow : Window
         ClearDiffWorkspace();
     }
 
-    private void FindNext()
+    private void FindNext(bool backwards = false)
     {
         var term = _search.Text;
         if (string.IsNullOrEmpty(term)) { _search.Focus(); return; }
         if (_currentDiff is null) { _status.Text = "There is no text diff to search"; return; }
         var editor = ActiveEditor;
         var text = editor.Text;
-        var next = text.IndexOf(term, Math.Min(editor.SelectionStart + editor.SelectionLength, text.Length), StringComparison.OrdinalIgnoreCase);
+        var next = backwards ? editor.SelectionStart > 0 && text.Length > 0 ? text.LastIndexOf(term, Math.Min(editor.SelectionStart - 1, text.Length - 1), StringComparison.OrdinalIgnoreCase) : -1
+            : text.IndexOf(term, Math.Min(editor.SelectionStart + editor.SelectionLength, text.Length), StringComparison.OrdinalIgnoreCase);
         if (next < 0 && _diffMode.SelectedIndex == 1)
         {
             var other = editor == _before ? _after : _before;
-            var match = other.Text.IndexOf(term, StringComparison.OrdinalIgnoreCase);
+            var match = backwards ? other.Text.LastIndexOf(term, StringComparison.OrdinalIgnoreCase) : other.Text.IndexOf(term, StringComparison.OrdinalIgnoreCase);
             if (match >= 0) { editor = other; text = other.Text; next = match; }
         }
-        if (next < 0) next = text.IndexOf(term, StringComparison.OrdinalIgnoreCase);
+        if (next < 0) next = backwards ? text.LastIndexOf(term, StringComparison.OrdinalIgnoreCase) : text.IndexOf(term, StringComparison.OrdinalIgnoreCase);
         if (next < 0) { _status.Text = "Text not found in the current diff"; return; }
         editor.Focus(); editor.Select(next, term.Length);
         RevealLine(editor, editor.Document.GetLineByOffset(next).LineNumber);

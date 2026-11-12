@@ -68,6 +68,8 @@ public sealed partial class MainWindow
         {
             var error = Required<TextBlock>("DiffOptionsError");
             error.Text = "Choose a whole context value from 0 to 50 and a whitespace mode."; error.IsVisible = true;
+            if (!full && !validContext) Required<TextBox>("ContextLinesInput").Focus();
+            else Required<ComboBox>("WhitespaceSelector").Focus();
             return;
         }
         var options = new DiffOptions(validContext ? value : _diffOptions.ContextLines, whitespace, full);

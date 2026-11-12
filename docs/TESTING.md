@@ -11,6 +11,8 @@ Treesi separates normal verification, native desktop automation, and performance
 
 ## Automatic verification
 
+Accessibility tests drive real headless keyboard events and query automation peers for read-only document values, rejected writes, region traversal, contained panel focus, live metadata, Unicode previews, visible layout focus and bidirectional search. Native Windows coverage queries UIA values/read-only state and exercises F6/Tab/Escape. See [coverage and manual acceptance still pending](ACCESSIBILITY.md).
+
 Full-context tests cover working/staged/HEAD comparisons, fixed SHA-1/SHA-256 revisions, initial commits, file edges, non-mutation, CLI support and output-limit refusal. Headless coverage checks both themes/layouts, source anchors, separate edit navigation, draft/focus behavior, transactional failure/cancellation and superseded results. The native Windows suite expands/contracts through accessibility and verifies search remains available.
 
 Source presentation adds finite-lexer and Unicode range tests, budget/fallback cases, and headless render checks in unified/split layouts for both themes. Checks inspect real token runs and rendered inline-background pixels, verify contrast, preserve text/selection/search, and ensure local display changes do not query Git. Native Windows coverage exercises the display toggles through accessibility in the disposable VM.
