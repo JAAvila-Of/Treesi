@@ -14,7 +14,7 @@ public sealed class InspectionService(IRepositoryReader reader) : IInspectionSer
     {
         ValidatePath(repository);
         ValidatePath(path);
-        if (!Enum.IsDefined(comparison)) throw new InspectionException("invalid_comparison", "The comparison is not supported.");
+        if (comparison is not (Comparison.WorkingTree or Comparison.Staged or Comparison.Head)) throw new InspectionException("invalid_comparison", "Use working, staged, or head. Revision comparisons use the revision port.");
         options ??= DiffOptions.Default;
         options.Validate();
         return reader.DiffAsync(repository, path, comparison, cancellationToken, options);

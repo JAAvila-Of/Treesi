@@ -7,10 +7,11 @@ internal sealed class GitFixture : IDisposable
 {
     public string Root { get; } = Path.Combine(Path.GetTempPath(), "treesi-tests-" + Guid.NewGuid().ToString("N"));
 
-    public GitFixture()
+    public GitFixture(bool sha256 = false)
     {
         Directory.CreateDirectory(Root);
-        Git("init", "--initial-branch=main");
+        if (sha256) Git("init", "--initial-branch=main", "--object-format=sha256");
+        else Git("init", "--initial-branch=main");
         Git("config", "user.name", "Treesi Test");
         Git("config", "user.email", "tests@example.invalid");
         Git("config", "core.autocrlf", "false");

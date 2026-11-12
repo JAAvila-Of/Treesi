@@ -9,8 +9,27 @@ The first supported transport is a finite, read-only JSON CLI. Run one process p
 | `capabilities` | None | Version, provider, read-only capability, command and comparison names, diff-option defaults and bounds, limits, exclusions, transports |
 | `inspect` | Existing folder or file | Repository root, optional selected relative file, changed file records |
 | `diff` | Repository path, literal repository-relative file, optional `--comparison working\|staged\|head`, `--context 0..50`, `--whitespace <mode>` | Patch text, binary flag, structured hunks, line numbers and effective options |
+| `references` | Repository path | Up to 200 local reference records, limit and `hasMore` |
+| `compare` | Repository, base revision, target revision, optional `--mode direct\|merge-base` | Resolved endpoints and unfiltered changed-file records |
+| `revision-diff` | Repository, base revision, target revision, relative file, optional mode/context/whitespace flags | Diff with `comparison: revisions`, resolved endpoints and effective options |
 
-The default comparison is `working`: current worktree relative to the index. `staged` compares the index relative to HEAD. `head` compares the worktree relative to HEAD and fails with `unborn_head` when no HEAD exists. Untracked files are presented as additions without staging them; their staged comparison is empty. These are not revision-to-revision comparisons.
+The default comparison is `working`: current worktree relative to the index. `staged` compares the index relative to HEAD. `head` compares the worktree relative to HEAD and fails with `unborn_head` when no HEAD exists. Untracked files are presented as additions without staging them; their staged comparison is empty. These three modes describe live local state. Revision commands use committed trees instead.
+
+## Local revision comparisons
+
+The application separates `IRevisionService` from live inspection, with `IRevisionReader` as its provider port. Resolve produces `RevisionEndpoints`; Compare lists files for those endpoints; Diff reads one path. The Git adapter validates full SHA-1/SHA-256 IDs and uses fixed object IDs for subsequent reads. It does not use status, require the historical file on disk, check out a revision, mutate the index, or request a fetch. Replacement objects are disabled for this path.
+
+Selections accept names, full/abbreviated commit IDs and up to eight `~n`/`^n` ancestry operators, each bounded to 999. Reflog/date expressions, ranges, message searches and tree/path expressions are excluded. Names resolve with `rev-parse --verify --end-of-options` and commit peeling. Use fully qualified refs to avoid short-name disambiguation; responses always identify the actual resolved IDs. Reference enumeration includes HEAD when available plus local branches/tags; locally stored remote-tracking names may also be entered explicitly. A tag that does not peel to a commit fails resolution.
+
+`direct` uses the resolved base tip. `merge-base` uses a single local common ancestor as its effective base and compares it to the target. Unrelated or shallow history can yield no available ancestor; multiple best ancestors are rejected rather than selecting one silently. See [Git revision resolution](https://git-scm.com/docs/git-rev-parse) and [merge-base semantics](https://git-scm.com/docs/git-merge-base).
+
+`endpoints` records root, requested names, resolved base/target IDs, effective base ID and mode. It is a record of resolution, not an atomic snapshot of moving refs or an authorization token. For stable multi-request tooling, pass the returned full IDs to later revision-diff calls; in merge-base mode use the effective base and target with direct mode. The desktop retains the original endpoints until explicit refresh.
+
+File records contain `path` and `status` (A, D, M or T), independent of the working index and unaffected by whitespace filters. Renames are deletion/addition pairs. Lists are limited to 10,000 files and the existing 2 MiB Git output boundary. A single revision-diff skips full file enumeration. Reference lists report `hasMore` instead of pretending to be complete. Empty committed-tree comparisons remain distinct from an empty filtered patch.
+
+Historical paths are literal, repository-relative Git paths with forward slashes; backslashes and dot/traversal segments are rejected rather than rewritten. Tree entries are inspected without following working-tree links. Directories, file-to-directory transitions and submodule entries are rejected explicitly; committed symlink targets remain inert blob text. Files absent from both trees fail instead of appearing unchanged. Missing objects produce `revision_unavailable`; no automatic fetch is attempted. Added error codes include `invalid_revision`, `invalid_revision_mode`, `revision_not_found`, `no_merge_base`, `ambiguous_merge_base`, `invalid_revision_comparison`, `unsupported_submodule`, and `capability_unavailable` for hosts that have not injected a revision service.
+
+Capabilities advertises revision availability, modes and list limits. Embedding hosts inject an instrumented or plain RevisionService independently of live inspection. The same ActivitySource/Meter uses fixed operation names for references, resolution, listing and file diffs, without repository paths, reference names or object IDs in tags.
 
 File status has separate `indexStatus` and `workingTreeStatus` fields using Git porcelain status characters; `.` means unchanged and `?` means untracked. Original paths are retained for reported renames. Structured diff lines have `kind` (`context`, `added`, `removed`, `metadata`), nullable `oldLine` and `newLine`, and `text` without the diff prefix. The no-final-newline marker is metadata.
 

@@ -25,7 +25,10 @@ public sealed class App : Avalonia.Application
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            desktop.MainWindow = new MainWindow(new InstrumentedInspectionService(new InspectionService(new GitInspector())), desktop.Args?.FirstOrDefault(), _appearance!, new JsonMotionPreferenceStore(), new JsonWorkspaceHistoryStore());
+        {
+            var git = new GitInspector();
+            desktop.MainWindow = new MainWindow(new InstrumentedInspectionService(new InspectionService(git)), desktop.Args?.FirstOrDefault(), _appearance!, new JsonMotionPreferenceStore(), new JsonWorkspaceHistoryStore(), new InstrumentedRevisionService(new RevisionService(git)));
+        }
         base.OnFrameworkInitializationCompleted();
     }
 }

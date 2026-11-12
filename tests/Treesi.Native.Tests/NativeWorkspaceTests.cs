@@ -26,7 +26,7 @@ public sealed class NativeWorkspaceTests
             ?? throw new InvalidOperationException("TREESI_NATIVE_APP must name the published Treesi executable.");
         if (!Path.IsPathFullyQualified(executable) || !File.Exists(executable))
             throw new InvalidOperationException("The published Treesi executable does not exist.");
-        _repository = new SyntheticRepository();
+        _repository = new SyntheticRepository(revisionHistory: true);
         var options = new AppiumOptions { PlatformName = "Windows", AutomationName = "Wincore", App = executable };
         options.AddAdditionalAppiumOption("appArguments", $"\"{_repository.SamplePath}\"");
         options.AddAdditionalAppiumOption("shouldCloseApp", true);
@@ -99,6 +99,26 @@ public sealed class NativeWorkspaceTests
     }
 
     private AppiumElement Element(string id) => _driver!.FindElement(new ByAccessibilityId(id));
+
+    [Test]
+    public void NativeLocalRevisionComparisonUsesCommittedDataAndCanReturnToWorkingChanges()
+    {
+        Element("CompareRevisionsButton").Click();
+        Element("BrowseRevisionReferencesButton").Click();
+        WaitUntil(() => Element("UseReferenceAsBaseButton").Enabled);
+        Element("BackToRevisionDraftButton").Click();
+        var from = Element("BaseRevisionInput"); from.Clear(); from.SendKeys("HEAD~1");
+        var to = Element("TargetRevisionInput"); to.Clear(); to.SendKeys("HEAD");
+        Element("ApplyRevisionButton").Click();
+        WaitUntil(() => Element("DiffSearch").Enabled && Element("RevisionEndpointsButton").Displayed);
+        Element("DiffSearch").SendKeys("historical"); Element("FindNextButton").Click();
+        WaitUntil(() => Element("OperationStatus").Text == "Match selected in diff");
+        Element("RevisionEndpointsButton").Click(); Element("ReturnToWorkingButton").Click();
+        WaitUntil(() => Element("ComparisonSelector").Displayed && Element("DiffSearch").Enabled);
+        Element("DiffSearch").Clear(); Element("DiffSearch").SendKeys("changed"); Element("FindNextButton").Click();
+        WaitUntil(() => Element("OperationStatus").Text == "Match selected in diff");
+        Element("FileTitle").Text.Test().Be("sample.txt");
+    }
 
     [Test]
     public void NativeComparisonOptionsApplyContextAndKeepWhitespaceFilteringVisible()

@@ -55,7 +55,7 @@ public sealed partial class MainWindow
         if (initialPath is null) ShowRecentWorkspaces();
     }
 
-    private WorkspaceEntry? CurrentWorkspace() => _snapshot is null ? null : new WorkspaceEntry(_snapshot.Root,
+    private WorkspaceEntry? CurrentWorkspace() => _snapshot is null || _revisionComparison is not null ? null : new WorkspaceEntry(_snapshot.Root,
         (_files.SelectedItem as ChangedFileItem)?.Path,
         _comparison.SelectedIndex switch { 1 => Comparison.Staged, 2 => Comparison.Head, _ => Comparison.WorkingTree },
         _diffMode.SelectedIndex == 1, _filesPanelVisible);
@@ -85,6 +85,7 @@ public sealed partial class MainWindow
     private void ShowRecentWorkspaces()
     {
         CloseComparisonOptions(false);
+        CloseRevisionPicker(true, false);
         Cancel(); SaveCurrentWorkspace(); SetFocusMode(false);
         Required<Control>("OpenRecoveryNotice").IsVisible = false;
         Required<Control>("WorkspaceFrame").IsVisible = false;
@@ -110,7 +111,7 @@ public sealed partial class MainWindow
         Required<Control>("WorkspaceFrame").IsVisible = true;
         Required<Button>("FocusWorkspaceButton").IsEnabled = true;
         Required<Button>("FocusWorkspaceButton").IsVisible = true;
-        Required<TextBlock>("WorkspaceContext").Text = "Workspace";
+        Required<TextBlock>("WorkspaceContext").Text = _revisionComparison is null ? "Workspace" : "Revisions";
         FocusComparison();
     }
 

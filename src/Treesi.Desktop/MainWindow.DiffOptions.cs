@@ -36,6 +36,7 @@ public sealed partial class MainWindow
 
     private void OpenComparisonOptions()
     {
+        if (Required<Control>("RevisionPanel").IsVisible) CloseRevisionPicker(true, false);
         SetOptionsDraft(_diffOptions);
         Required<Control>("DiffOptionsPanel").IsVisible = true;
         var input = Required<TextBox>("ContextLinesInput");

@@ -33,9 +33,10 @@ public sealed partial class MainWindow : Window
     public Task PendingInspection { get; private set; } = Task.CompletedTask;
     public Task PendingMotion => _motion.Pending;
 
-    public MainWindow(IInspectionService inspector, string? initialPath, ThemeController appearance, IMotionPreferenceStore? motionPreferences = null, IWorkspaceHistoryStore? workspaceHistory = null)
+    public MainWindow(IInspectionService inspector, string? initialPath, ThemeController appearance, IMotionPreferenceStore? motionPreferences = null, IWorkspaceHistoryStore? workspaceHistory = null, IRevisionService? revisions = null)
     {
         _inspector = inspector;
+        _revisions = revisions;
         _appearance = appearance;
         AvaloniaXamlLoader.Load(this);
         _repositoryName = Required<TextBlock>("RepositoryName"); _repositoryLabel = Required<TextBlock>("RepositoryLocation");
@@ -69,6 +70,7 @@ public sealed partial class MainWindow : Window
         InitializeDiffWorkspace();
         InitializePresentation();
         InitializeDiffOptions();
+        InitializeRevisions();
         _themes.ItemsSource = ThemeCatalog.All;
         _themes.SelectedItem = appearance.Current;
         _themes.SelectionChanged += (_, _) =>
@@ -82,7 +84,7 @@ public sealed partial class MainWindow : Window
         _filter.PropertyChanged += (_, args) => { if (args.Property == TextBox.TextProperty) FilterFiles(); };
         Required<Button>("OpenFolderButton").Click += async (_, _) => await PickAsync(false);
         Required<Button>("OpenFileButton").Click += async (_, _) => await PickAsync(true);
-        _refresh.Click += async (_, _) => { if (_snapshot is not null) await OpenRepositoryAsync(_snapshot.Root); };
+        _refresh.Click += (_, _) => PendingInspection = RefreshWorkspaceAsync();
         _cancel.Click += (_, _) => { Cancel(); _status.Text = _isOpeningWorkspace ? "Cancelling opening…" : "Cancelling inspection…"; };
         _findNext.Click += (_, _) => FindNext();
         _search.KeyDown += (_, args) => { if (args.Key == Key.Enter) { FindNext(); args.Handled = true; } };
@@ -94,7 +96,8 @@ public sealed partial class MainWindow : Window
             }
             if (args.Key == Key.Escape)
             {
-                if (Required<Control>("DiffOptionsPanel").IsVisible) CloseComparisonOptions();
+                if (Required<Control>("RevisionPanel").IsVisible) CloseRevisionPicker();
+                else if (Required<Control>("DiffOptionsPanel").IsVisible) CloseComparisonOptions();
                 else if (Required<Control>("OpenRecoveryNotice").IsVisible) DismissOpenRecovery();
                 else if (_isOpeningWorkspace) Cancel();
                 else if (Required<Control>("HomeSurface").IsVisible && _snapshot is not null) ShowComparison();
@@ -107,7 +110,7 @@ public sealed partial class MainWindow : Window
             switch (args.Key)
             {
                 case Key.O: args.Handled = true; await PickAsync(false); break;
-                case Key.R: args.Handled = true; if (_snapshot is not null) await OpenRepositoryAsync(_snapshot.Root); break;
+                case Key.R: args.Handled = true; PendingInspection = RefreshWorkspaceAsync(); await PendingInspection; break;
                 case Key.B:
                     if (Required<Control>("HomeSurface").IsVisible) break;
                     args.Handled = true; ToggleFilesPanel(); break;
@@ -127,6 +130,8 @@ public sealed partial class MainWindow : Window
             Cancel(); _appearance.Changed -= OnThemeChanged;
             _opening?.Dispose(); _opening = null;
             _loading?.Dispose(); _loading = null;
+            _comparingRevisions?.Dispose(); _comparingRevisions = null;
+            _listingReferences?.Dispose(); _listingReferences = null;
             _decoration.Dispose();
             _beforeDecoration.Dispose(); _afterDecoration.Dispose();
             _motion.Dispose();
@@ -163,15 +168,18 @@ public sealed partial class MainWindow : Window
     private async Task OpenWorkspaceAsync(string path, WorkspaceEntry? resume)
     {
         Cancel();
+        CloseRevisionPicker(true, false);
+        _comparingRevisions?.Dispose(); _comparingRevisions = null; _isComparingRevisions = false;
         CloseComparisonOptions(false);
         SaveCurrentWorkspace();
-        var previous = (_files.SelectedItem as ChangedFileItem)?.Path;
+        var previous = _revisionComparison is null ? (_files.SelectedItem as ChangedFileItem)?.Path : _workingSelectedPath;
         var previousRoot = _snapshot?.Root;
         var wasHome = Required<Control>("HomeSurface").IsVisible;
         _opening?.Dispose();
         var cancellation = _opening = new CancellationTokenSource();
         _isOpeningWorkspace = true;
         Required<Button>("DiffOptionsButton").IsEnabled = false;
+        Required<Button>("CompareRevisionsButton").IsEnabled = false;
         _files.IsEnabled = false; _filter.IsEnabled = false; _comparison.IsEnabled = false;
         Required<Control>("OpenRecoveryNotice").IsVisible = false;
         Required<TextBlock>("HomeNotice").IsVisible = false;
@@ -190,6 +198,7 @@ public sealed partial class MainWindow : Window
             try
             {
                 if (snapshot.Root != previousRoot) ResetWorkspaceDiffOptions();
+                ClearRevisionComparison();
                 _files.ItemsSource = null;
                 _filter.Text = "";
                 if (resume is not null)
@@ -236,6 +245,7 @@ public sealed partial class MainWindow : Window
                 _files.IsEnabled = true;
                 _filter.IsEnabled = _snapshot is not null; _comparison.IsEnabled = _snapshot is not null;
                 Required<Button>("DiffOptionsButton").IsEnabled = _snapshot is not null;
+                Required<Button>("CompareRevisionsButton").IsEnabled = _snapshot is not null && _revisions is not null;
                 SetBusy(false);
             }
         }
@@ -245,7 +255,7 @@ public sealed partial class MainWindow : Window
     {
         if (_updatingFiles || _closed) return;
         preferred ??= (_files.SelectedItem as ChangedFileItem)?.Path;
-        var filtered = _allFiles.Where(file => file.Path.Contains(_filter.Text ?? "", StringComparison.OrdinalIgnoreCase)).Select(file => new ChangedFileItem(file)).ToArray();
+        var filtered = _allFiles.Where(file => file.Path.Contains(_filter.Text ?? "", StringComparison.OrdinalIgnoreCase)).Select(file => new ChangedFileItem(file, _revisionComparison is not null)).ToArray();
         _updatingFiles = true;
         try
         {
@@ -256,9 +266,19 @@ public sealed partial class MainWindow : Window
         if (filtered.Length == 0 && _snapshot is not null)
         {
             _loading?.Cancel();
-            _fileTitle.Text = _allFiles.Count == 0 ? "Working tree is clean" : "No matching files";
-            ShowState("No matching files.", "Try a different file name or clear the filter to see all changes.");
-            _status.Text = "No files match the current filter";
+            if (_revisionComparison is { Endpoints: var endpoints } && _allFiles.Count == 0)
+            {
+                _fileTitle.Text = "No changed files";
+                _comparisonLabel.Text = $"{endpoints.EffectiveBaseCommitId[..8]} → {endpoints.TargetCommitId[..8]}";
+                ShowState("No changed files between these commits.", "Submodule contents are excluded. Choose another comparison or return to working changes.");
+                _status.Text = "Revision comparison complete · 0 files";
+            }
+            else
+            {
+                _fileTitle.Text = _allFiles.Count == 0 ? "Working tree is clean" : "No matching files";
+                ShowState("No matching files.", "Try a different file name or clear the filter to see all changes.");
+                _status.Text = "No files match the current filter";
+            }
         }
         PendingInspection = LoadDiffAsync();
     }
@@ -278,7 +298,10 @@ public sealed partial class MainWindow : Window
         var start = Stopwatch.GetTimestamp();
         try
         {
-            var result = await _inspector.DiffAsync(_snapshot.Root, item.Path, comparison, cancellation.Token, _diffOptions);
+            var revisions = _revisionComparison;
+            var result = revisions is not null && _revisions is not null
+                ? await _revisions.DiffAsync(revisions.Endpoints, item.Path, _diffOptions, cancellation.Token)
+                : await _inspector.DiffAsync(_snapshot.Root, item.Path, comparison, cancellation.Token, _diffOptions);
             if (_closed || _loading != cancellation) return;
             if (cancellation.IsCancellationRequested) { ShowCancelledDiff(); return; }
             if (result.Patch.Length > 200000)
@@ -345,13 +368,13 @@ public sealed partial class MainWindow : Window
 
     private void SetBusy(bool value)
     {
-        value |= _isOpeningWorkspace;
+        value |= _isOpeningWorkspace || _isComparingRevisions;
         _cancel.IsVisible = value;
         var progress = Required<ProgressBar>("BusyIndicator");
         progress.IsIndeterminate = value && !_motion.Reduced;
         progress.IsVisible = value;
     }
-    private void Cancel() { _opening?.Cancel(); _loading?.Cancel(); }
+    private void Cancel() { _opening?.Cancel(); _loading?.Cancel(); _comparingRevisions?.Cancel(); _listingReferences?.Cancel(); }
     private void ShowCancelledDiff()
     {
         ShowState("Comparison cancelled.", "No complete result is available. Select a file or refresh to try again.");

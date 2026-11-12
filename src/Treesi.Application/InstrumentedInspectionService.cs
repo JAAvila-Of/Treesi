@@ -22,7 +22,7 @@ public sealed class InstrumentedInspectionService(IInspectionService inner) : II
     public Task<FileDiff> DiffAsync(string repository, string path, Comparison comparison, CancellationToken cancellationToken = default, DiffOptions? options = null) =>
         MeasureAsync("diff", () => inner.DiffAsync(repository, path, comparison, cancellationToken, options));
 
-    private static async Task<T> MeasureAsync<T>(string operation, Func<Task<T>> action)
+    internal static async Task<T> MeasureAsync<T>(string operation, Func<Task<T>> action)
     {
         using var activity = InspectionTelemetry.Activities.StartActivity(operation);
         var start = Stopwatch.GetTimestamp();

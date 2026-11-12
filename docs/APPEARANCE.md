@@ -48,7 +48,15 @@ Before/after labels reflect the selected comparison (HEAD, Index, or Working tre
 
 Source-language highlighting, word-level comparisons, full-file context, and conflict editing remain separate product work. The existing 200,000-character preview limit remains in force. All editors remain read-only and disable hyperlink activation.
 
-## Comparison options
+## Local revision workspace
+
+Compare opens an in-window draft with base, target, mode, Swap and an explicit reference browser. The smaller draft expands for a reference list or error, while keeping actions reachable at compact sizes. Browsing is optional and bounded; choosing a ref fills one endpoint without applying the comparison. Cancel/Escape preserves the loaded view. Resolution/list failures retain the previous comparison and show an actionable error.
+
+Successful comparison reuses the primary code canvas and file navigation. The sidebar identifies changes between commits; rows do not call them staged or working. The endpoint button shows Direct or Merge base and abbreviated effective-base/target IDs, with full requested names and IDs in its accessible description and tooltip. Split panes label the effective base and target commits. Unified view retains mode and direction in the endpoint button.
+
+Files and options reuse pinned endpoints. Refresh explicitly resolves requested names again. Working changes returns to a fresh inspection and restores the working selection. Historical selections do not overwrite recent-workspace metadata, and the comparison remains session-only. Empty lists refer to the compared commits, while filters and whitespace-empty results retain their separate messages. Layout remains subject to the same 80% height and 60% area checks.
+
+## Comparison option controls
 
 The file heading exposes Options without adding another toolbar row. Its in-window panel edits a draft: choose 0–50 context lines and Exact, Ignore trailing space, Ignore space changes, or Ignore all space. Apply reloads only a changed request; Cancel, Escape and navigation discard the draft. Defaults changes the draft and still requires Apply. Fractional or missing context values keep the panel open with an error. Context appears beside the selected path; the button tooltip describes both active options.
 

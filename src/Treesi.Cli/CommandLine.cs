@@ -14,7 +14,7 @@ public static class CommandLine
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
     };
 
-    public static async Task<int> RunAsync(string[] args, TextWriter output, IInspectionService inspector, CancellationToken token = default)
+    public static async Task<int> RunAsync(string[] args, TextWriter output, IInspectionService inspector, CancellationToken token = default, IRevisionService? revisions = null)
     {
         var requestId = Guid.NewGuid().ToString("N");
         var start = Stopwatch.GetTimestamp();
@@ -32,8 +32,9 @@ public static class CommandLine
                     version = "0.1.0",
                     provider = "git",
                     readOnly = true,
-                    commands = new[] { "capabilities", "inspect", "diff" },
+                    commands = revisions is null ? new[] { "capabilities", "inspect", "diff" } : ["capabilities", "inspect", "diff", "references", "compare", "revision-diff"],
                     comparisons = new[] { "working", "staged", "head" },
+                    revisionComparisons = new { available = revisions is not null, modes = new[] { "direct", "merge-base" }, referenceLimit = RevisionLimits.References, fileLimit = RevisionLimits.Files },
                     diffOptions = new
                     {
                         context = new { minimum = 0, maximum = DiffOptions.MaximumContextLines, @default = 3 },
@@ -43,10 +44,13 @@ public static class CommandLine
                     limits = new { gitOutputBytes = 2097152, newFileBytes = 1048576, commandTimeoutSeconds = 15 },
                     transports = new[] { "cli-json" },
                     contentTrust = "untrusted",
-                    excluded = new[] { "submoduleContents", "executableFilters", "nonUtf8Text", "revisionToRevisionDiff" }
+                    excluded = revisions is null ? new[] { "submoduleContents", "executableFilters", "nonUtf8Text", "revisionToRevisionDiff" } : ["submoduleContents", "executableFilters", "nonUtf8Text"]
                 },
                 ["inspect", var path] => await inspector.InspectAsync(path, token),
                 ["diff", var repository, var path, .. var flags] => await ReadDiffAsync(inspector, repository, path, flags, token),
+                ["references", var repository] => await RequireRevisions(revisions).ReferencesAsync(repository, token),
+                ["compare", var repository, var from, var to, .. var flags] => await CompareAsync(RequireRevisions(revisions), repository, from, to, flags, token),
+                ["revision-diff", var repository, var from, var to, var path, .. var flags] => await ReadRevisionDiffAsync(RequireRevisions(revisions), repository, from, to, path, flags, token),
                 _ => throw Usage()
             };
         }
@@ -93,6 +97,12 @@ public static class CommandLine
 
     private static async Task<FileDiff> ReadDiffAsync(IInspectionService inspector, string repository, string path, string[] flags, CancellationToken token)
     {
+        var (comparison, options) = ParseDiffFlags(flags);
+        return await inspector.DiffAsync(repository, path, comparison, token, options);
+    }
+
+    private static (Comparison Comparison, DiffOptions Options) ParseDiffFlags(string[] flags)
+    {
         if (flags.Length % 2 != 0) throw Usage();
         var comparison = Comparison.WorkingTree;
         var options = DiffOptions.Default;
@@ -124,8 +134,41 @@ public static class CommandLine
                 default: throw Usage();
             }
         }
-        return await inspector.DiffAsync(repository, path, comparison, token, options);
+        return (comparison, options);
     }
 
-    private static InspectionException Usage() => new("usage", "Usage: capabilities | inspect <path> | diff <repository> <relative-file> [--comparison working|staged|head] [--context 0..50] [--whitespace exact|ignore-trailing-space|ignore-space-change|ignore-all-space]");
+    private static IRevisionService RequireRevisions(IRevisionService? service) => service ?? throw new InspectionException("capability_unavailable", "This host has no revision comparison service.");
+
+    private static (RevisionComparisonMode Mode, DiffOptions Options) ParseRevisionFlags(string[] flags, bool allowDiffOptions)
+    {
+        if (flags.Length % 2 != 0) throw Usage();
+        var mode = RevisionComparisonMode.Direct; var seenMode = false; var diffFlags = new List<string>();
+        for (var index = 0; index < flags.Length; index += 2)
+        {
+            if (flags[index] == "--mode")
+            {
+                if (seenMode) throw Usage(); seenMode = true;
+                mode = flags[index + 1] switch { "direct" => RevisionComparisonMode.Direct, "merge-base" => RevisionComparisonMode.MergeBase, _ => throw Usage() };
+            }
+            else if (allowDiffOptions && flags[index] is "--context" or "--whitespace") diffFlags.AddRange([flags[index], flags[index + 1]]);
+            else throw Usage();
+        }
+        return (mode, ParseDiffFlags(diffFlags.ToArray()).Options);
+    }
+
+    private static async Task<RevisionComparison> CompareAsync(IRevisionService service, string repository, string from, string to, string[] flags, CancellationToken token)
+    {
+        var (mode, _) = ParseRevisionFlags(flags, false);
+        var endpoints = await service.ResolveAsync(repository, new(from, to, mode), token);
+        return await service.CompareAsync(endpoints, token);
+    }
+
+    private static async Task<FileDiff> ReadRevisionDiffAsync(IRevisionService service, string repository, string from, string to, string path, string[] flags, CancellationToken token)
+    {
+        var (mode, options) = ParseRevisionFlags(flags, true);
+        var endpoints = await service.ResolveAsync(repository, new(from, to, mode), token);
+        return await service.DiffAsync(endpoints, path, options, token);
+    }
+
+    private static InspectionException Usage() => new("usage", "Usage: capabilities | inspect <path> | references <repository> | compare <repository> <base> <target> [--mode direct|merge-base] | revision-diff <repository> <base> <target> <relative-file> [--mode direct|merge-base] [--context 0..50] [--whitespace <mode>] | diff <repository> <relative-file> [--comparison working|staged|head] [--context 0..50] [--whitespace exact|ignore-trailing-space|ignore-space-change|ignore-all-space]");
 }

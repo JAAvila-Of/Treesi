@@ -3,6 +3,7 @@
         xmlns:editor="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
         xmlns:local="clr-namespace:Treesi.Desktop"
         xmlns:workspaces="clr-namespace:Treesi.Desktop.Workspaces"
+        xmlns:domain="clr-namespace:Treesi.Domain;assembly=Treesi.Domain"
         x:Class="Treesi.Desktop.MainWindow" Classes="workspace"
         Title="Treesi — Change inspection" Width="1180" Height="740" MinWidth="900" MinHeight="560"
         WindowStartupLocation="CenterScreen">
@@ -19,6 +20,7 @@
       </StackPanel>
       <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
         <Button x:Name="RecentWorkspacesButton" AutomationProperties.AutomationId="RecentWorkspacesButton" Content="Recents" Classes="quiet" ToolTip.Tip="Open a recent local workspace" />
+        <Button x:Name="CompareRevisionsButton" AutomationProperties.AutomationId="CompareRevisionsButton" Content="Compare" Classes="quiet" IsEnabled="False" ToolTip.Tip="Compare existing local commits, branches or tags" />
         <Button x:Name="OpenFileButton" AutomationProperties.AutomationId="OpenFileButton" Content="Open file" Classes="quiet" ToolTip.Tip="Open a file inside a repository" />
         <Button x:Name="OpenFolderButton" AutomationProperties.AutomationId="OpenFolderButton" Classes="primary">
           <StackPanel Orientation="Horizontal" Spacing="8">
@@ -46,7 +48,7 @@
           </Border>
           <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="12,0,8,6">
             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-              <TextBlock Text="Changes" FontWeight="SemiBold" VerticalAlignment="Center" />
+              <TextBlock x:Name="ChangesHeading" Text="Changes" FontWeight="SemiBold" VerticalAlignment="Center" />
               <Border Background="{DynamicResource Surface.Hover}" CornerRadius="4" Padding="6,2">
                 <TextBlock x:Name="FileCount" Text="0" FontSize="11" Classes="secondary" />
               </Border>
@@ -64,7 +66,7 @@
                   <StackPanel Grid.Column="1" Spacing="5">
                     <TextBlock Text="{Binding Name}" Foreground="{DynamicResource Text.Primary}" FontSize="12" FontWeight="Medium" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Path}" />
                     <TextBlock Text="{Binding Directory}" Classes="secondary" FontSize="10" TextTrimming="CharacterEllipsis" />
-                    <TextBlock Text="{Binding State}" Classes="secondary" FontSize="10" />
+                    <TextBlock Text="{Binding State}" Classes="secondary" FontSize="10" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding State}" />
                   </StackPanel>
                 </Grid>
               </DataTemplate>
@@ -73,7 +75,7 @@
           <Border Grid.Row="4" Padding="12,8" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Border.Default}">
             <StackPanel Orientation="Horizontal" Spacing="7">
               <Ellipse Width="6" Height="6" Fill="{DynamicResource Accent.Primary}" VerticalAlignment="Center" />
-              <TextBlock Text="Local workspace" Classes="secondary" FontSize="11" />
+              <TextBlock x:Name="WorkspaceScopeHint" Text="Local workspace" Classes="secondary" FontSize="11" />
             </StackPanel>
           </Border>
         </Grid>
@@ -100,11 +102,14 @@
           <Border x:Name="ComparisonToolbar" Grid.Row="1" Background="{DynamicResource Surface.Panel}" BorderThickness="0,1,0,1" BorderBrush="{DynamicResource Border.Default}" Padding="6,3">
             <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto" ColumnSpacing="5">
               <Button x:Name="ToggleFilesButton" AutomationProperties.AutomationId="ToggleFilesButton" Content="☰" Classes="quiet" Width="30" AutomationProperties.Name="Hide file panel" ToolTip.Tip="Show or hide files (Ctrl+B)" />
-              <ComboBox Grid.Column="1" x:Name="ComparisonSelector" AutomationProperties.AutomationId="ComparisonSelector" Width="192" SelectedIndex="0" AutomationProperties.Name="Comparison endpoints">
+              <Grid Grid.Column="1" Width="192">
+              <ComboBox x:Name="ComparisonSelector" AutomationProperties.AutomationId="ComparisonSelector" Width="192" SelectedIndex="0" AutomationProperties.Name="Comparison endpoints">
                 <ComboBoxItem Content="Working tree vs Index" />
                 <ComboBoxItem Content="Index vs HEAD" />
                 <ComboBoxItem Content="Working tree vs HEAD" />
               </ComboBox>
+              <Button x:Name="RevisionEndpointsButton" AutomationProperties.AutomationId="RevisionEndpointsButton" IsVisible="False" Content="Compared commits" FontFamily="monospace" FontSize="10" HorizontalAlignment="Stretch" />
+              </Grid>
               <Border Grid.Column="2" Background="{DynamicResource Surface.Control}" CornerRadius="7" BorderThickness="1" BorderBrush="{DynamicResource Border.Default}" Padding="2">
                 <TabStrip x:Name="DiffModeSelector" Classes="diff-modes" AutomationProperties.AutomationId="DiffModeSelector" SelectedIndex="0" AutomationProperties.Name="Diff layout">
                   <TabStripItem x:Name="UnifiedModeButton" AutomationProperties.AutomationId="UnifiedModeButton" Content="Unified" />
@@ -231,6 +236,46 @@
           <Button Grid.Column="3" x:Name="ApplyDiffOptionsButton" AutomationProperties.AutomationId="ApplyDiffOptionsButton" Content="Apply" Classes="primary" />
         </Grid>
       </StackPanel>
+    </Border>
+    <Border x:Name="RevisionPanel" Grid.Row="1" IsVisible="False" ZIndex="25" Width="460" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="16" Padding="16" CornerRadius="10" Background="{DynamicResource Surface.Panel}" BorderBrush="{DynamicResource Border.Default}" BorderThickness="1" BoxShadow="0 8 24 0 #30000000" AutomationProperties.Name="Compare local revisions">
+      <Grid x:Name="RevisionPanelLayout" RowDefinitions="Auto,*,Auto" Height="320" RowSpacing="12">
+        <TextBlock Text="Compare local revisions" FontSize="18" FontWeight="SemiBold" />
+        <StackPanel x:Name="RevisionDraft" Grid.Row="1" Spacing="8">
+          <Label Target="{Binding #BaseRevisionInput}" Content="Base revision" Padding="0" />
+          <TextBox x:Name="BaseRevisionInput" AutomationProperties.AutomationId="BaseRevisionInput" AutomationProperties.Name="Base revision" Text="HEAD~1" MaxLength="512" />
+          <Label Target="{Binding #TargetRevisionInput}" Content="Target revision" Padding="0" />
+          <TextBox x:Name="TargetRevisionInput" AutomationProperties.AutomationId="TargetRevisionInput" AutomationProperties.Name="Target revision" Text="HEAD" MaxLength="512" />
+          <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
+            <ComboBox x:Name="RevisionModeSelector" AutomationProperties.AutomationId="RevisionModeSelector" SelectedIndex="0" HorizontalAlignment="Stretch" AutomationProperties.Name="Revision comparison mode">
+              <ComboBoxItem Content="Direct: base to target" /><ComboBoxItem Content="Merge base to target" />
+            </ComboBox>
+            <Button Grid.Column="1" x:Name="SwapRevisionsButton" AutomationProperties.AutomationId="SwapRevisionsButton" Content="Swap" Classes="quiet" />
+            <Button Grid.Column="2" x:Name="BrowseRevisionReferencesButton" AutomationProperties.AutomationId="BrowseRevisionReferencesButton" Content="Browse refs" />
+          </Grid>
+          <TextBlock Text="Use commit IDs, local refs, or ~n/^n ancestry (up to 999 per step). Comparison pins commits until you explicitly refresh. No fetch is performed." Classes="secondary" FontSize="11" TextWrapping="Wrap" />
+          <TextBlock x:Name="RevisionError" AutomationProperties.AutomationId="RevisionError" IsVisible="False" Foreground="{DynamicResource Status.Warning}" FontSize="11" TextWrapping="Wrap" />
+        </StackPanel>
+        <Grid x:Name="RevisionReferencePicker" Grid.Row="1" IsVisible="False" RowDefinitions="Auto,*" RowSpacing="8">
+          <TextBlock x:Name="RevisionReferenceNotice" AutomationProperties.AutomationId="RevisionReferenceNotice" Text="Choose a local reference." Classes="secondary" FontSize="11" TextWrapping="Wrap" />
+          <ListBox x:Name="RevisionReferencesList" Grid.Row="1" AutomationProperties.AutomationId="RevisionReferencesList" AutomationProperties.Name="Local references" Background="Transparent" BorderThickness="0">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="domain:RevisionReference">
+                <StackPanel Spacing="4"><TextBlock Text="{Binding Name}" FontWeight="Medium" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" /><TextBlock Text="{Binding Kind}" Classes="secondary" FontSize="10" /></StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Grid>
+        <Grid x:Name="RevisionDraftActions" Grid.Row="2" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="6">
+          <Button x:Name="ReturnToWorkingButton" AutomationProperties.AutomationId="ReturnToWorkingButton" Content="Working changes" Classes="quiet" IsVisible="False" />
+          <Button Grid.Column="2" x:Name="CancelRevisionButton" AutomationProperties.AutomationId="CancelRevisionButton" Content="Cancel" Classes="quiet" />
+          <Button Grid.Column="3" x:Name="ApplyRevisionButton" AutomationProperties.AutomationId="ApplyRevisionButton" Content="Compare" Classes="primary" />
+        </Grid>
+        <Grid x:Name="RevisionReferenceActions" Grid.Row="2" IsVisible="False" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="6">
+          <Button x:Name="BackToRevisionDraftButton" AutomationProperties.AutomationId="BackToRevisionDraftButton" Content="Back" Classes="quiet" />
+          <Button Grid.Column="2" x:Name="UseReferenceAsBaseButton" AutomationProperties.AutomationId="UseReferenceAsBaseButton" Content="Use as base" />
+          <Button Grid.Column="3" x:Name="UseReferenceAsTargetButton" AutomationProperties.AutomationId="UseReferenceAsTargetButton" Content="Use as target" Classes="primary" />
+        </Grid>
+      </Grid>
     </Border>
     <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="12,0">
       <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">

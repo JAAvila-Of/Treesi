@@ -28,6 +28,8 @@ dotnet run --project src/Treesi.Desktop --configuration Release -- /path/to/repo
 
 The path is optional and may point to a file inside a working tree. Use Open repository or Open file, select a comparison, and choose a changed file. The prototype supports working tree versus index, index versus HEAD, and working tree versus HEAD. Additions and removals describe the current working/index side relative to its base.
 
+Compare opens a draft for two local revisions. Enter commit IDs, reference names or bounded `~n`/`^n` ancestry; Browse refs reads up to 200 local entries only when requested. Direct compares the two tips; Merge base compares their single available common ancestor to the target. Compare pins complete commit IDs, lists changed files and reuses the same read-only diff viewer. The endpoint button shows direction and mode, with full IDs in its tooltip. Refresh resolves the names again; changing files, options, themes or layouts does not. Working changes returns to a fresh working-tree inspection. Historical comparisons are session-only; recents retain the working view.
+
 Options beside the diff search opens a draft panel for 0–50 context lines and whitespace handling. Defaults are 3 lines and Exact. Apply reloads the selected diff only when the options change; Cancel and Escape discard the draft. Ignoring trailing space, space changes or all space leaves a visible WS ignored indicator, including when no differences remain. These filters can hide meaningful changes inside strings; return to Exact to verify all changes. Options are session-only and reset when switching repository roots.
 
 Without a path argument, the app starts at local recent repositories. Select a shortcut and choose Resume selected, or press Enter in the list. Startup reads only the small settings file; it does not inspect recent repositories automatically. A path argument opens that location instead. Failed or cancelled openings preserve an existing comparison and offer recovery.
@@ -49,6 +51,9 @@ dotnet src/Treesi.Cli/bin/Release/net11.0/Treesi.Cli.dll capabilities
 dotnet src/Treesi.Cli/bin/Release/net11.0/Treesi.Cli.dll inspect /path/to/repository
 dotnet src/Treesi.Cli/bin/Release/net11.0/Treesi.Cli.dll diff /path/to/repository src/example.cs --comparison staged
 dotnet src/Treesi.Cli/bin/Release/net11.0/Treesi.Cli.dll diff /path/to/repository src/example.cs --context 10 --whitespace ignore-trailing-space
+dotnet src/Treesi.Cli/bin/Release/net11.0/Treesi.Cli.dll references /path/to/repository
+dotnet src/Treesi.Cli/bin/Release/net11.0/Treesi.Cli.dll compare /path/to/repository main feature --mode merge-base
+dotnet src/Treesi.Cli/bin/Release/net11.0/Treesi.Cli.dll revision-diff /path/to/repository HEAD~1 HEAD src/example.cs --context 10
 ```
 
 Every invocation emits one JSON envelope with a schema version, request ID, success flag, data or a stable error code, and elapsed time. Diffs include structured hunks and line numbers. Repository text and paths are untrusted data, including when they look like instructions to an AI agent.
@@ -59,7 +64,8 @@ See [test execution and isolation](docs/TESTING.md) for hosted CI, native Window
 
 ## Prototype boundaries
 
-- Inspection only: no staging, commits, remote access, revision-to-revision comparisons, history browser, or conflict resolution yet.
+- Inspection only: no staging, commits, remote access, history browser, or conflict resolution yet. Local revision comparison is available without fetching objects.
+- Revision comparison reads committed trees without checking out a revision or reading the current file. File lists are bounded to 10,000 entries; the CLI can inspect a specific historical file without enumerating the full list. Missing objects or absent/ambiguous merge bases are explicit errors. Rename detection remains disabled, so renames appear as deletion/addition. Historical submodule traversal and file-to-directory transitions are unsupported.
 - Global and system Git configuration are intentionally excluded. Repository-local executable content filters are refused; external diff drivers, textconv, and fsmonitor are disabled. This may produce different results from a user's custom Git setup and is not an OS sandbox.
 - Submodule contents are excluded. Rename status is retained, but individual diff previews disable rename detection.
 - Git stdout is capped at 2 MiB per command, stderr at 64 KiB, and each Git command at 15 seconds. New-file previews are capped at 1 MiB. The desktop displays at most 200,000 patch characters and reports when a selection exceeds that limit.

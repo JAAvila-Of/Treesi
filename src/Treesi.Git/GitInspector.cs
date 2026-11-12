@@ -4,7 +4,7 @@ using Treesi.Domain;
 
 namespace Treesi.Git;
 
-public sealed class GitInspector(string gitExecutable = "git", TimeSpan? commandTimeout = null) : IRepositoryReader
+public sealed partial class GitInspector(string gitExecutable = "git", TimeSpan? commandTimeout = null) : IRepositoryReader, IRevisionReader
 {
     private readonly GitProcess _git = new(gitExecutable, commandTimeout ?? TimeSpan.FromSeconds(15));
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
@@ -34,7 +34,7 @@ public sealed class GitInspector(string gitExecutable = "git", TimeSpan? command
     public async Task<FileDiff> DiffAsync(string repository, string path, Comparison comparison,
         CancellationToken cancellationToken = default, DiffOptions? options = null)
     {
-        if (!Enum.IsDefined(comparison)) throw new InspectionException("invalid_comparison", "The comparison is not supported.");
+        if (comparison is not (Comparison.WorkingTree or Comparison.Staged or Comparison.Head)) throw new InspectionException("invalid_comparison", "Use the revision port to compare commits.");
         options ??= DiffOptions.Default;
         options.Validate();
         var snapshot = await InspectAsync(repository, cancellationToken);
@@ -62,17 +62,7 @@ public sealed class GitInspector(string gitExecutable = "git", TimeSpan? command
             if (comparison == Comparison.Staged) return new FileDiff(gitPath, comparison, "", false, [], Options: options);
             return (await ReadUntrackedAsync(fullPath, gitPath, comparison, cancellationToken)) with { Options = options };
         }
-        var args = new List<string> { "diff", "--no-ext-diff", "--no-textconv", "--no-color", "--no-renames", "--ignore-submodules=all",
-            "--inter-hunk-context=0", "--output-indicator-new=+", "--output-indicator-old=-", "--output-indicator-context= ",
-            "--unified=" + options.ContextLines.ToString(System.Globalization.CultureInfo.InvariantCulture) };
-        var whitespaceFlag = options.Whitespace switch
-        {
-            WhitespaceMode.IgnoreTrailingSpace => "--ignore-space-at-eol",
-            WhitespaceMode.IgnoreSpaceChange => "--ignore-space-change",
-            WhitespaceMode.IgnoreAllSpace => "--ignore-all-space",
-            _ => null
-        };
-        if (whitespaceFlag is not null) args.Add(whitespaceFlag);
+        var args = CreateDiffArguments(options);
         if (comparison == Comparison.Staged) args.Add("--cached");
         if (comparison == Comparison.Head)
         {
@@ -83,6 +73,22 @@ public sealed class GitInspector(string gitExecutable = "git", TimeSpan? command
         var result = await RunAsync(root, args, cancellationToken);
         var binary = result.Output.Contains("\nBinary files ", StringComparison.Ordinal);
         return new FileDiff(gitPath, comparison, result.Output, binary, PatchParser.Parse(result.Output), Options: options);
+    }
+
+    private static List<string> CreateDiffArguments(DiffOptions options)
+    {
+        var args = new List<string> { "diff", "--no-ext-diff", "--no-textconv", "--no-color", "--no-renames", "--ignore-submodules=all",
+            "--inter-hunk-context=0", "--output-indicator-new=+", "--output-indicator-old=-", "--output-indicator-context= ",
+            "--unified=" + options.ContextLines.ToString(System.Globalization.CultureInfo.InvariantCulture) };
+        var flag = options.Whitespace switch
+        {
+            WhitespaceMode.IgnoreTrailingSpace => "--ignore-space-at-eol",
+            WhitespaceMode.IgnoreSpaceChange => "--ignore-space-change",
+            WhitespaceMode.IgnoreAllSpace => "--ignore-all-space",
+            _ => null
+        };
+        if (flag is not null) args.Add(flag);
+        return args;
     }
 
     private async Task CheckConfigurationAsync(string root, CancellationToken token)
