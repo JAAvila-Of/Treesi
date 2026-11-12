@@ -200,7 +200,9 @@ public sealed partial class MainWindow
         if (endpoints is null) return;
         var kind = endpoints.IsRootComparison ? "Empty tree" : _historyCommit is not null ? $"Parent {_historyParent}" : endpoints.Mode == RevisionComparisonMode.MergeBase ? "Merge base" : "Direct";
         button.Content = endpoints.IsRootComparison ? $"Empty tree → {endpoints.TargetCommitId[..6]}" : $"{kind} {endpoints.EffectiveBaseCommitId[..6]} → {endpoints.TargetCommitId[..6]}";
-        var description = $"{kind}: {endpoints.BaseName} ({endpoints.BaseCommitId}) to {endpoints.TargetName} ({endpoints.TargetCommitId}). Effective base: {endpoints.EffectiveBaseCommitId}. Refresh resolves names again.";
+        var refresh = _historyCommit is null ? "Refresh resolves names again." : "Refresh retains these pinned commits. Use History Go to resolve a reference again.";
+        var description = endpoints.IsRootComparison ? $"Empty tree to initial commit {endpoints.TargetCommitId}. {refresh}" :
+            $"{kind}: {endpoints.BaseName} ({endpoints.BaseCommitId}) to {endpoints.TargetName} ({endpoints.TargetCommitId}). Effective base: {endpoints.EffectiveBaseCommitId}. {refresh}";
         ToolTip.SetTip(button, description); AutomationProperties.SetName(button, description);
     }
 

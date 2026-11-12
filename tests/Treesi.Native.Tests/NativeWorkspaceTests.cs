@@ -111,11 +111,11 @@ public sealed class NativeWorkspaceTests
         var to = Element("TargetRevisionInput"); to.Clear(); to.SendKeys("HEAD");
         Element("ApplyRevisionButton").Click();
         WaitUntil(() => Element("DiffSearch").Enabled && Element("RevisionEndpointsButton").Displayed);
-        Element("DiffSearch").SendKeys("historical"); Element("FindNextButton").Click();
+        EnterText("DiffSearch", "historical"); Element("FindNextButton").Click();
         WaitUntil(() => Element("OperationStatus").Text == "Match selected in diff");
         Element("RevisionEndpointsButton").Click(); Element("ReturnToWorkingButton").Click();
         WaitUntil(() => Element("ComparisonSelector").Displayed && Element("DiffSearch").Enabled);
-        Element("DiffSearch").Clear(); Element("DiffSearch").SendKeys("changed"); Element("FindNextButton").Click();
+        EnterText("DiffSearch", "changed"); Element("FindNextButton").Click();
         WaitUntil(() => Element("OperationStatus").Text == "Match selected in diff");
         Element("FileTitle").Text.Test().Be("sample.txt");
     }
@@ -196,15 +196,15 @@ public sealed class NativeWorkspaceTests
         WaitUntil(() => _driver!.FindElements(By.Name("test: create historical change")).Any(item => item.Displayed));
         _driver!.FindElements(By.Name("test: create historical change")).First(item => item.Displayed).Click();
         WaitUntil(() => Element("RevisionEndpointsButton").Displayed && Element("DiffSearch").Enabled);
-        Element("DiffSearch").Clear(); Element("DiffSearch").SendKeys("historical"); Element("FindNextButton").Click();
+        EnterText("DiffSearch", "historical"); Element("FindNextButton").Click();
         WaitUntil(() => Element("OperationStatus").Text == "Match selected in diff");
         Element("RevisionEndpointsButton").Click();
         WaitUntil(() => Element("CommitMessage").Displayed);
-        Element("CommitMessage").Text.Contains("test: create historical change", StringComparison.Ordinal).Test().BeTrue();
+        Element("CommitMessage").GetAttribute("Value").Contains("test: create historical change", StringComparison.Ordinal).Test().BeTrue();
         Element("CloseCommitDetailsButton").Click();
         _driver.FindElements(By.Name("test: create isolated fixture")).First(item => item.Displayed).Click();
         WaitUntil(() => Element("RevisionEndpointsButton").Text.Contains("Empty tree", StringComparison.Ordinal) && Element("DiffSearch").Enabled);
-        Element("DiffSearch").Clear(); Element("DiffSearch").SendKeys("original"); Element("FindNextButton").Click();
+        EnterText("DiffSearch", "original"); Element("FindNextButton").Click();
         WaitUntil(() => Element("OperationStatus").Text == "Match selected in diff");
         Element("RevisionEndpointsButton").Click(); Element("CommitWorkingButton").Click();
         WaitUntil(() => Element("ComparisonSelector").Displayed && Element("DiffSearch").Enabled);
@@ -216,6 +216,12 @@ public sealed class NativeWorkspaceTests
         Element(id).Click();
         WaitUntil(() => _driver!.FindElements(By.Name(option)).Any(item => item.Displayed));
         _driver!.FindElements(By.Name(option)).First(item => item.Displayed).Click();
+    }
+
+    private void EnterText(string id, string value)
+    {
+        var input = Element(id); input.Click(); input.Clear(); input.SendKeys(value);
+        WaitUntil(() => input.GetAttribute("Value") == value);
     }
 
     private static void WaitUntil(Func<bool> predicate)
