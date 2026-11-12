@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.VisualTree;
 using Avalonia.Threading;
 using AvaloniaEdit;
@@ -10,7 +11,7 @@ public sealed partial class MainWindow
 {
     private TextEditor _before = null!, _after = null!;
     private DiffDecoration _beforeDecoration = null!, _afterDecoration = null!;
-    private ComboBox _diffMode = null!;
+    private TabStrip _diffMode = null!;
     private Control _splitView = null!;
     private Button _previousBlock = null!, _nextBlock = null!;
     private TextBlock _blockPosition = null!;
@@ -27,7 +28,7 @@ public sealed partial class MainWindow
         _before = Required<TextEditor>("BeforeEditor"); _after = Required<TextEditor>("AfterEditor");
         _activeSplitEditor = _after;
         _beforeDecoration = new DiffDecoration(_before, 1); _afterDecoration = new DiffDecoration(_after, 2);
-        _diffMode = Required<ComboBox>("DiffModeSelector"); _splitView = Required<Control>("SplitView");
+        _diffMode = Required<TabStrip>("DiffModeSelector"); _splitView = Required<Control>("SplitView");
         _previousBlock = Required<Button>("PreviousBlockButton"); _nextBlock = Required<Button>("NextBlockButton");
         _blockPosition = Required<TextBlock>("BlockPosition");
         foreach (var editor in new[] { _before, _after })
@@ -100,6 +101,7 @@ public sealed partial class MainWindow
             _beforeDecoration.SetDocument(_splitDiff.Before); _afterDecoration.SetDocument(_splitDiff.After);
         }
         _diff.IsVisible = !split; _splitView.IsVisible = split;
+        _motion.Reveal(Required<Control>("DiffSurface"));
         if (_blockIndex >= 0)
         {
             ScrollToBlock();
@@ -153,5 +155,17 @@ public sealed partial class MainWindow
         _diffMode.IsEnabled = _previousBlock.IsEnabled = _nextBlock.IsEnabled = false;
         _blockPosition.Text = "No change blocks";
         _beforeDecoration.Clear(); _afterDecoration.Clear();
+    }
+
+    private static void RevealMatch(TextEditor editor, int offset, int length)
+    {
+        if (editor.FindDescendantOfType<ScrollViewer>() is not { } scroll) return;
+        var start = editor.Document.GetLocation(offset);
+        var end = editor.Document.GetLocation(offset + length);
+        var view = editor.TextArea.TextView;
+        var left = view.GetVisualPosition(new TextViewPosition(start.Line, start.Column), AvaloniaEdit.Rendering.VisualYPosition.LineTop).X;
+        var right = view.GetVisualPosition(new TextViewPosition(end.Line, end.Column), AvaloniaEdit.Rendering.VisualYPosition.LineTop).X;
+        if (left < scroll.Offset.X || right > scroll.Offset.X + scroll.Viewport.Width)
+            scroll.Offset = scroll.Offset.WithX(Math.Max(0, left - scroll.Viewport.Width / 4));
     }
 }

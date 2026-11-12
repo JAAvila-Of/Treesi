@@ -103,13 +103,15 @@ public sealed class NativeWorkspaceTests
     [Test]
     public void NativeSplitLayoutExposesBlockNavigationAndSearch()
     {
-        SelectCombo("DiffModeSelector", "Side by side");
+        Element("SplitModeButton").Click();
         Element("NextBlockButton").Click();
         WaitUntil(() => Element("OperationStatus").Text == "Change block 1 of 1");
         Element("DiffSearch").SendKeys("changed"); Element("FindNextButton").Click();
         WaitUntil(() => Element("OperationStatus").Text == "Match selected in diff");
-        SelectCombo("DiffModeSelector", "Unified");
+        Element("ReduceMotionToggle").Click();
+        Element("UnifiedModeButton").Click();
         Element("FileTitle").Text.Test().Be("sample.txt");
+        Element("ReduceMotionToggle").Click();
     }
     private string ComboText(string id) => Element(id).Text + " " + Element(id).GetAttribute("Value");
     private void SelectCombo(string id, string option)

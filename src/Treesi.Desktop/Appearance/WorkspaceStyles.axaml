@@ -4,9 +4,9 @@
     <ResourceDictionary>
       <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Light">
-          <SolidColorBrush x:Key="Surface.Window">#F5F7F9</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Window">#EDF2F0</SolidColorBrush>
           <SolidColorBrush x:Key="Surface.Panel">#FFFFFF</SolidColorBrush>
-          <SolidColorBrush x:Key="Surface.Sidebar">#F5F7F9</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Sidebar">#F3F7F5</SolidColorBrush>
           <SolidColorBrush x:Key="Surface.Control">#FFFFFF</SolidColorBrush>
           <SolidColorBrush x:Key="Surface.Hover">#EDF1F5</SolidColorBrush>
           <SolidColorBrush x:Key="Surface.Selected">#DCEEE8</SolidColorBrush>
@@ -29,12 +29,12 @@
           <SolidColorBrush x:Key="Status.Warning">#8A550B</SolidColorBrush>
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
-          <SolidColorBrush x:Key="Surface.Window">#111820</SolidColorBrush>
-          <SolidColorBrush x:Key="Surface.Panel">#151E28</SolidColorBrush>
-          <SolidColorBrush x:Key="Surface.Sidebar">#121B24</SolidColorBrush>
-          <SolidColorBrush x:Key="Surface.Control">#1A2531</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Window">#0B1219</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Panel">#14202A</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Sidebar">#101B23</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Control">#192832</SolidColorBrush>
           <SolidColorBrush x:Key="Surface.Hover">#23313E</SolidColorBrush>
-          <SolidColorBrush x:Key="Surface.Selected">#203C36</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Selected">#193D34</SolidColorBrush>
           <SolidColorBrush x:Key="Border.Default">#2B3846</SolidColorBrush>
           <SolidColorBrush x:Key="Text.Primary">#E5EDF5</SolidColorBrush>
           <SolidColorBrush x:Key="Text.Secondary">#A4B3C3</SolidColorBrush>
@@ -43,8 +43,8 @@
           <SolidColorBrush x:Key="Accent.Hover">#98E8D2</SolidColorBrush>
           <SolidColorBrush x:Key="Accent.Contrast">#10251F</SolidColorBrush>
           <SolidColorBrush x:Key="Accent.Soft">#203C36</SolidColorBrush>
-          <SolidColorBrush x:Key="Diff.Canvas">#111A24</SolidColorBrush>
-          <SolidColorBrush x:Key="Diff.Gutter">#121C27</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.Canvas">#0E1821</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.Gutter">#121F29</SolidColorBrush>
           <SolidColorBrush x:Key="Diff.AddBackground">#173729</SolidColorBrush>
           <SolidColorBrush x:Key="Diff.AddText">#A5E7B9</SolidColorBrush>
           <SolidColorBrush x:Key="Diff.RemoveBackground">#3B222B</SolidColorBrush>
@@ -72,9 +72,34 @@
     <Setter Property="Background" Value="{DynamicResource Surface.Control}" />
     <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="6" />
+    <Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="9" />
     <Setter Property="Padding" Value="12,8" /><Setter Property="MinHeight" Value="36" />
     <Setter Property="FontSize" Value="12" /><Setter Property="FontWeight" Value="Medium" />
+  </Style>
+  <Style Selector="Window.workspace.motion-enabled Button">
+    <Setter Property="RenderTransform" Value="translate(0px, 0px)" />
+    <Setter Property="RenderTransformOrigin" Value="50%,50%" />
+    <Setter Property="Transitions">
+      <Transitions><TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" Easing="CubicEaseOut" /></Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Window.workspace.motion-enabled Button:pointerover"><Setter Property="RenderTransform" Value="translate(0px, -1px)" /></Style>
+  <Style Selector="Window.workspace.motion-enabled Button:pressed"><Setter Property="RenderTransform" Value="scale(0.98)" /></Style>
+  <Style Selector="Window.workspace.motion-enabled Button /template/ ContentPresenter">
+    <Setter Property="Transitions">
+      <Transitions>
+        <BrushTransition Property="Background" Duration="0:0:0.12" />
+        <BrushTransition Property="BorderBrush" Duration="0:0:0.12" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Window.workspace.motion-enabled ListBoxItem /template/ ContentPresenter">
+    <Setter Property="Transitions">
+      <Transitions>
+        <BrushTransition Property="Background" Duration="0:0:0.14" />
+        <BrushTransition Property="BorderBrush" Duration="0:0:0.14" />
+      </Transitions>
+    </Setter>
   </Style>
   <Style Selector="Button:pointerover /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource Surface.Hover}" />
@@ -100,7 +125,7 @@
     <Setter Property="Background" Value="{DynamicResource Surface.Control}" />
     <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Border.Default}" />
-    <Setter Property="CornerRadius" Value="6" /><Setter Property="FontSize" Value="12" />
+    <Setter Property="CornerRadius" Value="8" /><Setter Property="FontSize" Value="12" />
     <Setter Property="PlaceholderForeground" Value="{DynamicResource Text.Secondary}" />
     <Setter Property="MinHeight" Value="36" /><Setter Property="Padding" Value="10,8" />
   </Style>
@@ -108,20 +133,48 @@
     <Setter Property="Background" Value="{DynamicResource Surface.Control}" />
     <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Border.Default}" />
-    <Setter Property="CornerRadius" Value="6" /><Setter Property="MinHeight" Value="36" />
+    <Setter Property="CornerRadius" Value="8" /><Setter Property="MinHeight" Value="36" />
     <Setter Property="FontSize" Value="12" /><Setter Property="Padding" Value="10,7" />
   </Style>
   <Style Selector="ListBoxItem">
-    <Setter Property="Padding" Value="10,10" /><Setter Property="Margin" Value="8,2" />
-    <Setter Property="CornerRadius" Value="6" /><Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="11,11" /><Setter Property="Margin" Value="10,3" />
+    <Setter Property="CornerRadius" Value="9" /><Setter Property="BorderThickness" Value="1" />
     <Setter Property="BorderBrush" Value="Transparent" /><Setter Property="MinHeight" Value="60" />
   </Style>
   <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter"><Setter Property="Background" Value="{DynamicResource Surface.Hover}" /></Style>
   <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource Surface.Selected}" />
     <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent.Primary}" />
   </Style>
   <Style Selector="TextBlock.file-status"><Setter Property="Foreground" Value="{DynamicResource Accent.Primary}" /></Style>
+  <Style Selector="TabStrip.diff-modes TabStripItem">
+    <Setter Property="Theme">
+      <ControlTheme TargetType="TabStripItem">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource Text.Secondary}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Padding" Value="13,6" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Template">
+          <ControlTemplate>
+            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}">
+              <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+          </ControlTemplate>
+        </Setter>
+      </ControlTheme>
+    </Setter>
+  </Style>
+  <Style Selector="TabStrip.diff-modes TabStripItem:selected">
+    <Setter Property="Background" Value="{DynamicResource Accent.Soft}" />
+    <Setter Property="Foreground" Value="{DynamicResource Accent.Primary}" />
+  </Style>
+  <Style Selector="TabStrip.diff-modes TabStripItem:pointerover:not(:selected)"><Setter Property="Background" Value="{DynamicResource Surface.Hover}" /></Style>
+  <Style Selector="TabStrip.diff-modes TabStripItem:focus-visible"><Setter Property="BorderBrush" Value="{DynamicResource Accent.Primary}" /></Style>
+  <Style Selector="Window.workspace.motion-enabled TabStrip.diff-modes TabStripItem">
+    <Setter Property="Transitions"><Transitions><BrushTransition Property="Background" Duration="0:0:0.14" /></Transitions></Setter>
+  </Style>
   <Style Selector="TextBlock.added"><Setter Property="Foreground" Value="{DynamicResource Diff.AddText}" /></Style>
   <Style Selector="TextBlock.removed"><Setter Property="Foreground" Value="{DynamicResource Diff.RemoveText}" /></Style>
   <Style Selector="editing|TextArea">

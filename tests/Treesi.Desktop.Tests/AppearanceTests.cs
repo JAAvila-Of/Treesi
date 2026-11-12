@@ -1,7 +1,9 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.NUnit;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Threading;
@@ -21,6 +23,119 @@ public sealed class AppearanceTests
     private const string Patch = "diff --git a/src/ChangeSummary.cs b/src/ChangeSummary.cs\nindex 20f9d32..fe89263 100644\n--- a/src/ChangeSummary.cs\n+++ b/src/ChangeSummary.cs\n@@ -1,7 +1,10 @@\n namespace Treesi;\n \n public static class ChangeSummary\n {\n-    public static string Describe(int files) => $\"Changes: {files}\";\n+    public static string Describe(int files)\n+    {\n+        ArgumentOutOfRangeException.ThrowIfNegative(files);\n+        return files == 1 ? \"1 changed file\" : $\"{files} changed files\";\n+    }\n }\n";
 
     [AvaloniaTest]
+    public async Task MotionPreferenceAndWorkspaceActionsPreserveTheLoadedDiff()
+    {
+        var reader = new FixtureInspector(); var preferences = new MotionPreferences();
+        var themes = new ThemeController(Avalonia.Application.Current!, new MemoryPreferences());
+        var window = new MainWindow(reader, null, themes, preferences);
+        var directory = Environment.GetEnvironmentVariable("TREESI_MOTION_OUTPUT");
+        var frameNumber = 0;
+        var captures = new List<(string Name, double Seconds)>();
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        async Task Settle()
+        {
+            if (directory is not { Length: > 0 }) { await window.PendingMotion.WaitAsync(TimeSpan.FromSeconds(5)); return; }
+            Directory.CreateDirectory(directory);
+            for (var frameIndex = 0; frameIndex < 24; frameIndex++)
+            {
+                Dispatcher.UIThread.RunJobs();
+                AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+                using var frame = window.GetLastRenderedFrame();
+                var name = $"frame-{frameNumber++:D4}.png";
+                captures.Add((name, clock.Elapsed.TotalSeconds));
+                frame!.Save(Path.Combine(directory, name), new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
+                await Task.Delay(33);
+            }
+        }
+        try
+        {
+            window.Show(); await window.OpenRepositoryAsync(Root); await Settle();
+            window.FindControl<ProgressBar>("BusyIndicator")!.IsVisible.Test().BeFalse();
+            var calls = reader.DiffCalls;
+            var button = window.FindControl<Button>("FindNextButton")!;
+            var point = button.TranslatePoint(new Point(12, 12), window)!.Value;
+            window.MouseMove(point); await Settle();
+            window.MouseMove(new Point(800, 64));
+            window.FindControl<TabStrip>("DiffModeSelector")!.SelectedIndex = 1; await Settle();
+            window.FindControl<TextBox>("DiffSearch")!.Text = "ThrowIfNegative";
+            button.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent)); await Settle();
+            themes.Apply(ThemeCatalog.Light); await Settle();
+            window.FindControl<CheckBox>("ReduceMotionToggle")!.IsChecked = true; await Settle();
+            preferences.Value.Test().BeTrue(); window.Classes.Contains("motion-enabled").Test().BeFalse();
+            window.FindControl<TabStrip>("DiffModeSelector")!.SelectedIndex = 0; await Settle();
+            if (directory is { Length: > 0 })
+            {
+                var timeline = new List<string> { "ffconcat version 1.0" };
+                for (var i = 0; i < captures.Count; i++)
+                {
+                    timeline.Add($"file '{captures[i].Name}'");
+                    var seconds = i + 1 < captures.Count ? captures[i + 1].Seconds - captures[i].Seconds : 0.033;
+                    timeline.Add("duration " + seconds.ToString("F6", System.Globalization.CultureInfo.InvariantCulture));
+                }
+                timeline.Add($"file '{captures[^1].Name}'");
+                File.WriteAllLines(Path.Combine(directory, "frames.ffconcat"), timeline);
+            }
+            window.FindControl<TextEditor>("DiffEditor")!.Text.Test().Be(Patch);
+            window.PendingMotion.IsCompletedSuccessfully.Test().BeTrue();
+            window.Width = 900; window.FindControl<TabStrip>("DiffModeSelector")!.SelectedIndex = 1;
+            using var compact = window.CaptureRenderedFrame();
+            button.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            Dispatcher.UIThread.RunJobs();
+            var editor = window.FindControl<TextEditor>("AfterEditor")!;
+            (editor.HorizontalOffset > 0).Test().BeTrue();
+            editor.SelectedText.Test().Be("ThrowIfNegative");
+            reader.DiffCalls.Test().Be(calls);
+        }
+        finally { window.Close(); }
+    }
+
+    [AvaloniaTest]
+    public void MotionPreferenceLoadsAndSaveFailuresKeepTheSessionUsable()
+    {
+        var preferences = new MotionPreferences(true) { SaveSucceeds = false };
+        var window = new MainWindow(new FixtureInspector(), null,
+            new ThemeController(Avalonia.Application.Current!, new MemoryPreferences()), preferences);
+        try
+        {
+            window.Show();
+            var toggle = window.FindControl<CheckBox>("ReduceMotionToggle")!;
+            (toggle.IsChecked == true).Test().BeTrue();
+            window.Classes.Contains("motion-enabled").Test().BeFalse();
+            toggle.IsChecked = false;
+            window.Classes.Contains("motion-enabled").Test().BeTrue();
+            window.FindControl<TextBlock>("OperationStatus")!.Text.Test().Contain("could not be saved");
+            preferences.Value.Test().BeTrue();
+        }
+        finally { window.Close(); }
+    }
+
+    private sealed class MotionPreferences(bool initial = false) : IMotionPreferenceStore
+    {
+        public bool Value { get; private set; } = initial;
+        public bool SaveSucceeds { get; init; } = true;
+        public bool Load() => Value;
+        public bool Save(bool reduced) { if (SaveSucceeds) Value = reduced; return SaveSucceeds; }
+    }
+
+    [AvaloniaTest]
+    public async Task SegmentedLayoutRespondsToHeadlessPointerInput()
+    {
+        var window = new MainWindow(new FixtureInspector(), null,
+            new ThemeController(Avalonia.Application.Current!, new MemoryPreferences()), new MotionPreferences(true));
+        try
+        {
+            window.Show(); await window.OpenRepositoryAsync(Root);
+            using var frame = window.CaptureRenderedFrame();
+            var split = window.FindControl<TabStripItem>("SplitModeButton")!;
+            var point = split.TranslatePoint(new Point(split.Bounds.Width / 2, split.Bounds.Height / 2), window)!.Value;
+            window.MouseDown(point, MouseButton.Left); window.MouseUp(point, MouseButton.Left);
+            window.FindControl<TabStrip>("DiffModeSelector")!.SelectedIndex.Test().Be(1);
+            window.FindControl<Control>("SplitView")!.IsVisible.Test().BeTrue();
+        }
+        finally { window.Close(); }
+    }
+
+    [AvaloniaTest]
     public async Task SplitModePreservesLoadedDataAndRendersBothThemes()
     {
         var reader = new FixtureInspector();
@@ -30,7 +145,7 @@ public sealed class AppearanceTests
         {
             window.Show(); await window.OpenRepositoryAsync(Root);
             var calls = reader.DiffCalls;
-            window.FindControl<ComboBox>("DiffModeSelector")!.SelectedIndex = 1;
+            window.FindControl<TabStrip>("DiffModeSelector")!.SelectedIndex = 1;
             Dispatcher.UIThread.RunJobs();
             var before = window.FindControl<TextEditor>("BeforeEditor")!;
             var after = window.FindControl<TextEditor>("AfterEditor")!;
@@ -51,7 +166,7 @@ public sealed class AppearanceTests
                 (position.Y >= 0 && position.Y + control.Bounds.Height <= window.ClientSize.Height + 1).Test().BeTrue();
             }
             SaveFrame(window, "split-light-compact.png");
-            window.FindControl<ComboBox>("DiffModeSelector")!.SelectedIndex = 0;
+            window.FindControl<TabStrip>("DiffModeSelector")!.SelectedIndex = 0;
             window.FindControl<TextEditor>("DiffEditor")!.Text.Test().Be(Patch);
             reader.DiffCalls.Test().Be(calls);
         }
@@ -66,7 +181,7 @@ public sealed class AppearanceTests
         try
         {
             window.Show(); await window.OpenRepositoryAsync(Root);
-            window.FindControl<ComboBox>("DiffModeSelector")!.SelectedIndex = 1;
+            window.FindControl<TabStrip>("DiffModeSelector")!.SelectedIndex = 1;
             window.FindControl<TextBox>("DiffSearch")!.Text = "Changes: {files}";
             window.FindControl<Button>("FindNextButton")!.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
             window.FindControl<TextEditor>("BeforeEditor")!.SelectedText.Test().Be("Changes: {files}");
@@ -76,7 +191,7 @@ public sealed class AppearanceTests
             window.FindControl<TextEditor>("BeforeEditor")!.Text.Test().Be("");
             window.FindControl<TextEditor>("AfterEditor")!.Text.Test().Be("");
             window.FindControl<Button>("NextBlockButton")!.IsEnabled.Test().BeFalse();
-            window.FindControl<ComboBox>("DiffModeSelector")!.IsEnabled.Test().BeFalse();
+            window.FindControl<TabStrip>("DiffModeSelector")!.IsEnabled.Test().BeFalse();
         }
         finally { window.Close(); }
     }
@@ -233,6 +348,8 @@ public sealed class AppearanceTests
 
     private static void SaveFrame(Window window, string name)
     {
+        window.FindControl<CheckBox>("ReduceMotionToggle")!.IsChecked = true;
+        Dispatcher.UIThread.RunJobs();
         using var frame = window.CaptureRenderedFrame();
         frame.Test().NotBeNull();
         frame!.PixelSize.Width.Test().BePositive(); frame.PixelSize.Height.Test().BePositive();

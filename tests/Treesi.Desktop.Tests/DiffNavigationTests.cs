@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.NUnit;
 using Avalonia.Interactivity;
@@ -31,7 +32,7 @@ public sealed class DiffNavigationTests
             Click(window, "NextBlockButton");
             window.FindControl<TextBlock>("BlockPosition")!.Text.Test().Be("Block 2 of 2");
             (window.FindControl<TextEditor>("DiffEditor")!.VerticalOffset > 0).Test().BeTrue();
-            window.FindControl<ComboBox>("DiffModeSelector")!.SelectedIndex = 1;
+            window.FindControl<TabStrip>("DiffModeSelector")!.SelectedIndex = 1;
             Dispatcher.UIThread.RunJobs();
             using var frame = window.CaptureRenderedFrame();
             var before = window.FindControl<TextEditor>("BeforeEditor")!;
@@ -57,7 +58,7 @@ public sealed class DiffNavigationTests
         try
         {
             window.Show(); await window.OpenRepositoryAsync("fixture");
-            window.FindControl<ComboBox>("DiffModeSelector")!.SelectedIndex = 1;
+            window.FindControl<TabStrip>("DiffModeSelector")!.SelectedIndex = 1;
             Dispatcher.UIThread.RunJobs();
             using var frame = window.CaptureRenderedFrame();
             var before = window.FindControl<TextEditor>("BeforeEditor")!;
@@ -84,13 +85,13 @@ public sealed class DiffNavigationTests
         try
         {
             window.Show(); await window.OpenRepositoryAsync("fixture");
-            window.FindControl<ComboBox>("DiffModeSelector")!.SelectedIndex = 1;
+            window.FindControl<TabStrip>("DiffModeSelector")!.SelectedIndex = 1;
             window.FindControl<ComboBox>("ComparisonSelector")!.SelectedIndex = 2;
             await window.PendingInspection;
             window.FindControl<Control>("SplitView")!.IsVisible.Test().BeFalse();
             window.FindControl<TextEditor>("DiffEditor")!.IsVisible.Test().BeTrue();
             window.FindControl<TextEditor>("DiffEditor")!.Text.Test().Contain("new mode 100755");
-            window.FindControl<ComboBox>("DiffModeSelector")!.IsEnabled.Test().BeFalse();
+            window.FindControl<TabStrip>("DiffModeSelector")!.IsEnabled.Test().BeFalse();
         }
         finally { window.Close(); }
     }

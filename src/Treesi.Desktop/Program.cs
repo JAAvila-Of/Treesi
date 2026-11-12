@@ -24,7 +24,7 @@ public sealed class App : Avalonia.Application
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            desktop.MainWindow = new MainWindow(new InstrumentedInspectionService(new InspectionService(new GitInspector())), desktop.Args?.FirstOrDefault(), _appearance!);
+            desktop.MainWindow = new MainWindow(new InstrumentedInspectionService(new InspectionService(new GitInspector())), desktop.Args?.FirstOrDefault(), _appearance!, new JsonMotionPreferenceStore());
         base.OnFrameworkInitializationCompleted();
     }
 }

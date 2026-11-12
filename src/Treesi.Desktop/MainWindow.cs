@@ -23,14 +23,16 @@ public sealed partial class MainWindow : Window
     private readonly Button _refresh, _cancel, _findNext;
     private readonly Control _emptyState, _diffLabel;
     private readonly DiffDecoration _decoration;
+    private readonly WorkspaceMotion _motion;
     private IReadOnlyList<FileChange> _allFiles = [];
     private RepositorySnapshot? _snapshot;
     private CancellationTokenSource? _opening, _loading;
     private bool _updatingFiles;
     private bool _closed;
     public Task PendingInspection { get; private set; } = Task.CompletedTask;
+    public Task PendingMotion => _motion.Pending;
 
-    public MainWindow(IInspectionService inspector, string? initialPath, ThemeController appearance)
+    public MainWindow(IInspectionService inspector, string? initialPath, ThemeController appearance, IMotionPreferenceStore? motionPreferences = null)
     {
         _inspector = inspector;
         _appearance = appearance;
@@ -52,6 +54,17 @@ public sealed partial class MainWindow : Window
         _diff.Options.EnableEmailHyperlinks = false;
         _diff.Options.AllowScrollBelowDocument = false;
         _decoration = new DiffDecoration(_diff);
+        _motion = new WorkspaceMotion(this) { Reduced = motionPreferences?.Load() ?? false };
+        var reduceMotion = Required<CheckBox>("ReduceMotionToggle");
+        reduceMotion.IsChecked = _motion.Reduced;
+        reduceMotion.PropertyChanged += (_, args) =>
+        {
+            if (args.Property != CheckBox.IsCheckedProperty) return;
+            _motion.Reduced = reduceMotion.IsChecked == true;
+            if (_motion.Reduced) Required<ProgressBar>("BusyIndicator").IsIndeterminate = false;
+            if (motionPreferences is not null && !motionPreferences.Save(_motion.Reduced))
+                _status.Text = "Motion preference changed for this session; it could not be saved.";
+        };
         InitializeDiffWorkspace();
         _themes.ItemsSource = ThemeCatalog.All;
         _themes.SelectedItem = appearance.Current;
@@ -93,6 +106,7 @@ public sealed partial class MainWindow : Window
             _loading?.Dispose(); _loading = null;
             _decoration.Dispose();
             _beforeDecoration.Dispose(); _afterDecoration.Dispose();
+            _motion.Dispose();
         };
         if (initialPath is not null) Opened += async (_, _) => await OpenRepositoryAsync(initialPath);
     }
@@ -104,6 +118,7 @@ public sealed partial class MainWindow : Window
         _themes.SelectedItem = theme;
         _decoration.Refresh();
         _beforeDecoration.Refresh(); _afterDecoration.Refresh();
+        _motion.Reveal(Required<Control>("FileHeading"));
     }
 
     private async Task PickAsync(bool file)
@@ -232,6 +247,7 @@ public sealed partial class MainWindow : Window
         _search.IsEnabled = false; _findNext.IsEnabled = false;
         _emptyTitle.Text = title; _emptyDescription.Text = description;
         _decoration.Clear(); _added.Text = "+0"; _removed.Text = "−0";
+        _motion.Stop();
         ClearDiffWorkspace();
     }
 
@@ -253,10 +269,17 @@ public sealed partial class MainWindow : Window
         if (next < 0) { _status.Text = "Text not found in the current diff"; return; }
         editor.Focus(); editor.Select(next, term.Length);
         RevealLine(editor, editor.Document.GetLineByOffset(next).LineNumber);
+        RevealMatch(editor, next, term.Length);
         _status.Text = "Match selected in diff";
     }
 
-    private void SetBusy(bool value) => _cancel.IsVisible = value;
+    private void SetBusy(bool value)
+    {
+        _cancel.IsVisible = value;
+        var progress = Required<ProgressBar>("BusyIndicator");
+        progress.IsIndeterminate = value && !_motion.Reduced;
+        progress.IsVisible = value;
+    }
     private void Cancel() { _opening?.Cancel(); _loading?.Cancel(); }
     private void ShowError(Exception exception)
     {

@@ -2,6 +2,18 @@
 
 The workspace provides Light and Dark themes with a restrained green accent, clear type hierarchy, compact actions, and distinct repository, file-list, and diff surfaces. Theme changes apply immediately and preserve the current file, comparison, filter, and text selection.
 
+The visual shell uses a rounded workspace frame, a compact repository card, a clear file heading, colored addition/removal counters, and a framed diff canvas. A segmented layout control exposes Unified and Side by side directly. Selected files and keyboard focus have explicit outlines; color is accompanied by status text and diff prefixes.
+
+## Motion
+
+Buttons respond to hover and press with 120 ms transitions. File selection and layout segments blend their backgrounds over 140 ms. Loaded diffs and layout changes use a single 180 ms ease-out reveal with a four-pixel translation and opacity from 0.88 to 1. Theme changes briefly reveal the file heading. Text is never scaled or animated during scrolling, and there are no decorative idle loops. The activity line animates only while inspection is busy.
+
+`WorkspaceMotion` owns cancellation: replacing an animation, showing a non-diff state, reducing motion, or closing the window stops the previous reveal. Content, focus, and text selection remain immediately available; actions never wait for a decorative transition. No animation library or additional runtime dependency is required.
+
+The footer's Reduce motion setting disables these custom reveals and interaction transitions and keeps the activity line static. `IMotionPreferenceStore` separates the setting from its JSON adapter, which writes atomically to local application data under Treesi/motion.json. Save failures preserve the current session and report a message. This explicit app setting does not currently follow the operating system's motion preference or disable every built-in Fluent control effect.
+
+Headless tests verify completion, replacement/cancellation, stable final appearance, persisted preferences and save failures, interaction without Git reloads, and compact layout. Optional `TREESI_MOTION_OUTPUT` exports a synthetic headless walkthrough as PNG frames; it is a visual diagnostic, not a native frame-rate or GPU benchmark. See the official [Avalonia keyframe animation reference](https://docs.avaloniaui.net/docs/graphics-animation/keyframe-animations).
+
 ## Theme structure
 
 `ThemeCatalog` registers theme IDs, display names, and Avalonia variants. `WorkspaceStyles.axaml` defines semantic brushes for surfaces, text, borders, selection, additions, removals, and hunk headers. Layout and controls reference those resources dynamically. The diff renderer resolves brushes against the editor's active variant rather than hardcoding light or dark colors.
