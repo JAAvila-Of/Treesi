@@ -82,15 +82,19 @@
           <Grid x:Name="FileHeading" Margin="10,4" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10" Height="34">
             <StackPanel Spacing="1" VerticalAlignment="Center">
               <TextBlock x:Name="FileTitle" AutomationProperties.AutomationId="FileTitle" Text="Change inspection" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-              <TextBlock x:Name="ComparisonDescription" Text="Select a repository to start reviewing." Classes="secondary" FontSize="10" TextTrimming="CharacterEllipsis" />
+              <TextBlock x:Name="ComparisonDescription" AutomationProperties.AutomationId="ComparisonDescription" Text="Select a repository to start reviewing." Classes="secondary" FontSize="10" TextTrimming="CharacterEllipsis" />
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
               <Border CornerRadius="5" Padding="6,3" Background="{DynamicResource Diff.AddBackground}"><TextBlock x:Name="AddedCount" AutomationProperties.AutomationId="AddedCount" Text="+0" Classes="added" FontFamily="monospace" FontSize="11" /></Border>
               <Border CornerRadius="5" Padding="6,3" Background="{DynamicResource Diff.RemoveBackground}"><TextBlock x:Name="RemovedCount" AutomationProperties.AutomationId="RemovedCount" Text="−0" Classes="removed" FontFamily="monospace" FontSize="11" /></Border>
+              <Border x:Name="WhitespaceNotice" AutomationProperties.AutomationId="WhitespaceNotice" IsVisible="False" CornerRadius="5" Padding="6,3" BorderBrush="{DynamicResource Status.Warning}" BorderThickness="1">
+                <TextBlock Text="WS ignored" Foreground="{DynamicResource Status.Warning}" FontSize="10" />
+              </Border>
             </StackPanel>
             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
               <TextBox x:Name="DiffSearch" AutomationProperties.AutomationId="DiffSearch" PlaceholderText="Find in diff…" Width="140" AutomationProperties.Name="Find text in diff" />
               <Button x:Name="FindNextButton" AutomationProperties.AutomationId="FindNextButton" Content="Find" ToolTip.Tip="Find the next occurrence" />
+              <Button x:Name="DiffOptionsButton" AutomationProperties.AutomationId="DiffOptionsButton" Content="Options" IsEnabled="False" AutomationProperties.Name="Comparison options" />
             </StackPanel>
           </Grid>
           <Border x:Name="ComparisonToolbar" Grid.Row="1" Background="{DynamicResource Surface.Panel}" BorderThickness="0,1,0,1" BorderBrush="{DynamicResource Border.Default}" Padding="6,3">
@@ -204,6 +208,28 @@
           <Button x:Name="ChooseWorkspaceButton" AutomationProperties.AutomationId="ChooseWorkspaceButton" Content="Choose another" />
           <Button x:Name="DismissRecoveryButton" AutomationProperties.AutomationId="DismissRecoveryButton" Content="Dismiss" Classes="quiet" />
         </StackPanel>
+      </StackPanel>
+    </Border>
+    <Border x:Name="DiffOptionsPanel" Grid.Row="1" IsVisible="False" ZIndex="20" Width="368" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="16" Padding="18" CornerRadius="10" Background="{DynamicResource Surface.Panel}" BorderBrush="{DynamicResource Border.Default}" BorderThickness="1" BoxShadow="0 8 24 0 #30000000" AutomationProperties.Name="Comparison options">
+      <StackPanel Spacing="12">
+        <TextBlock Text="Comparison options" FontSize="18" FontWeight="SemiBold" />
+        <TextBlock Text="Apply to the current comparison. Repository files remain unchanged." Classes="secondary" FontSize="11" TextWrapping="Wrap" />
+        <StackPanel Spacing="5">
+          <Label Target="{Binding #ContextLinesInput}" Content="Context lines" Padding="0" />
+          <NumericUpDown x:Name="ContextLinesInput" AutomationProperties.AutomationId="ContextLinesInput" AutomationProperties.Name="Context lines" Minimum="0" Maximum="50" Increment="1" Value="3" FormatString="0.############################" />
+          <TextBlock Text="0–50 lines around each change. Output limits still apply." Classes="secondary" FontSize="10" TextWrapping="Wrap" />
+        </StackPanel>
+        <StackPanel Spacing="5">
+          <Label Target="{Binding #WhitespaceSelector}" Content="Whitespace" Padding="0" />
+          <ComboBox x:Name="WhitespaceSelector" AutomationProperties.AutomationId="WhitespaceSelector" AutomationProperties.Name="Whitespace policy" HorizontalAlignment="Stretch" />
+        </StackPanel>
+        <TextBlock Text="Ignoring whitespace can hide meaningful changes, including spaces inside strings. Use Exact to verify all changes." Foreground="{DynamicResource Status.Warning}" FontSize="11" TextWrapping="Wrap" />
+        <TextBlock x:Name="DiffOptionsError" IsVisible="False" Foreground="{DynamicResource Status.Warning}" FontSize="11" TextWrapping="Wrap" />
+        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="6">
+          <Button x:Name="ResetDiffOptionsButton" AutomationProperties.AutomationId="ResetDiffOptionsButton" Content="Defaults" Classes="quiet" />
+          <Button Grid.Column="2" x:Name="CancelDiffOptionsButton" AutomationProperties.AutomationId="CancelDiffOptionsButton" Content="Cancel" Classes="quiet" />
+          <Button Grid.Column="3" x:Name="ApplyDiffOptionsButton" AutomationProperties.AutomationId="ApplyDiffOptionsButton" Content="Apply" Classes="primary" />
+        </Grid>
       </StackPanel>
     </Border>
     <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="12,0">

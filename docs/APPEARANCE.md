@@ -48,6 +48,16 @@ Before/after labels reflect the selected comparison (HEAD, Index, or Working tre
 
 Source-language highlighting, word-level comparisons, full-file context, and conflict editing remain separate product work. The existing 200,000-character preview limit remains in force. All editors remain read-only and disable hyperlink activation.
 
+## Comparison options
+
+The file heading exposes Options without adding another toolbar row. Its in-window panel edits a draft: choose 0–50 context lines and Exact, Ignore trailing space, Ignore space changes, or Ignore all space. Apply reloads only a changed request; Cancel, Escape and navigation discard the draft. Defaults changes the draft and still requires Apply. Fractional or missing context values keep the panel open with an error. Context appears beside the selected path; the button tooltip describes both active options.
+
+A WS ignored badge remains visible for every non-Exact mode, even with an empty result. Empty filtered results say No differences for these options and explain how to return to Exact. The file list continues to reflect unfiltered Git status, and counters reflect the loaded filtered hunks. Whitespace filtering can hide significant string contents, so it is never represented as an exact or clean result. Filtered context follows Git's patch rather than reconstructing both whitespace variants.
+
+Options are session-only, excluded from recent-workspace metadata and restored to 3/Exact when the repository root changes. Applying new options cancels superseded loads; late results cannot overwrite a newer selection. Switching layout or theme retains the current options without reading Git again. Existing timeout, output and UTF-8 boundaries remain unchanged; context is not a request for unlimited content.
+
+Headless tests cover draft cancellation, unchanged Apply, defaults, invalid input, filtered-empty recovery, stale requests, root changes and compact bounds in both themes and layouts. The code canvas retains its height and area requirements with the warning visible. Contrast checks include warning text against the panel. Native isolated verification types context, selects whitespace, applies changes and verifies the persistent warning and return to defaults.
+
 ## Headless verification
 
 UI tests use Avalonia Headless with Skia rendering. Controls, layout, theme resources, and editor content exist in memory. A fake inspection service supplies test data, and an in-memory preference store isolates appearance tests from application settings.

@@ -107,7 +107,7 @@ public sealed class DiffNavigationTests
         public int Calls { get; private set; }
         public Task<RepositorySnapshot> InspectAsync(string path, CancellationToken cancellationToken = default) =>
             Task.FromResult(new RepositorySnapshot("fixture", "sample.txt", [new FileChange("sample.txt", null, ".", "M")]));
-        public Task<FileDiff> DiffAsync(string repository, string path, Comparison comparison, CancellationToken cancellationToken = default)
+        public Task<FileDiff> DiffAsync(string repository, string path, Comparison comparison, CancellationToken cancellationToken = default, DiffOptions? options = null)
         {
             Calls++;
             if (comparison == Comparison.Head) return Task.FromResult(new FileDiff(path, comparison,

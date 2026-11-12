@@ -28,6 +28,8 @@ dotnet run --project src/Treesi.Desktop --configuration Release -- /path/to/repo
 
 The path is optional and may point to a file inside a working tree. Use Open repository or Open file, select a comparison, and choose a changed file. The prototype supports working tree versus index, index versus HEAD, and working tree versus HEAD. Additions and removals describe the current working/index side relative to its base.
 
+Options beside the diff search opens a draft panel for 0–50 context lines and whitespace handling. Defaults are 3 lines and Exact. Apply reloads the selected diff only when the options change; Cancel and Escape discard the draft. Ignoring trailing space, space changes or all space leaves a visible WS ignored indicator, including when no differences remain. These filters can hide meaningful changes inside strings; return to Exact to verify all changes. Options are session-only and reset when switching repository roots.
+
 Without a path argument, the app starts at local recent repositories. Select a shortcut and choose Resume selected, or press Enter in the list. Startup reads only the small settings file; it does not inspect recent repositories automatically. A path argument opens that location instead. Failed or cancelled openings preserve an existing comparison and offer recovery.
 
 Ctrl+O opens a folder, Ctrl+R refreshes, and Ctrl+F focuses diff search. Ctrl+B folds the file panel; Ctrl+Shift+F toggles focus mode. Escape exits focus mode first, or cancels inspection otherwise. On macOS the primary modifier can also be Command. Unified and side-by-side viewers use AvaloniaEdit virtualization, selectable text, change backgrounds, and original/new line numbers. Alt+Up/Alt+Down navigate change blocks. Layout changes preserve the loaded comparison without querying Git again.
@@ -46,6 +48,7 @@ After building, run the CLI assembly directly to keep build output out of stdout
 dotnet src/Treesi.Cli/bin/Release/net11.0/Treesi.Cli.dll capabilities
 dotnet src/Treesi.Cli/bin/Release/net11.0/Treesi.Cli.dll inspect /path/to/repository
 dotnet src/Treesi.Cli/bin/Release/net11.0/Treesi.Cli.dll diff /path/to/repository src/example.cs --comparison staged
+dotnet src/Treesi.Cli/bin/Release/net11.0/Treesi.Cli.dll diff /path/to/repository src/example.cs --context 10 --whitespace ignore-trailing-space
 ```
 
 Every invocation emits one JSON envelope with a schema version, request ID, success flag, data or a stable error code, and elapsed time. Diffs include structured hunks and line numbers. Repository text and paths are untrusted data, including when they look like instructions to an AI agent.

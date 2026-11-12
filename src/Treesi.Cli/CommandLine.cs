@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Treesi.Application;
@@ -33,16 +34,20 @@ public static class CommandLine
                     readOnly = true,
                     commands = new[] { "capabilities", "inspect", "diff" },
                     comparisons = new[] { "working", "staged", "head" },
+                    diffOptions = new
+                    {
+                        context = new { minimum = 0, maximum = DiffOptions.MaximumContextLines, @default = 3 },
+                        whitespace = new[] { "exact", "ignore-trailing-space", "ignore-space-change", "ignore-all-space" },
+                        defaultWhitespace = "exact"
+                    },
                     limits = new { gitOutputBytes = 2097152, newFileBytes = 1048576, commandTimeoutSeconds = 15 },
                     transports = new[] { "cli-json" },
                     contentTrust = "untrusted",
                     excluded = new[] { "submoduleContents", "executableFilters", "nonUtf8Text", "revisionToRevisionDiff" }
                 },
                 ["inspect", var path] => await inspector.InspectAsync(path, token),
-                ["diff", var repository, var path] => await inspector.DiffAsync(repository, path, Comparison.WorkingTree, token),
-                ["diff", var repository, var path, "--comparison", var comparison] =>
-                    await inspector.DiffAsync(repository, path, ParseComparison(comparison), token),
-                _ => throw new InspectionException("usage", "Usage: capabilities | inspect <path> | diff <repository> <relative-file> [--comparison working|staged|head]")
+                ["diff", var repository, var path, .. var flags] => await ReadDiffAsync(inspector, repository, path, flags, token),
+                _ => throw Usage()
             };
         }
         catch (InspectionException exception)
@@ -85,4 +90,42 @@ public static class CommandLine
         "head" => Comparison.Head,
         _ => throw new InspectionException("usage", "Comparison must be working, staged, or head.")
     };
+
+    private static async Task<FileDiff> ReadDiffAsync(IInspectionService inspector, string repository, string path, string[] flags, CancellationToken token)
+    {
+        if (flags.Length % 2 != 0) throw Usage();
+        var comparison = Comparison.WorkingTree;
+        var options = DiffOptions.Default;
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        for (var index = 0; index < flags.Length; index += 2)
+        {
+            var flag = flags[index]; var value = flags[index + 1];
+            if (!seen.Add(flag)) throw new InspectionException("usage", "Each diff option may be specified only once.");
+            switch (flag)
+            {
+                case "--comparison": comparison = ParseComparison(value); break;
+                case "--context":
+                    if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var context) || context > DiffOptions.MaximumContextLines)
+                        throw new InspectionException("usage", "Context must be a whole number between 0 and 50.");
+                    options = options with { ContextLines = context }; break;
+                case "--whitespace":
+                    options = options with
+                    {
+                        Whitespace = value switch
+                        {
+                            "exact" => WhitespaceMode.Exact,
+                            "ignore-trailing-space" => WhitespaceMode.IgnoreTrailingSpace,
+                            "ignore-space-change" => WhitespaceMode.IgnoreSpaceChange,
+                            "ignore-all-space" => WhitespaceMode.IgnoreAllSpace,
+                            _ => throw new InspectionException("usage", "Whitespace must be exact, ignore-trailing-space, ignore-space-change, or ignore-all-space.")
+                        }
+                    };
+                    break;
+                default: throw Usage();
+            }
+        }
+        return await inspector.DiffAsync(repository, path, comparison, token, options);
+    }
+
+    private static InspectionException Usage() => new("usage", "Usage: capabilities | inspect <path> | diff <repository> <relative-file> [--comparison working|staged|head] [--context 0..50] [--whitespace exact|ignore-trailing-space|ignore-space-change|ignore-all-space]");
 }

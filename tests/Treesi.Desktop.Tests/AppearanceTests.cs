@@ -454,6 +454,7 @@ public sealed class AppearanceTests
         foreach (var pair in new[]
         {
             ("Text.Primary", "Surface.Panel"), ("Text.Secondary", "Surface.Sidebar"), ("Text.Subtle", "Diff.Gutter"),
+            ("Status.Warning", "Surface.Panel"),
             ("Accent.Contrast", "Accent.Primary"), ("Text.Primary", "Accent.Soft"), ("Diff.AddText", "Diff.AddBackground"),
             ("Diff.RemoveText", "Diff.RemoveBackground"), ("Diff.HunkText", "Diff.HunkBackground")
         })
@@ -505,7 +506,7 @@ public sealed class AppearanceTests
         public Task<RepositorySnapshot> InspectAsync(string path, CancellationToken cancellationToken = default) =>
             Task.FromResult(new RepositorySnapshot(Root, "src/ChangeSummary.cs", [
                 new FileChange("src/ChangeSummary.cs", null, ".", "M"), new FileChange("docs/README.md", null, "?", "?") ]));
-        public Task<FileDiff> DiffAsync(string repository, string path, Comparison comparison, CancellationToken cancellationToken = default)
+        public Task<FileDiff> DiffAsync(string repository, string path, Comparison comparison, CancellationToken cancellationToken = default, DiffOptions? options = null)
         {
             DiffCalls++;
             if (comparison == Comparison.Staged) return Task.FromResult(new FileDiff(path, comparison, "", false, []));

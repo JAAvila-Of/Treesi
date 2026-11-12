@@ -19,8 +19,8 @@ public sealed class InstrumentedInspectionService(IInspectionService inner) : II
     public Task<RepositorySnapshot> InspectAsync(string path, CancellationToken cancellationToken = default) =>
         MeasureAsync("inspect", () => inner.InspectAsync(path, cancellationToken));
 
-    public Task<FileDiff> DiffAsync(string repository, string path, Comparison comparison, CancellationToken cancellationToken = default) =>
-        MeasureAsync("diff", () => inner.DiffAsync(repository, path, comparison, cancellationToken));
+    public Task<FileDiff> DiffAsync(string repository, string path, Comparison comparison, CancellationToken cancellationToken = default, DiffOptions? options = null) =>
+        MeasureAsync("diff", () => inner.DiffAsync(repository, path, comparison, cancellationToken, options));
 
     private static async Task<T> MeasureAsync<T>(string operation, Func<Task<T>> action)
     {

@@ -263,7 +263,7 @@ public sealed class WorkspaceOpeningTests
             if (Failure is { } error) return Task.FromException<RepositorySnapshot>(error);
             return Delayed.TryGetValue(path, out var pending) ? pending.Task : Task.FromResult(Snapshot(path));
         }
-        public Task<FileDiff> DiffAsync(string repository, string path, Comparison comparison, CancellationToken cancellationToken = default)
+        public Task<FileDiff> DiffAsync(string repository, string path, Comparison comparison, CancellationToken cancellationToken = default, DiffOptions? options = null)
         {
             Diffs.Add((repository, path, comparison));
             if (path == MissingDiff) return Task.FromException<FileDiff>(new InspectionException("path_not_found", "The saved file is no longer available. Choose another changed file."));

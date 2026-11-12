@@ -6,13 +6,30 @@ The first supported transport is a finite, read-only JSON CLI. Run one process p
 
 | Command | Arguments | Result |
 | --- | --- | --- |
-| `capabilities` | None | Version, provider, read-only capability, command and comparison names, limits, exclusions, transports |
+| `capabilities` | None | Version, provider, read-only capability, command and comparison names, diff-option defaults and bounds, limits, exclusions, transports |
 | `inspect` | Existing folder or file | Repository root, optional selected relative file, changed file records |
-| `diff` | Repository path, literal repository-relative file, optional `--comparison working\|staged\|head` | Patch text, binary flag, structured hunks and line numbers |
+| `diff` | Repository path, literal repository-relative file, optional `--comparison working\|staged\|head`, `--context 0..50`, `--whitespace <mode>` | Patch text, binary flag, structured hunks, line numbers and effective options |
 
 The default comparison is `working`: current worktree relative to the index. `staged` compares the index relative to HEAD. `head` compares the worktree relative to HEAD and fails with `unborn_head` when no HEAD exists. Untracked files are presented as additions without staging them; their staged comparison is empty. These are not revision-to-revision comparisons.
 
 File status has separate `indexStatus` and `workingTreeStatus` fields using Git porcelain status characters; `.` means unchanged and `?` means untracked. Original paths are retained for reported renames. Structured diff lines have `kind` (`context`, `added`, `removed`, `metadata`), nullable `oldLine` and `newLine`, and `text` without the diff prefix. The no-final-newline marker is metadata.
+
+## Diff options
+
+Context defaults to 3 and accepts whole numbers from 0 through 50. It controls surrounding lines, not the total number of changed lines or the preview size. Existing command, output and desktop preview limits remain in force. A zero-context diff still carries source line numbers. Untracked files remain complete additions; context does not truncate their added lines.
+
+| CLI whitespace value | Result `options.whitespace` | Git behavior |
+| --- | --- | --- |
+| `exact` | `exact` | Keep whitespace differences; default |
+| `ignore-trailing-space` | `ignoreTrailingSpace` | Ignore whitespace differences at line ends |
+| `ignore-space-change` | `ignoreSpaceChange` | Treat nonempty whitespace runs as equivalent; also ignore trailing whitespace |
+| `ignore-all-space` | `ignoreAllSpace` | Ignore whitespace differences even where one side has no space |
+
+These are text filters, not language-aware analysis: they can hide significant spaces in string literals. An empty filtered patch does not prove that the file is unchanged. Status records remain unfiltered. Filtered context is the single context text emitted by Git, so split panes do not reconstruct both original whitespace variants. Use Exact for literal whitespace review. Semantics follow the official [Git diff options](https://git-scm.com/docs/diff-options).
+
+Flags may appear in any order, once each. Unknown flags, duplicate flags, missing values, unsupported modes and invalid context values return usage exit code 2 before provider I/O. No arbitrary Git argument is forwarded. The shared `DiffOptions` value is validated by the application and Git adapter, which selects fixed arguments; invalid embedded requests raise `invalid_diff_options`. Repository configuration cannot override the requested context or diff-line indicator characters.
+
+Successful Git diff results include `options: { "contextLines": 3, "whitespace": "exact" }`, including empty and binary results. Capabilities advertises CLI spellings, bounds and defaults. The original invocation without options retains its defaults. Embedded callers can pass `options:` to `IInspectionService.DiffAsync`; cancellation remains the existing parameter. Metrics do not include repository text, paths or option values.
 
 ## Response contract
 

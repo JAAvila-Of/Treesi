@@ -10,12 +10,14 @@ public sealed class InspectionService(IRepositoryReader reader) : IInspectionSer
         return reader.InspectAsync(path, cancellationToken);
     }
 
-    public Task<FileDiff> DiffAsync(string repository, string path, Comparison comparison, CancellationToken cancellationToken = default)
+    public Task<FileDiff> DiffAsync(string repository, string path, Comparison comparison, CancellationToken cancellationToken = default, DiffOptions? options = null)
     {
         ValidatePath(repository);
         ValidatePath(path);
         if (!Enum.IsDefined(comparison)) throw new InspectionException("invalid_comparison", "The comparison is not supported.");
-        return reader.DiffAsync(repository, path, comparison, cancellationToken);
+        options ??= DiffOptions.Default;
+        options.Validate();
+        return reader.DiffAsync(repository, path, comparison, cancellationToken, options);
     }
 
     private static void ValidatePath(string path)

@@ -56,7 +56,7 @@ public sealed class ArchitectureTests
             Calls++;
             return Task.FromResult(new RepositorySnapshot(path, null, []));
         }
-        public Task<FileDiff> DiffAsync(string repository, string path, Comparison comparison, CancellationToken cancellationToken = default) =>
+        public Task<FileDiff> DiffAsync(string repository, string path, Comparison comparison, CancellationToken cancellationToken = default, DiffOptions? options = null) =>
             Task.FromResult(new FileDiff(path, comparison, "", false, []));
     }
 }

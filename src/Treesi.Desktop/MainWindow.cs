@@ -68,6 +68,7 @@ public sealed partial class MainWindow : Window
         };
         InitializeDiffWorkspace();
         InitializePresentation();
+        InitializeDiffOptions();
         _themes.ItemsSource = ThemeCatalog.All;
         _themes.SelectedItem = appearance.Current;
         _themes.SelectionChanged += (_, _) =>
@@ -93,7 +94,8 @@ public sealed partial class MainWindow : Window
             }
             if (args.Key == Key.Escape)
             {
-                if (Required<Control>("OpenRecoveryNotice").IsVisible) DismissOpenRecovery();
+                if (Required<Control>("DiffOptionsPanel").IsVisible) CloseComparisonOptions();
+                else if (Required<Control>("OpenRecoveryNotice").IsVisible) DismissOpenRecovery();
                 else if (_isOpeningWorkspace) Cancel();
                 else if (Required<Control>("HomeSurface").IsVisible && _snapshot is not null) ShowComparison();
                 else if (_focusMode) SetFocusMode(false);
@@ -161,6 +163,7 @@ public sealed partial class MainWindow : Window
     private async Task OpenWorkspaceAsync(string path, WorkspaceEntry? resume)
     {
         Cancel();
+        CloseComparisonOptions(false);
         SaveCurrentWorkspace();
         var previous = (_files.SelectedItem as ChangedFileItem)?.Path;
         var previousRoot = _snapshot?.Root;
@@ -168,6 +171,7 @@ public sealed partial class MainWindow : Window
         _opening?.Dispose();
         var cancellation = _opening = new CancellationTokenSource();
         _isOpeningWorkspace = true;
+        Required<Button>("DiffOptionsButton").IsEnabled = false;
         _files.IsEnabled = false; _filter.IsEnabled = false; _comparison.IsEnabled = false;
         Required<Control>("OpenRecoveryNotice").IsVisible = false;
         Required<TextBlock>("HomeNotice").IsVisible = false;
@@ -185,6 +189,7 @@ public sealed partial class MainWindow : Window
             _updatingFiles = true;
             try
             {
+                if (snapshot.Root != previousRoot) ResetWorkspaceDiffOptions();
                 _files.ItemsSource = null;
                 _filter.Text = "";
                 if (resume is not null)
@@ -230,6 +235,7 @@ public sealed partial class MainWindow : Window
                 _isOpeningWorkspace = false;
                 _files.IsEnabled = true;
                 _filter.IsEnabled = _snapshot is not null; _comparison.IsEnabled = _snapshot is not null;
+                Required<Button>("DiffOptionsButton").IsEnabled = _snapshot is not null;
                 SetBusy(false);
             }
         }
@@ -265,14 +271,14 @@ public sealed partial class MainWindow : Window
         var cancellation = _loading = new CancellationTokenSource();
         var comparison = _comparison.SelectedIndex switch { 1 => Comparison.Staged, 2 => Comparison.Head, _ => Comparison.WorkingTree };
         _fileTitle.Text = item.Name;
-        _comparisonLabel.Text = item.Path;
+        _comparisonLabel.Text = $"{item.Path} · Context {_diffOptions.ContextLines}";
         ToolTip.SetTip(_comparisonLabel, item.Path);
         ShowState("Loading differences…", "Reading the selected file and comparison.");
         _status.Text = "Loading diff…"; SetBusy(true);
         var start = Stopwatch.GetTimestamp();
         try
         {
-            var result = await _inspector.DiffAsync(_snapshot.Root, item.Path, comparison, cancellation.Token);
+            var result = await _inspector.DiffAsync(_snapshot.Root, item.Path, comparison, cancellation.Token, _diffOptions);
             if (_closed || _loading != cancellation) return;
             if (cancellation.IsCancellationRequested) { ShowCancelledDiff(); return; }
             if (result.Patch.Length > 200000)
@@ -280,7 +286,9 @@ public sealed partial class MainWindow : Window
             else if (result.IsBinary)
                 ShowState("Binary file changed.", "A text comparison is not available for this file.");
             else if (result.Patch.Length == 0)
-                ShowState("No differences here.", "This file has no changes for the selected comparison. Try another comparison above.");
+                ShowState(_diffOptions.Whitespace == WhitespaceMode.Exact ? "No differences here." : "No differences for these options.",
+                    _diffOptions.Whitespace == WhitespaceMode.Exact ? "This file has no changes for the selected comparison. Try another comparison above." :
+                    "Whitespace is being ignored. Return to Exact in Options to verify all changes.");
             else
             {
                 SetWorkspaceDiff(result);

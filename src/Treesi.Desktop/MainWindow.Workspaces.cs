@@ -84,6 +84,7 @@ public sealed partial class MainWindow
 
     private void ShowRecentWorkspaces()
     {
+        CloseComparisonOptions(false);
         Cancel(); SaveCurrentWorkspace(); SetFocusMode(false);
         Required<Control>("OpenRecoveryNotice").IsVisible = false;
         Required<Control>("WorkspaceFrame").IsVisible = false;
