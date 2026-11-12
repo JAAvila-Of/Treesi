@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Treesi.Cli/Treesi.Cli.csproj" />
+    <Project Path="src/Treesi.Domain/Treesi.Domain.csproj" />
+    <Project Path="src/Treesi.Application/Treesi.Application.csproj" />
+    <Project Path="src/Treesi.Desktop/Treesi.Desktop.csproj" />
+    <Project Path="src/Treesi.Git/Treesi.Git.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Treesi.TestSupport/Treesi.TestSupport.csproj" />
+    <Project Path="tests/Treesi.Desktop.Tests/Treesi.Desktop.Tests.csproj" />
+    <Project Path="tests/Treesi.Tests/Treesi.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,84 @@
+name: Native Windows UI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-ui-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      TESTINGPLATFORM_TELEMETRY_OPTOUT: '1'
+      TREESI_ISOLATED_SUITE: native-ui
+    steps:
+      - name: Require a disposable interactive hosted VM
+        shell: pwsh
+        run: |
+          if ($env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or -not [Environment]::UserInteractive -or [Diagnostics.Process]::GetCurrentProcess().SessionId -eq 0) {
+            throw 'Native UI tests require an interactive GitHub-hosted VM; developer desktops and services are refused.'
+          }
+          "TREESI_NATIVE_RESULTS=$env:RUNNER_TEMP/treesi-native-results" >> $env:GITHUB_ENV
+          "APPIUM_HOME=$env:RUNNER_TEMP/treesi-appium-home" >> $env:GITHUB_ENV
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26.13.1'
+      - name: Publish application and compile native tests
+        shell: pwsh
+        run: |
+          dotnet publish src/Treesi.Desktop --configuration Release --runtime win-x64 --self-contained true --output "$env:RUNNER_TEMP/treesi-app"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          dotnet restore tests/Treesi.Native.Tests --locked-mode
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          dotnet build tests/Treesi.Native.Tests --configuration Release --no-restore
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          "TREESI_NATIVE_APP=$env:RUNNER_TEMP/treesi-app/Treesi.Desktop.exe" >> $env:GITHUB_ENV
+      - name: Install pinned Appium tools only inside this VM
+        shell: pwsh
+        run: |
+          npm ci --prefix eng/native-tools --no-audit --no-fund
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & './eng/native-tools/node_modules/.bin/appium.cmd' driver install --source=local "$pwd/eng/native-tools/node_modules/appium-wincore-driver"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Run Appium and native tests in one owned process lifetime
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force $env:TREESI_NATIVE_RESULTS | Out-Null
+          $entry = Join-Path $pwd 'eng/native-tools/node_modules/appium/build/lib/main.js'
+          $arguments = @('"' + $entry + '"', '--address', '127.0.0.1', '--port', '4723', '--log-no-colors')
+          $server = Start-Process -FilePath (Get-Command node.exe).Source -ArgumentList $arguments -WindowStyle Hidden -RedirectStandardOutput "$env:TREESI_NATIVE_RESULTS/appium.stdout.log" -RedirectStandardError "$env:TREESI_NATIVE_RESULTS/appium.stderr.log" -PassThru
+          try {
+            $ready = $false
+            for ($attempt = 0; $attempt -lt 40; $attempt++) {
+              try { $status = Invoke-RestMethod 'http://127.0.0.1:4723/status'; if ($status.value.ready) { $ready = $true; break } } catch { }
+              Start-Sleep -Seconds 1
+            }
+            if (-not $ready) { throw 'Appium did not become ready on loopback.' }
+            dotnet test tests/Treesi.Native.Tests --configuration Release --no-build --logger trx --results-directory "$env:TREESI_NATIVE_RESULTS/tests"
+            if ($LASTEXITCODE) { throw "Native UI tests failed (exit $LASTEXITCODE)." }
+          }
+          finally {
+            if (-not $server.HasExited) { $server.Kill($true) }
+          }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: native-windows-results
+          path: ${{ runner.temp }}/treesi-native-results
+          retention-days: 3
+          if-no-files-found: warn

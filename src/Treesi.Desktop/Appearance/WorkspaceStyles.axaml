@@ -1,0 +1,131 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:editing="clr-namespace:AvaloniaEdit.Editing;assembly=AvaloniaEdit">
+  <Styles.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+          <SolidColorBrush x:Key="Surface.Window">#F5F7F9</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Panel">#FFFFFF</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Sidebar">#F5F7F9</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Control">#FFFFFF</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Hover">#EDF1F5</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Selected">#DCEEE8</SolidColorBrush>
+          <SolidColorBrush x:Key="Border.Default">#DCE3E9</SolidColorBrush>
+          <SolidColorBrush x:Key="Text.Primary">#1B2939</SolidColorBrush>
+          <SolidColorBrush x:Key="Text.Secondary">#536579</SolidColorBrush>
+          <SolidColorBrush x:Key="Text.Subtle">#607286</SolidColorBrush>
+          <SolidColorBrush x:Key="Accent.Primary">#146C58</SolidColorBrush>
+          <SolidColorBrush x:Key="Accent.Hover">#105A49</SolidColorBrush>
+          <SolidColorBrush x:Key="Accent.Contrast">#FFFFFF</SolidColorBrush>
+          <SolidColorBrush x:Key="Accent.Soft">#DCEEE8</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.Canvas">#FFFFFF</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.Gutter">#F6F8FA</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.AddBackground">#E5F4E9</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.AddText">#216039</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.RemoveBackground">#FCE9EB</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.RemoveText">#A02E40</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.HunkBackground">#EDF2FC</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.HunkText">#375B91</SolidColorBrush>
+          <SolidColorBrush x:Key="Status.Warning">#8A550B</SolidColorBrush>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+          <SolidColorBrush x:Key="Surface.Window">#111820</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Panel">#151E28</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Sidebar">#121B24</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Control">#1A2531</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Hover">#23313E</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Selected">#203C36</SolidColorBrush>
+          <SolidColorBrush x:Key="Border.Default">#2B3846</SolidColorBrush>
+          <SolidColorBrush x:Key="Text.Primary">#E5EDF5</SolidColorBrush>
+          <SolidColorBrush x:Key="Text.Secondary">#A4B3C3</SolidColorBrush>
+          <SolidColorBrush x:Key="Text.Subtle">#97A9BB</SolidColorBrush>
+          <SolidColorBrush x:Key="Accent.Primary">#74DCC0</SolidColorBrush>
+          <SolidColorBrush x:Key="Accent.Hover">#98E8D2</SolidColorBrush>
+          <SolidColorBrush x:Key="Accent.Contrast">#10251F</SolidColorBrush>
+          <SolidColorBrush x:Key="Accent.Soft">#203C36</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.Canvas">#111A24</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.Gutter">#121C27</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.AddBackground">#173729</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.AddText">#A5E7B9</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.RemoveBackground">#3B222B</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.RemoveText">#FFADB9</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.HunkBackground">#1B2B42</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.HunkText">#B3CBF8</SolidColorBrush>
+          <SolidColorBrush x:Key="Status.Warning">#ECC180</SolidColorBrush>
+        </ResourceDictionary>
+      </ResourceDictionary.ThemeDictionaries>
+    </ResourceDictionary>
+  </Styles.Resources>
+  <Style Selector="Window.workspace">
+    <Setter Property="Background" Value="{DynamicResource Surface.Window}" />
+    <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
+    <Setter Property="FontFamily" Value="Segoe UI, SF Pro Text, Noto Sans, sans-serif" />
+    <Setter Property="FontSize" Value="13" />
+  </Style>
+  <Style Selector="TextBlock.secondary"><Setter Property="Foreground" Value="{DynamicResource Text.Secondary}" /></Style>
+  <Style Selector="TextBlock.eyebrow">
+    <Setter Property="Foreground" Value="{DynamicResource Text.Subtle}" />
+    <Setter Property="FontSize" Value="10" /><Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="LetterSpacing" Value="1.1" />
+  </Style>
+  <Style Selector="Button">
+    <Setter Property="Background" Value="{DynamicResource Surface.Control}" />
+    <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="12,8" /><Setter Property="MinHeight" Value="36" />
+    <Setter Property="FontSize" Value="12" /><Setter Property="FontWeight" Value="Medium" />
+  </Style>
+  <Style Selector="Button:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Surface.Hover}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Border.Default}" />
+    <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
+  </Style>
+  <Style Selector="Button.primary">
+    <Setter Property="Background" Value="{DynamicResource Accent.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Accent.Contrast}" />
+  </Style>
+  <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Accent.Hover}" />
+    <Setter Property="Foreground" Value="{DynamicResource Accent.Contrast}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent.Hover}" />
+  </Style>
+  <Style Selector="Button.quiet">
+    <Setter Property="Background" Value="Transparent" /><Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Text.Secondary}" />
+  </Style>
+  <Style Selector="Button:focus-visible"><Setter Property="BorderBrush" Value="{DynamicResource Accent.Primary}" /></Style>
+  <Style Selector="TextBox">
+    <Setter Property="Background" Value="{DynamicResource Surface.Control}" />
+    <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Border.Default}" />
+    <Setter Property="CornerRadius" Value="6" /><Setter Property="FontSize" Value="12" />
+    <Setter Property="PlaceholderForeground" Value="{DynamicResource Text.Secondary}" />
+    <Setter Property="MinHeight" Value="36" /><Setter Property="Padding" Value="10,8" />
+  </Style>
+  <Style Selector="ComboBox">
+    <Setter Property="Background" Value="{DynamicResource Surface.Control}" />
+    <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Border.Default}" />
+    <Setter Property="CornerRadius" Value="6" /><Setter Property="MinHeight" Value="36" />
+    <Setter Property="FontSize" Value="12" /><Setter Property="Padding" Value="10,7" />
+  </Style>
+  <Style Selector="ListBoxItem">
+    <Setter Property="Padding" Value="10,10" /><Setter Property="Margin" Value="8,2" />
+    <Setter Property="CornerRadius" Value="6" /><Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderBrush" Value="Transparent" /><Setter Property="MinHeight" Value="60" />
+  </Style>
+  <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter"><Setter Property="Background" Value="{DynamicResource Surface.Hover}" /></Style>
+  <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Surface.Selected}" />
+    <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
+  </Style>
+  <Style Selector="TextBlock.file-status"><Setter Property="Foreground" Value="{DynamicResource Accent.Primary}" /></Style>
+  <Style Selector="TextBlock.added"><Setter Property="Foreground" Value="{DynamicResource Diff.AddText}" /></Style>
+  <Style Selector="TextBlock.removed"><Setter Property="Foreground" Value="{DynamicResource Diff.RemoveText}" /></Style>
+  <Style Selector="editing|TextArea">
+    <Setter Property="SelectionBrush" Value="{DynamicResource Accent.Soft}" />
+    <Setter Property="SelectionForeground" Value="{DynamicResource Text.Primary}" />
+  </Style>
+</Styles>

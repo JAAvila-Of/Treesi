@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><IsPackable>false</IsPackable><IsTestProject>true</IsTestProject></PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter"><PrivateAssets>all</PrivateAssets></PackageReference>
+    <PackageReference Include="JAAvila.FluentOperations" />
+    <PackageReference Include="JAAvila.FluentOperations.Analyzers"><PrivateAssets>all</PrivateAssets></PackageReference>
+    <PackageReference Include="Appium.WebDriver" />
+    <ProjectReference Include="../Treesi.TestSupport/Treesi.TestSupport.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net11.0": {
+      "treesi.application": {
+        "type": "Project",
+        "dependencies": {
+          "Treesi.Domain": "[1.0.0, )"
+        }
+      },
+      "treesi.domain": {
+        "type": "Project"
+      },
+      "treesi.git": {
+        "type": "Project",
+        "dependencies": {
+          "Treesi.Application": "[1.0.0, )"
+        }
+      }
+    }
+  }
+}

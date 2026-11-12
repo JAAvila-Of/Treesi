@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup><ProjectReference Include="../Treesi.Application/Treesi.Application.csproj" /></ItemGroup>
+</Project>

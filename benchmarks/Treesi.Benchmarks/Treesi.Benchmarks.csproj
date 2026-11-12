@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
+    <ProjectReference Include="../../src/Treesi.Git/Treesi.Git.csproj" />
+    <ProjectReference Include="../../tests/Treesi.TestSupport/Treesi.TestSupport.csproj" />
+  </ItemGroup>
+</Project>

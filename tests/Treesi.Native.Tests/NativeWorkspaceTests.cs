@@ -1,0 +1,121 @@
+using System.Diagnostics;
+using JAAvila.FluentOperations;
+using NUnit.Framework;
+using NUnit.Framework.Interfaces;
+using OpenQA.Selenium;
+using OpenQA.Selenium.Appium;
+using OpenQA.Selenium.Appium.Windows;
+using Treesi.TestSupport;
+
+namespace Treesi.Native.Tests;
+
+[TestFixture]
+[NonParallelizable]
+public sealed class NativeWorkspaceTests
+{
+    private WindowsDriver? _driver;
+    private SyntheticRepository? _repository;
+
+    [OneTimeSetUp]
+    public void RequireIsolatedDesktop() => IsolatedExecution.Require("native-ui");
+
+    [SetUp]
+    public void LaunchOnlyTheFixtureApplication()
+    {
+        var executable = Environment.GetEnvironmentVariable("TREESI_NATIVE_APP")
+            ?? throw new InvalidOperationException("TREESI_NATIVE_APP must name the published Treesi executable.");
+        if (!Path.IsPathFullyQualified(executable) || !File.Exists(executable))
+            throw new InvalidOperationException("The published Treesi executable does not exist.");
+        _repository = new SyntheticRepository();
+        var options = new AppiumOptions { PlatformName = "Windows", AutomationName = "Wincore", App = executable };
+        options.AddAdditionalAppiumOption("appArguments", $"\"{_repository.SamplePath}\"");
+        options.AddAdditionalAppiumOption("shouldCloseApp", true);
+        _driver = new WindowsDriver(new Uri("http://127.0.0.1:4723"), options, TimeSpan.FromSeconds(60));
+        WaitUntil(() => Element("FileTitle").Text == "sample.txt");
+    }
+
+    [TearDown]
+    public void CloseTheOwnedSession()
+    {
+        try
+        {
+            if (_driver is not null && TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Failed)
+            {
+                var directory = Environment.GetEnvironmentVariable("TREESI_NATIVE_RESULTS");
+                if (!string.IsNullOrWhiteSpace(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                    File.WriteAllText(Path.Combine(directory, TestContext.CurrentContext.Test.Name + ".xml"), _driver.PageSource);
+                    _driver.GetScreenshot().SaveAsFile(Path.Combine(directory, TestContext.CurrentContext.Test.Name + ".png"));
+                }
+            }
+        }
+        finally
+        {
+            try { _driver?.Quit(); }
+            finally { _driver?.Dispose(); _driver = null; _repository?.Dispose(); _repository = null; }
+        }
+    }
+
+    [Test]
+    public void DirectFileOpenExposesAccessibleWorkspaceAndChangeCounts()
+    {
+        WaitUntil(() => Element("AddedCount").Text == "+1");
+        Element("RemovedCount").Text.Test().Be("−1");
+        Element("ChangedFiles").Displayed.Test().BeTrue();
+        Element("DiffSearch").Enabled.Test().BeTrue();
+    }
+
+    [Test]
+    public void NativeThemeSelectorCanSwitchBothThemes()
+    {
+        SelectCombo("ThemeSelector", "Light");
+        WaitUntil(() => ComboText("ThemeSelector").Contains("Light", StringComparison.Ordinal));
+        SelectCombo("ThemeSelector", "Dark");
+        WaitUntil(() => ComboText("ThemeSelector").Contains("Dark", StringComparison.Ordinal));
+        Element("FileTitle").Text.Test().Be("sample.txt");
+    }
+
+    [Test]
+    public void NativeFilterUpdatesAndRestoresTheSelection()
+    {
+        var filter = Element("FileFilter"); filter.SendKeys("missing-file");
+        WaitUntil(() => Element("EmptyTitle").Text == "No matching files.");
+        filter.Clear();
+        WaitUntil(() => Element("FileTitle").Text == "sample.txt" && Element("DiffSearch").Enabled);
+        Element("AddedCount").Text.Test().Be("+1");
+    }
+
+    [Test]
+    public void NativeComparisonAndSearchWorkThroughAccessibility()
+    {
+        SelectCombo("ComparisonSelector", "Index vs HEAD");
+        WaitUntil(() => Element("EmptyTitle").Text == "No differences here.");
+        SelectCombo("ComparisonSelector", "Working tree vs Index");
+        WaitUntil(() => Element("DiffSearch").Enabled);
+        Element("DiffSearch").SendKeys("changed"); Element("FindNextButton").Click();
+        WaitUntil(() => Element("OperationStatus").Text == "Match selected in diff");
+        Element("FileTitle").Text.Test().Be("sample.txt");
+    }
+
+    private AppiumElement Element(string id) => _driver!.FindElement(new ByAccessibilityId(id));
+    private string ComboText(string id) => Element(id).Text + " " + Element(id).GetAttribute("Value");
+    private void SelectCombo(string id, string option)
+    {
+        Element(id).Click();
+        WaitUntil(() => _driver!.FindElements(By.Name(option)).Any(item => item.Displayed));
+        _driver!.FindElements(By.Name(option)).First(item => item.Displayed).Click();
+    }
+
+    private static void WaitUntil(Func<bool> predicate)
+    {
+        var deadline = Stopwatch.StartNew();
+        while (deadline.Elapsed < TimeSpan.FromSeconds(20))
+        {
+            try { if (predicate()) return; }
+            catch (WebDriverException) { }
+            Thread.Sleep(100);
+        }
+        throw new TimeoutException("The native workspace did not reach the expected accessible state.");
+    }
+}

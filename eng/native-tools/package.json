@@ -1,0 +1,10 @@
+{
+  "name": "treesi-isolated-native-tools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pinned automation tools installed only in disposable remote Windows VMs.",
+  "dependencies": {
+    "appium": "3.9.0",
+    "appium-wincore-driver": "3.3.2"
+  }
+}

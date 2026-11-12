@@ -1,0 +1,47 @@
+name: Build and test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      TESTINGPLATFORM_TELEMETRY_OPTOUT: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          global-json-file: global.json
+      - run: dotnet restore Treesi.slnx --locked-mode
+      - run: dotnet build Treesi.slnx --configuration Release --no-restore
+      - run: dotnet test Treesi.slnx --configuration Release --no-build --logger trx --results-directory "${{ runner.temp }}/treesi-results/tests"
+        env:
+          TREESI_RENDER_OUTPUT: ${{ runner.temp }}/treesi-results/renders
+      - run: dotnet format Treesi.slnx --no-restore --verify-no-changes
+      - name: Compile isolated suites without running them
+        run: |
+          dotnet restore Treesi.Isolated.slnx --locked-mode
+          dotnet build Treesi.Isolated.slnx --configuration Release --no-restore
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: verification-${{ matrix.os }}
+          path: ${{ runner.temp }}/treesi-results
+          retention-days: 3
+          if-no-files-found: error

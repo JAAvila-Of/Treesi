@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><IsPackable>false</IsPackable><IsTestProject>true</IsTestProject></PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter"><PrivateAssets>all</PrivateAssets></PackageReference>
+    <PackageReference Include="JAAvila.FluentOperations" />
+    <PackageReference Include="JAAvila.FluentOperations.Architecture" />
+    <PackageReference Include="JAAvila.FluentOperations.Analyzers"><PrivateAssets>all</PrivateAssets></PackageReference>
+    <ProjectReference Include="../../src/Treesi.Git/Treesi.Git.csproj" />
+    <ProjectReference Include="../../src/Treesi.Cli/Treesi.Cli.csproj" />
+    <ProjectReference Include="../Treesi.TestSupport/Treesi.TestSupport.csproj" />
+  </ItemGroup>
+</Project>
