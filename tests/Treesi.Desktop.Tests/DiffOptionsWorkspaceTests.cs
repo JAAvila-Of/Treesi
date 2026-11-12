@@ -24,8 +24,28 @@ public sealed class DiffOptionsWorkspaceTests
     private static void Draft(MainWindow window, int context, WhitespaceMode whitespace)
     {
         Click(window, "DiffOptionsButton");
-        Control<NumericUpDown>(window, "ContextLinesInput").Value = context;
+        Control<TextBox>(window, "ContextLinesInput").Text = context.ToString(System.Globalization.CultureInfo.InvariantCulture);
         Control<ComboBox>(window, "WhitespaceSelector").SelectedIndex = (int)whitespace;
+    }
+
+    [AvaloniaTest]
+    public async Task ContextCanBeTypedThroughTheFocusedEditFieldAndApplied()
+    {
+        var inspector = new Inspector(); var window = Window(inspector);
+        try
+        {
+            window.Show(); await window.OpenRepositoryAsync(Root("treesi"));
+            using var initial = window.CaptureRenderedFrame();
+            Click(window, "DiffOptionsButton");
+            var input = Control<TextBox>(window, "ContextLinesInput");
+            input.IsFocused.Test().BeTrue();
+            window.KeyTextInput("10");
+            input.Text.Test().Be("10");
+            Click(window, "ApplyDiffOptionsButton"); await window.PendingInspection;
+            inspector.Requests.Last().Options.ContextLines.Test().Be(10);
+            Control<TextBlock>(window, "ComparisonDescription").Text!.Contains("Context 10", StringComparison.Ordinal).Test().BeTrue();
+        }
+        finally { window.Close(); }
     }
 
     [AvaloniaTest]
@@ -40,7 +60,7 @@ public sealed class DiffOptionsWorkspaceTests
             inspector.Requests.Count.Test().Be(1);
             Control<Control>(window, "WhitespaceNotice").IsVisible.Test().BeFalse();
             Click(window, "DiffOptionsButton");
-            Control<NumericUpDown>(window, "ContextLinesInput").Value.Test().Be(3m);
+            Control<TextBox>(window, "ContextLinesInput").Text.Test().Be("3");
             Click(window, "ApplyDiffOptionsButton"); inspector.Requests.Count.Test().Be(1);
             Draft(window, 10, WhitespaceMode.IgnoreTrailingSpace);
             Click(window, "ApplyDiffOptionsButton"); await window.PendingInspection;
@@ -96,17 +116,17 @@ public sealed class DiffOptionsWorkspaceTests
                 SaveFrame(window, $"options-{theme.Id}-compact.png");
                 foreach (var name in new[] { "ContextLinesInput", "WhitespaceSelector", "ApplyDiffOptionsButton", "CancelDiffOptionsButton", "ResetDiffOptionsButton" })
                     AssertInside(window, Control<Control>(window, name));
-                Control<NumericUpDown>(window, "ContextLinesInput").IsKeyboardFocusWithin.Test().BeTrue();
-                Control<NumericUpDown>(window, "ContextLinesInput").Value = null;
+                Control<TextBox>(window, "ContextLinesInput").IsKeyboardFocusWithin.Test().BeTrue();
+                Control<TextBox>(window, "ContextLinesInput").Text = null;
                 Click(window, "ApplyDiffOptionsButton");
                 Control<Control>(window, "DiffOptionsError").IsVisible.Test().BeTrue();
                 Control<Control>(window, "DiffOptionsPanel").IsVisible.Test().BeTrue();
                 inspector.Requests.Count.Test().Be(theme == ThemeCatalog.Dark ? 1 : 2);
-                Control<NumericUpDown>(window, "ContextLinesInput").Value = 3.5m;
+                Control<TextBox>(window, "ContextLinesInput").Text = "3.5";
                 Click(window, "ApplyDiffOptionsButton");
                 Control<Control>(window, "DiffOptionsError").IsVisible.Test().BeTrue();
                 inspector.Requests.Count.Test().Be(theme == ThemeCatalog.Dark ? 1 : 2);
-                Control<NumericUpDown>(window, "ContextLinesInput").Value = 10;
+                Control<TextBox>(window, "ContextLinesInput").Text = "10";
                 Click(window, "ApplyDiffOptionsButton"); await window.PendingInspection;
                 foreach (var mode in new[] { 0, 1 })
                 {
@@ -141,7 +161,7 @@ public sealed class DiffOptionsWorkspaceTests
             inspector.Requests.Last().Options.Test().Be(DiffOptions.Default);
             Control<Control>(window, "WhitespaceNotice").IsVisible.Test().BeFalse();
             Click(window, "DiffOptionsButton");
-            Control<NumericUpDown>(window, "ContextLinesInput").Value.Test().Be(3m);
+            Control<TextBox>(window, "ContextLinesInput").Text.Test().Be("3");
             Control<ComboBox>(window, "WhitespaceSelector").SelectedIndex.Test().Be(0);
         }
         finally { window.Close(); }

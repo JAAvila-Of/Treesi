@@ -104,17 +104,16 @@ public sealed class NativeWorkspaceTests
     public void NativeComparisonOptionsApplyContextAndKeepWhitespaceFilteringVisible()
     {
         Element("DiffOptionsButton").Click();
-        var context = Element("ContextLinesInput"); context.Click();
-        context.SendKeys(Keys.Control + "a" + Keys.Null + "10" + Keys.Tab);
+        var context = Element("ContextLinesInput"); context.Clear(); context.SendKeys("10");
         SelectCombo("WhitespaceSelector", "Ignore trailing space");
         Element("ApplyDiffOptionsButton").Click();
-        WaitUntil(() => Element("DiffSearch").Enabled && Element("WhitespaceNotice").Displayed);
+        WaitUntil(() => Element("DiffSearch").Enabled && Element("WhitespaceWarningText").Displayed);
         Element("ComparisonDescription").Text.Contains("Context 10", StringComparison.Ordinal).Test().BeTrue();
         Element("DiffOptionsButton").Click(); Element("ResetDiffOptionsButton").Click(); Element("CancelDiffOptionsButton").Click();
-        Element("WhitespaceNotice").Displayed.Test().BeTrue();
+        Element("WhitespaceWarningText").Displayed.Test().BeTrue();
         Element("DiffOptionsButton").Click(); Element("ResetDiffOptionsButton").Click(); Element("ApplyDiffOptionsButton").Click();
         WaitUntil(() => Element("DiffSearch").Enabled && Element("ComparisonDescription").Text.Contains("Context 3", StringComparison.Ordinal));
-        _driver!.FindElements(new ByAccessibilityId("WhitespaceNotice")).Any(item => item.Displayed).Test().BeFalse();
+        _driver!.FindElements(new ByAccessibilityId("WhitespaceWarningText")).Any(item => item.Displayed).Test().BeFalse();
         Element("FileTitle").Text.Test().Be("sample.txt");
     }
 

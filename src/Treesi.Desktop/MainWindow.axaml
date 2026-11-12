@@ -87,8 +87,8 @@
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
               <Border CornerRadius="5" Padding="6,3" Background="{DynamicResource Diff.AddBackground}"><TextBlock x:Name="AddedCount" AutomationProperties.AutomationId="AddedCount" Text="+0" Classes="added" FontFamily="monospace" FontSize="11" /></Border>
               <Border CornerRadius="5" Padding="6,3" Background="{DynamicResource Diff.RemoveBackground}"><TextBlock x:Name="RemovedCount" AutomationProperties.AutomationId="RemovedCount" Text="−0" Classes="removed" FontFamily="monospace" FontSize="11" /></Border>
-              <Border x:Name="WhitespaceNotice" AutomationProperties.AutomationId="WhitespaceNotice" IsVisible="False" CornerRadius="5" Padding="6,3" BorderBrush="{DynamicResource Status.Warning}" BorderThickness="1">
-                <TextBlock Text="WS ignored" Foreground="{DynamicResource Status.Warning}" FontSize="10" />
+              <Border x:Name="WhitespaceNotice" IsVisible="False" CornerRadius="5" Padding="6,3" BorderBrush="{DynamicResource Status.Warning}" BorderThickness="1">
+                <TextBlock x:Name="WhitespaceWarningText" AutomationProperties.AutomationId="WhitespaceWarningText" Text="WS ignored" Foreground="{DynamicResource Status.Warning}" FontSize="10" />
               </Border>
             </StackPanel>
             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
@@ -216,7 +216,7 @@
         <TextBlock Text="Apply to the current comparison. Repository files remain unchanged." Classes="secondary" FontSize="11" TextWrapping="Wrap" />
         <StackPanel Spacing="5">
           <Label Target="{Binding #ContextLinesInput}" Content="Context lines" Padding="0" />
-          <NumericUpDown x:Name="ContextLinesInput" AutomationProperties.AutomationId="ContextLinesInput" AutomationProperties.Name="Context lines" Minimum="0" Maximum="50" Increment="1" Value="3" FormatString="0.############################" />
+          <TextBox x:Name="ContextLinesInput" AutomationProperties.AutomationId="ContextLinesInput" AutomationProperties.Name="Context lines from 0 to 50" Text="3" MaxLength="3" />
           <TextBlock Text="0–50 lines around each change. Output limits still apply." Classes="secondary" FontSize="10" TextWrapping="Wrap" />
         </StackPanel>
         <StackPanel Spacing="5">

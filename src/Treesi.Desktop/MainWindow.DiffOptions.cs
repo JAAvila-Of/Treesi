@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Treesi.Domain;
@@ -28,7 +29,7 @@ public sealed partial class MainWindow
 
     private void SetOptionsDraft(DiffOptions options)
     {
-        Required<NumericUpDown>("ContextLinesInput").Value = options.ContextLines;
+        Required<TextBox>("ContextLinesInput").Text = options.ContextLines.ToString(CultureInfo.InvariantCulture);
         Required<ComboBox>("WhitespaceSelector").SelectedIndex = (int)options.Whitespace;
         Required<Control>("DiffOptionsError").IsVisible = false;
     }
@@ -37,7 +38,8 @@ public sealed partial class MainWindow
     {
         SetOptionsDraft(_diffOptions);
         Required<Control>("DiffOptionsPanel").IsVisible = true;
-        Required<NumericUpDown>("ContextLinesInput").Focus();
+        var input = Required<TextBox>("ContextLinesInput");
+        input.Focus(); input.SelectAll();
         _motion.Reveal(Required<Control>("DiffOptionsPanel"));
     }
 
@@ -49,15 +51,15 @@ public sealed partial class MainWindow
 
     private void ApplyComparisonOptions()
     {
-        var value = Required<NumericUpDown>("ContextLinesInput").Value;
+        var text = Required<TextBox>("ContextLinesInput").Text;
         var whitespace = (WhitespaceMode)Required<ComboBox>("WhitespaceSelector").SelectedIndex;
-        if (value is null || value < 0 || value > DiffOptions.MaximumContextLines || value != decimal.Truncate(value.Value) || !Enum.IsDefined(whitespace))
+        if (!int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var value) || value > DiffOptions.MaximumContextLines || !Enum.IsDefined(whitespace))
         {
             var error = Required<TextBlock>("DiffOptionsError");
             error.Text = "Choose a whole context value from 0 to 50 and a whitespace mode."; error.IsVisible = true;
             return;
         }
-        var options = new DiffOptions(decimal.ToInt32(value.Value), whitespace);
+        var options = new DiffOptions(value, whitespace);
         CloseComparisonOptions();
         if (_diffOptions == options) return;
         _diffOptions = options; UpdateOptionsIndicator();
@@ -77,7 +79,7 @@ public sealed partial class MainWindow
         var notice = Required<Control>("WhitespaceNotice");
         notice.IsVisible = filtered;
         ToolTip.SetTip(notice, description + " Differences may be hidden; return to Exact to verify.");
-        AutomationProperties.SetName(notice, description + " Differences may be hidden.");
+        AutomationProperties.SetName(Required<TextBlock>("WhitespaceWarningText"), description + " Differences may be hidden.");
         ToolTip.SetTip(Required<Button>("DiffOptionsButton"), description);
     }
 }
