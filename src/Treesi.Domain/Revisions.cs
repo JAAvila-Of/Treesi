@@ -36,7 +36,7 @@ public sealed record RevisionSelection(string Base, string Target, RevisionCompa
 }
 
 public sealed record RevisionEndpoints(string Root, string BaseName, string BaseCommitId, string TargetName,
-    string TargetCommitId, string EffectiveBaseCommitId, RevisionComparisonMode Mode)
+    string TargetCommitId, string EffectiveBaseCommitId, RevisionComparisonMode Mode, bool IsRootComparison = false)
 {
     public void Validate()
     {
@@ -45,6 +45,8 @@ public sealed record RevisionEndpoints(string Root, string BaseName, string Base
             || !Enum.IsDefined(Mode) || (Mode == RevisionComparisonMode.Direct && EffectiveBaseCommitId != BaseCommitId))
             throw new InspectionException("invalid_revision_comparison", "A resolved comparison requires an absolute root and complete commit IDs.");
         new RevisionSelection(BaseName, TargetName, Mode).Validate();
+        if (IsRootComparison && (Mode != RevisionComparisonMode.Direct || BaseCommitId != TargetCommitId || EffectiveBaseCommitId != TargetCommitId))
+            throw new InspectionException("invalid_revision_comparison", "An initial-commit comparison must pin one commit and use the empty tree.");
     }
 
     public static bool IsCommitId(string? value) => value is { Length: 40 or 64 } && value.All(character => character is >= '0' and <= '9' or >= 'a' and <= 'f');

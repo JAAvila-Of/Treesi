@@ -4,6 +4,8 @@ The first supported transport is a finite, read-only JSON CLI. Run one process p
 
 ## Commands
 
+Local history, commit metadata and parent-specific diffs are also available through the same envelope and composition boundaries. See [history commands and semantics](HISTORY.md).
+
 | Command | Arguments | Result |
 | --- | --- | --- |
 | `capabilities` | None | Version, provider, read-only capability, command and comparison names, diff-option defaults and bounds, limits, exclusions, transports |

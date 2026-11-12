@@ -91,9 +91,9 @@ public sealed partial class MainWindow
         ToolTip.SetTip(Required<TextBlock>("AfterLabel"), null);
         if (result.Revisions is { } revisions)
         {
-            Required<TextBlock>("BeforeLabel").Text = $"{(revisions.Mode == RevisionComparisonMode.MergeBase ? "MERGE BASE" : "BASE")} {revisions.EffectiveBaseCommitId[..12]}";
+            Required<TextBlock>("BeforeLabel").Text = revisions.IsRootComparison ? "EMPTY TREE" : $"{(revisions.Mode == RevisionComparisonMode.MergeBase ? "MERGE BASE" : "BASE")} {revisions.EffectiveBaseCommitId[..12]}";
             Required<TextBlock>("AfterLabel").Text = $"TARGET {revisions.TargetCommitId[..12]}";
-            ToolTip.SetTip(Required<TextBlock>("BeforeLabel"), $"{revisions.BaseName}: {revisions.BaseCommitId}. Effective base: {revisions.EffectiveBaseCommitId}");
+            ToolTip.SetTip(Required<TextBlock>("BeforeLabel"), revisions.IsRootComparison ? "Empty tree before the initial commit." : $"{revisions.BaseName}: {revisions.BaseCommitId}. Effective base: {revisions.EffectiveBaseCommitId}");
             ToolTip.SetTip(Required<TextBlock>("AfterLabel"), $"{revisions.TargetName}: {revisions.TargetCommitId}");
         }
         ApplyDiffMode();

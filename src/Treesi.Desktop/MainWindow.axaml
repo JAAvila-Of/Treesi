@@ -46,7 +46,7 @@
               <TextBlock x:Name="RepositoryLocation" Text="A local view of your changes" Classes="secondary" FontSize="10" TextTrimming="CharacterEllipsis" />
             </StackPanel>
           </Border>
-          <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="12,0,8,6">
+          <Grid x:Name="ChangesNavigationHeader" Grid.Row="1" ColumnDefinitions="*,Auto" Margin="12,0,8,6">
             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
               <TextBlock x:Name="ChangesHeading" Text="Changes" FontWeight="SemiBold" VerticalAlignment="Center" />
               <Border Background="{DynamicResource Surface.Hover}" CornerRadius="4" Padding="6,2">
@@ -72,11 +72,40 @@
               </DataTemplate>
             </ListBox.ItemTemplate>
           </ListBox>
+          <Grid x:Name="HistorySidebar" Grid.Row="1" Grid.RowSpan="3" IsVisible="False" Background="{DynamicResource Surface.Sidebar}" RowDefinitions="Auto,Auto,Auto,Auto,*,Auto" Margin="6,0,6,6" RowSpacing="6">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Text="History" FontWeight="SemiBold" VerticalAlignment="Center" Margin="6,0" />
+              <Button Grid.Column="1" x:Name="HistoryFilesButton" AutomationProperties.AutomationId="HistoryFilesButton" Content="Files" Classes="quiet" Padding="8,4" ToolTip.Tip="Show files in the current comparison" />
+            </Grid>
+            <ComboBox Grid.Row="1" x:Name="HistoryScopeSelector" AutomationProperties.AutomationId="HistoryScopeSelector" AutomationProperties.Name="History scope" HorizontalAlignment="Stretch" SelectedIndex="0">
+              <ComboBoxItem Content="Repository" /><ComboBoxItem Content="Selected file" />
+            </ComboBox>
+            <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="4">
+              <TextBox x:Name="HistoryStartInput" AutomationProperties.AutomationId="HistoryStartInput" Text="HEAD" MaxLength="512" AutomationProperties.Name="History start revision" />
+              <Button Grid.Column="1" x:Name="ReloadHistoryButton" AutomationProperties.AutomationId="ReloadHistoryButton" Content="Go" Classes="quiet" Padding="8,4" ToolTip.Tip="Start fresh history from this local revision" />
+            </Grid>
+            <TextBlock Grid.Row="3" x:Name="HistoryNotice" AutomationProperties.AutomationId="HistoryNotice" Classes="secondary" FontSize="10" TextWrapping="Wrap" Margin="6,0" />
+            <ListBox Grid.Row="4" x:Name="HistoryCommits" AutomationProperties.AutomationId="HistoryCommits" Background="Transparent" BorderThickness="0" AutomationProperties.Name="Local commits">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="local:HistoryCommitItem">
+                  <StackPanel Spacing="4" ToolTip.Tip="{Binding Subject}">
+                    <TextBlock Text="{Binding Subject}" TextTrimming="CharacterEllipsis" FontSize="12" FontWeight="Medium" />
+                    <TextBlock Text="{Binding Caption}" TextTrimming="CharacterEllipsis" Classes="secondary" FontSize="10" />
+                    <TextBlock Text="{Binding AuthoredAt}" TextTrimming="CharacterEllipsis" Classes="secondary" FontSize="9" />
+                  </StackPanel>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+            <Grid Grid.Row="5" ColumnDefinitions="*,*" ColumnSpacing="4">
+              <Button x:Name="PreviousHistoryButton" AutomationProperties.AutomationId="PreviousHistoryButton" Content="Previous" Classes="quiet" Padding="6,4" IsEnabled="False" />
+              <Button Grid.Column="1" x:Name="NextHistoryButton" AutomationProperties.AutomationId="NextHistoryButton" Content="Next" Classes="quiet" Padding="6,4" IsEnabled="False" />
+            </Grid>
+          </Grid>
           <Border Grid.Row="4" Padding="12,8" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Border.Default}">
-            <StackPanel Orientation="Horizontal" Spacing="7">
-              <Ellipse Width="6" Height="6" Fill="{DynamicResource Accent.Primary}" VerticalAlignment="Center" />
-              <TextBlock x:Name="WorkspaceScopeHint" Text="Local workspace" Classes="secondary" FontSize="11" />
-            </StackPanel>
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock x:Name="WorkspaceScopeHint" Text="Local workspace" Classes="secondary" FontSize="9" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+              <Button Grid.Column="1" x:Name="HistoryButton" AutomationProperties.AutomationId="HistoryButton" Content="History" Classes="quiet" Padding="6,3" MinHeight="24" IsEnabled="False" ToolTip.Tip="Browse local repository or file history" />
+            </Grid>
           </Border>
         </Grid>
         <Border x:Name="FilesSeparator" Grid.Column="1" Background="{DynamicResource Border.Default}" />
@@ -274,6 +303,20 @@
           <Button x:Name="BackToRevisionDraftButton" AutomationProperties.AutomationId="BackToRevisionDraftButton" Content="Back" Classes="quiet" />
           <Button Grid.Column="2" x:Name="UseReferenceAsBaseButton" AutomationProperties.AutomationId="UseReferenceAsBaseButton" Content="Use as base" />
           <Button Grid.Column="3" x:Name="UseReferenceAsTargetButton" AutomationProperties.AutomationId="UseReferenceAsTargetButton" Content="Use as target" Classes="primary" />
+        </Grid>
+      </Grid>
+    </Border>
+    <Border x:Name="CommitDetailsPanel" Grid.Row="1" IsVisible="False" ZIndex="26" Width="430" MaxHeight="410" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="16" Padding="16" CornerRadius="10" Background="{DynamicResource Surface.Panel}" BorderBrush="{DynamicResource Border.Default}" BorderThickness="1" BoxShadow="0 8 24 0 #30000000">
+      <Grid RowDefinitions="Auto,Auto,Auto,*,Auto,Auto" RowSpacing="10">
+        <TextBlock Text="Commit details" FontSize="16" FontWeight="SemiBold" />
+        <TextBlock Grid.Row="1" x:Name="CommitIdentity" AutomationProperties.AutomationId="CommitIdentity" FontFamily="monospace" FontSize="10" TextWrapping="Wrap" />
+        <TextBlock Grid.Row="2" x:Name="CommitAuthor" Classes="secondary" FontSize="10" TextWrapping="Wrap" MaxHeight="70" />
+        <TextBox Grid.Row="3" x:Name="CommitMessage" AutomationProperties.AutomationId="CommitMessage" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="50" MaxHeight="140" AutomationProperties.Name="Untrusted commit message" />
+        <ComboBox Grid.Row="4" x:Name="CommitParentSelector" AutomationProperties.AutomationId="CommitParentSelector" AutomationProperties.Name="Compare against parent" HorizontalAlignment="Stretch" />
+        <Grid Grid.Row="5" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
+          <Button x:Name="CommitWorkingButton" AutomationProperties.AutomationId="CommitWorkingButton" Content="Working changes" Classes="quiet" Padding="8,5" />
+          <Button Grid.Column="1" x:Name="CloseCommitDetailsButton" AutomationProperties.AutomationId="CloseCommitDetailsButton" Content="Close" Classes="quiet" Padding="8,5" />
+          <Button Grid.Column="2" x:Name="ApplyCommitParentButton" AutomationProperties.AutomationId="ApplyCommitParentButton" Content="Compare" Classes="primary" Padding="8,5" />
         </Grid>
       </Grid>
     </Border>

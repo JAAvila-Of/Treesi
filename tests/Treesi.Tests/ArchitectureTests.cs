@@ -37,6 +37,9 @@ public sealed class ArchitectureTests
         typeof(GitInspector).Test().ImplementInterface<IRepositoryReader>();
         typeof(GitInspector).Test().ImplementInterface<IRevisionReader>();
         typeof(RevisionService).Test().ImplementInterface<IRevisionService>();
+        typeof(GitInspector).Test().ImplementInterface<IHistoryReader>();
+        typeof(HistoryService).Test().ImplementInterface<IHistoryService>();
+        typeof(InstrumentedHistoryService).Test().ImplementInterface<IHistoryService>();
         typeof(CommandLine).Test().NotHaveDependencyOn("Treesi.Git");
     }
 

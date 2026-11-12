@@ -189,6 +189,28 @@ public sealed class NativeWorkspaceTests
         Element("ReduceMotionToggle").Click();
     }
     private string ComboText(string id) => Element(id).Text + " " + Element(id).GetAttribute("Value");
+    [Test]
+    public void NativeHistoryReviewsLocalAndInitialCommitsAndReturnsToWorkingChanges()
+    {
+        Element("HistoryButton").Click();
+        WaitUntil(() => _driver!.FindElements(By.Name("test: create historical change")).Any(item => item.Displayed));
+        _driver!.FindElements(By.Name("test: create historical change")).First(item => item.Displayed).Click();
+        WaitUntil(() => Element("RevisionEndpointsButton").Displayed && Element("DiffSearch").Enabled);
+        Element("DiffSearch").Clear(); Element("DiffSearch").SendKeys("historical"); Element("FindNextButton").Click();
+        WaitUntil(() => Element("OperationStatus").Text == "Match selected in diff");
+        Element("RevisionEndpointsButton").Click();
+        WaitUntil(() => Element("CommitMessage").Displayed);
+        Element("CommitMessage").Text.Contains("test: create historical change", StringComparison.Ordinal).Test().BeTrue();
+        Element("CloseCommitDetailsButton").Click();
+        _driver.FindElements(By.Name("test: create isolated fixture")).First(item => item.Displayed).Click();
+        WaitUntil(() => Element("RevisionEndpointsButton").Text.Contains("Empty tree", StringComparison.Ordinal) && Element("DiffSearch").Enabled);
+        Element("DiffSearch").Clear(); Element("DiffSearch").SendKeys("original"); Element("FindNextButton").Click();
+        WaitUntil(() => Element("OperationStatus").Text == "Match selected in diff");
+        Element("RevisionEndpointsButton").Click(); Element("CommitWorkingButton").Click();
+        WaitUntil(() => Element("ComparisonSelector").Displayed && Element("DiffSearch").Enabled);
+        Element("FileTitle").Text.Test().Be("sample.txt");
+    }
+
     private void SelectCombo(string id, string option)
     {
         Element(id).Click();

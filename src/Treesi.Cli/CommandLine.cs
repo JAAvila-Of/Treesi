@@ -7,14 +7,14 @@ using Treesi.Domain;
 
 namespace Treesi.Cli;
 
-public static class CommandLine
+public static partial class CommandLine
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
     {
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
     };
 
-    public static async Task<int> RunAsync(string[] args, TextWriter output, IInspectionService inspector, CancellationToken token = default, IRevisionService? revisions = null)
+    public static async Task<int> RunAsync(string[] args, TextWriter output, IInspectionService inspector, CancellationToken token = default, IRevisionService? revisions = null, IHistoryService? history = null)
     {
         var requestId = Guid.NewGuid().ToString("N");
         var start = Stopwatch.GetTimestamp();
@@ -32,9 +32,10 @@ public static class CommandLine
                     version = "0.1.0",
                     provider = "git",
                     readOnly = true,
-                    commands = revisions is null ? new[] { "capabilities", "inspect", "diff" } : ["capabilities", "inspect", "diff", "references", "compare", "revision-diff"],
+                    commands = AvailableCommands(revisions, history),
                     comparisons = new[] { "working", "staged", "head" },
                     revisionComparisons = new { available = revisions is not null, modes = new[] { "direct", "merge-base" }, referenceLimit = RevisionLimits.References, fileLimit = RevisionLimits.Files },
+                    history = new { available = history is not null, maximumPageSize = HistoryQuery.MaximumPageSize, maximumOffset = HistoryQuery.MaximumOffset, followsRenames = false },
                     diffOptions = new
                     {
                         context = new { minimum = 0, maximum = DiffOptions.MaximumContextLines, @default = 3 },
@@ -51,6 +52,10 @@ public static class CommandLine
                 ["references", var repository] => await RequireRevisions(revisions).ReferencesAsync(repository, token),
                 ["compare", var repository, var from, var to, .. var flags] => await CompareAsync(RequireRevisions(revisions), repository, from, to, flags, token),
                 ["revision-diff", var repository, var from, var to, var path, .. var flags] => await ReadRevisionDiffAsync(RequireRevisions(revisions), repository, from, to, path, flags, token),
+                ["history", var repository, .. var flags] => await ReadHistoryAsync(RequireHistory(history), repository, flags, token),
+                ["commit", var repository, var revision] => await RequireHistory(history).CommitAsync(repository, revision, token),
+                ["commit-files", var repository, var revision, .. var flags] => await ReadCommitFilesAsync(RequireHistory(history), RequireRevisions(revisions), repository, revision, flags, token),
+                ["commit-diff", var repository, var revision, var path, .. var flags] => await ReadCommitDiffAsync(RequireHistory(history), RequireRevisions(revisions), repository, revision, path, flags, token),
                 _ => throw Usage()
             };
         }

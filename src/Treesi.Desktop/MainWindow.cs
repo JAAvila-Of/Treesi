@@ -33,10 +33,11 @@ public sealed partial class MainWindow : Window
     public Task PendingInspection { get; private set; } = Task.CompletedTask;
     public Task PendingMotion => _motion.Pending;
 
-    public MainWindow(IInspectionService inspector, string? initialPath, ThemeController appearance, IMotionPreferenceStore? motionPreferences = null, IWorkspaceHistoryStore? workspaceHistory = null, IRevisionService? revisions = null)
+    public MainWindow(IInspectionService inspector, string? initialPath, ThemeController appearance, IMotionPreferenceStore? motionPreferences = null, IWorkspaceHistoryStore? workspaceHistory = null, IRevisionService? revisions = null, IHistoryService? history = null)
     {
         _inspector = inspector;
         _revisions = revisions;
+        _history = history;
         _appearance = appearance;
         AvaloniaXamlLoader.Load(this);
         _repositoryName = Required<TextBlock>("RepositoryName"); _repositoryLabel = Required<TextBlock>("RepositoryLocation");
@@ -71,6 +72,7 @@ public sealed partial class MainWindow : Window
         InitializePresentation();
         InitializeDiffOptions();
         InitializeRevisions();
+        InitializeHistory();
         _themes.ItemsSource = ThemeCatalog.All;
         _themes.SelectedItem = appearance.Current;
         _themes.SelectionChanged += (_, _) =>
@@ -96,7 +98,8 @@ public sealed partial class MainWindow : Window
             }
             if (args.Key == Key.Escape)
             {
-                if (Required<Control>("RevisionPanel").IsVisible) CloseRevisionPicker();
+                if (Required<Control>("CommitDetailsPanel").IsVisible) CloseCommitDetails();
+                else if (Required<Control>("RevisionPanel").IsVisible) CloseRevisionPicker();
                 else if (Required<Control>("DiffOptionsPanel").IsVisible) CloseComparisonOptions();
                 else if (Required<Control>("OpenRecoveryNotice").IsVisible) DismissOpenRecovery();
                 else if (_isOpeningWorkspace) Cancel();
@@ -132,6 +135,7 @@ public sealed partial class MainWindow : Window
             _loading?.Dispose(); _loading = null;
             _comparingRevisions?.Dispose(); _comparingRevisions = null;
             _listingReferences?.Dispose(); _listingReferences = null;
+            _listingHistory?.Dispose(); _choosingCommit?.Dispose();
             _decoration.Dispose();
             _beforeDecoration.Dispose(); _afterDecoration.Dispose();
             _motion.Dispose();
@@ -180,6 +184,7 @@ public sealed partial class MainWindow : Window
         _isOpeningWorkspace = true;
         Required<Button>("DiffOptionsButton").IsEnabled = false;
         Required<Button>("CompareRevisionsButton").IsEnabled = false;
+        Required<Button>("HistoryButton").IsEnabled = false;
         _files.IsEnabled = false; _filter.IsEnabled = false; _comparison.IsEnabled = false;
         Required<Control>("OpenRecoveryNotice").IsVisible = false;
         Required<TextBlock>("HomeNotice").IsVisible = false;
@@ -246,6 +251,7 @@ public sealed partial class MainWindow : Window
                 _filter.IsEnabled = _snapshot is not null; _comparison.IsEnabled = _snapshot is not null;
                 Required<Button>("DiffOptionsButton").IsEnabled = _snapshot is not null;
                 Required<Button>("CompareRevisionsButton").IsEnabled = _snapshot is not null && _revisions is not null;
+                Required<Button>("HistoryButton").IsEnabled = _snapshot is not null && _history is not null && _revisions is not null;
                 SetBusy(false);
             }
         }
@@ -374,7 +380,7 @@ public sealed partial class MainWindow : Window
         progress.IsIndeterminate = value && !_motion.Reduced;
         progress.IsVisible = value;
     }
-    private void Cancel() { _opening?.Cancel(); _loading?.Cancel(); _comparingRevisions?.Cancel(); _listingReferences?.Cancel(); }
+    private void Cancel() { _opening?.Cancel(); _loading?.Cancel(); _comparingRevisions?.Cancel(); _listingReferences?.Cancel(); _listingHistory?.Cancel(); _choosingCommit?.Cancel(); }
     private void ShowCancelledDiff()
     {
         ShowState("Comparison cancelled.", "No complete result is available. Select a file or refresh to try again.");

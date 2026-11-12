@@ -16,7 +16,7 @@ public sealed partial class MainWindow
     private void InitializeRevisions()
     {
         Required<Button>("CompareRevisionsButton").Click += (_, _) => OpenRevisionPicker();
-        Required<Button>("RevisionEndpointsButton").Click += (_, _) => OpenRevisionPicker();
+        Required<Button>("RevisionEndpointsButton").Click += (_, _) => { if (_historyCommit is null) OpenRevisionPicker(); else OpenCommitDetails(); };
         Required<Button>("CancelRevisionButton").Click += (_, _) => CloseRevisionPicker();
         Required<Button>("BackToRevisionDraftButton").Click += (_, _) => ShowReferencePicker(false);
         Required<Button>("BrowseRevisionReferencesButton").Click += (_, _) => PendingInspection = LoadReferencesAsync();
@@ -35,6 +35,7 @@ public sealed partial class MainWindow
     private void OpenRevisionPicker()
     {
         if (_snapshot is null || _revisions is null) return;
+        Required<Control>("CommitDetailsPanel").IsVisible = false;
         CloseComparisonOptions(false);
         var current = _revisionComparison?.Endpoints;
         Required<TextBox>("BaseRevisionInput").Text = current?.BaseName ?? "HEAD~1";
@@ -117,25 +118,26 @@ public sealed partial class MainWindow
         await CompareRevisionsAsync(selection);
     }
 
-    private async Task CompareRevisionsAsync(RevisionSelection selection)
+    private async Task CompareRevisionsAsync(RevisionSelection selection, RevisionEndpoints? pinned = null, CommitDetail? commit = null, int parent = 1, string? preferredPath = null)
     {
         if (_snapshot is null || _revisions is null) return;
         Cancel(); SaveCurrentWorkspace();
         _comparingRevisions?.Dispose();
         var cancellation = _comparingRevisions = new CancellationTokenSource();
         var root = _snapshot.Root;
-        var preferred = (_files.SelectedItem as ChangedFileItem)?.Path;
+        var preferred = preferredPath ?? (_files.SelectedItem as ChangedFileItem)?.Path;
         var working = _revisionComparison is null ? preferred : _workingSelectedPath;
         _isComparingRevisions = true; SetRevisionInputAvailability(false);
         Required<Control>("RevisionError").IsVisible = false;
         SetBusy(true); _status.Text = "Resolving local commits…";
         try
         {
-            var endpoints = await _revisions.ResolveAsync(root, selection, cancellation.Token);
+            var endpoints = pinned ?? await _revisions.ResolveAsync(root, selection, cancellation.Token);
             cancellation.Token.ThrowIfCancellationRequested();
             var comparison = await _revisions.CompareAsync(endpoints, cancellation.Token);
             if (_closed || cancellation.IsCancellationRequested || _comparingRevisions != cancellation || _snapshot?.Root != root) return;
             _revisionComparison = comparison; _workingSelectedPath = working;
+            _historyCommit = commit; _historyParent = parent;
             _allFiles = comparison.Files.Select(file => new FileChange(file.Path, null, ".", file.Status)).ToArray();
             _updatingFiles = true; _filter.Text = ""; _updatingFiles = false;
             _fileCount.Text = comparison.Files.Count.ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -177,11 +179,13 @@ public sealed partial class MainWindow
         _filter.IsEnabled = _comparison.IsEnabled = enabled && _snapshot is not null;
         Required<Button>("DiffOptionsButton").IsEnabled = enabled && _snapshot is not null;
         Required<Button>("CompareRevisionsButton").IsEnabled = enabled && _snapshot is not null && _revisions is not null;
+        Required<Button>("HistoryButton").IsEnabled = enabled && _snapshot is not null && _history is not null && _revisions is not null;
     }
 
     private void ClearRevisionComparison()
     {
         _revisionComparison = null; _workingSelectedPath = null;
+        ResetHistory();
         UpdateRevisionChrome();
     }
 
@@ -194,8 +198,8 @@ public sealed partial class MainWindow
         Required<TextBlock>("WorkspaceScopeHint").Text = endpoints is null ? "Local workspace" : "Pinned local commits";
         Required<TextBlock>("WorkspaceContext").Text = endpoints is null ? "Workspace" : "Revisions";
         if (endpoints is null) return;
-        var kind = endpoints.Mode == RevisionComparisonMode.MergeBase ? "Merge base" : "Direct";
-        button.Content = $"{kind} {endpoints.EffectiveBaseCommitId[..6]} → {endpoints.TargetCommitId[..6]}";
+        var kind = endpoints.IsRootComparison ? "Empty tree" : _historyCommit is not null ? $"Parent {_historyParent}" : endpoints.Mode == RevisionComparisonMode.MergeBase ? "Merge base" : "Direct";
+        button.Content = endpoints.IsRootComparison ? $"Empty tree → {endpoints.TargetCommitId[..6]}" : $"{kind} {endpoints.EffectiveBaseCommitId[..6]} → {endpoints.TargetCommitId[..6]}";
         var description = $"{kind}: {endpoints.BaseName} ({endpoints.BaseCommitId}) to {endpoints.TargetName} ({endpoints.TargetCommitId}). Effective base: {endpoints.EffectiveBaseCommitId}. Refresh resolves names again.";
         ToolTip.SetTip(button, description); AutomationProperties.SetName(button, description);
     }
@@ -203,7 +207,7 @@ public sealed partial class MainWindow
     private Task RefreshWorkspaceAsync()
     {
         if (_revisionComparison is { Endpoints: var endpoints })
-            return CompareRevisionsAsync(new(endpoints.BaseName, endpoints.TargetName, endpoints.Mode));
+            return CompareRevisionsAsync(new(endpoints.BaseName, endpoints.TargetName, endpoints.Mode), _historyCommit is null ? null : endpoints, _historyCommit, _historyParent);
         return _snapshot is null ? Task.CompletedTask : OpenRepositoryAsync(_snapshot.Root);
     }
 }

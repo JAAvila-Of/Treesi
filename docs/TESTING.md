@@ -11,6 +11,8 @@ Treesi separates normal verification, native desktop automation, and performance
 
 ## Automatic verification
 
+History coverage includes pinned pagination, SHA-1/SHA-256 initial commits, deleted literal paths, distinct merge-parent comparisons, shallow boundaries, invalid requests, index/object-store non-mutation and CLI results. Headless tests cover both themes at compact sizes, parent selection, file scope, bounded message previews, recovery and late-result cancellation. The isolated Windows suite also selects historical/initial commits through accessibility and returns to working changes.
+
 `ci.yml` runs on pushes, pull requests, and manual dispatch. It restores locked dependencies, builds Release, runs the regular suites, checks formatting, and compiles the isolated suites without executing them on Windows, macOS, and Linux. It retains TRX results and synthetic headless renders for three days. Newer runs cancel superseded verification runs.
 
 ```sh

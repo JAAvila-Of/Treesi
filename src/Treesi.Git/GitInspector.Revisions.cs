@@ -49,8 +49,11 @@ public sealed partial class GitInspector
     public async Task<RevisionComparison> CompareAsync(RevisionEndpoints endpoints, CancellationToken cancellationToken = default)
     {
         await CheckRevisionEndpointsAsync(endpoints, cancellationToken);
-        var result = await RunHistoricalAsync(endpoints.Root, ["diff", "--name-status", "-z", "--no-renames", "--no-relative", "--no-ext-diff", "--no-textconv", "--ignore-submodules=all",
-            endpoints.EffectiveBaseCommitId, endpoints.TargetCommitId, "--"], cancellationToken);
+        var args = new List<string> { endpoints.IsRootComparison ? "diff-tree" : "diff", "--name-status", "-z", "--no-renames", "--no-relative", "--no-ext-diff", "--no-textconv", "--ignore-submodules=all" };
+        if (endpoints.IsRootComparison) args.AddRange(["--root", "--no-commit-id", "-r"]);
+        else args.Add(endpoints.EffectiveBaseCommitId);
+        args.AddRange([endpoints.TargetCommitId, "--"]);
+        var result = await RunHistoricalAsync(endpoints.Root, args, cancellationToken);
         var files = new List<RevisionFileChange>();
         if (result.Output.Length == 0) return new(endpoints, files);
         var fields = result.Output.Split('\0');
@@ -70,11 +73,16 @@ public sealed partial class GitInspector
         endpoints.Validate(); options ??= DiffOptions.Default; options.Validate();
         var gitPath = RevisionPath.Normalize(endpoints.Root, path);
         await CheckRevisionEndpointsAsync(endpoints, cancellationToken);
-        var before = await HistoricalFileExistsAsync(endpoints.Root, endpoints.EffectiveBaseCommitId, gitPath, cancellationToken);
+        var before = !endpoints.IsRootComparison && await HistoricalFileExistsAsync(endpoints.Root, endpoints.EffectiveBaseCommitId, gitPath, cancellationToken);
         var after = await HistoricalFileExistsAsync(endpoints.Root, endpoints.TargetCommitId, gitPath, cancellationToken);
         if (!before && !after) throw new InspectionException("path_not_found", "The file is absent from both compared trees.");
         var args = CreateDiffArguments(options);
-        args.AddRange(["--no-relative", endpoints.EffectiveBaseCommitId, endpoints.TargetCommitId, "--", gitPath]);
+        if (endpoints.IsRootComparison)
+        {
+            args[0] = "diff-tree"; args.AddRange(["--root", "--no-commit-id", "-r", "-p"]);
+        }
+        else args.Add(endpoints.EffectiveBaseCommitId);
+        args.AddRange(["--no-relative", endpoints.TargetCommitId, "--", gitPath]);
         var result = await RunHistoricalAsync(endpoints.Root, args, cancellationToken);
         var binary = result.Output.Contains("\nBinary files ", StringComparison.Ordinal);
         return new(gitPath, Comparison.Revisions, result.Output, binary, PatchParser.Parse(result.Output), Options: options, Revisions: endpoints);
@@ -112,6 +120,8 @@ public sealed partial class GitInspector
     {
         endpoints.Validate();
         var root = await FindRevisionRootAsync(endpoints.Root, token);
+        if (endpoints.IsRootComparison && (await ReadCommitAsync(root, endpoints.TargetCommitId, token)).Parents.Count != 0)
+            throw new InspectionException("invalid_revision_comparison", "Only a commit without parents can use an empty-tree comparison.");
         if (!string.Equals(Path.GetFullPath(root), Path.GetFullPath(endpoints.Root), OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
             throw new InspectionException("invalid_revision_comparison", "The resolved root must be the Git working tree root.");
     }

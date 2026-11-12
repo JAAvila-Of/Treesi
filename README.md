@@ -42,6 +42,8 @@ Up to eight recent roots are stored locally in `Treesi/workspaces.json` under lo
 
 Choose Light or Dark from the appearance selector in the upper right. Changes apply immediately without reloading the diff. The choice is stored in `Treesi/appearance.json` under the platform's local application data directory; an unwritable preference does not prevent switching for the current session. The first-run fallback is Dark. See [appearance and UI verification](docs/APPEARANCE.md).
 
+History at the bottom of the sidebar browses local repository or selected-file history. Go starts from a local revision (HEAD by default). Previous and Next reuse the first page's pinned commit; selecting an entry loads its changes directly in the main diff. Files restores file navigation for that commit. Click the endpoint button for the message, identities and parent selector. Merges default to their first parent; initial commits show an empty-tree base. Working changes returns to the current working view. History does not follow renames or fetch missing objects. See [history and CLI commands](docs/HISTORY.md).
+
 ## Use with tools and AI agents
 
 After building, run the CLI assembly directly to keep build output out of stdout:
@@ -64,7 +66,7 @@ See [test execution and isolation](docs/TESTING.md) for hosted CI, native Window
 
 ## Prototype boundaries
 
-- Inspection only: no staging, commits, remote access, history browser, or conflict resolution yet. Local revision comparison is available without fetching objects.
+- Inspection only: no staging, commit creation, remote access, or conflict resolution yet. Local history and revision comparison are available without fetching objects.
 - Revision comparison reads committed trees without checking out a revision or reading the current file. File lists are bounded to 10,000 entries; the CLI can inspect a specific historical file without enumerating the full list. Missing objects or absent/ambiguous merge bases are explicit errors. Rename detection remains disabled, so renames appear as deletion/addition. Historical submodule traversal and file-to-directory transitions are unsupported.
 - Global and system Git configuration are intentionally excluded. Repository-local executable content filters are refused; external diff drivers, textconv, and fsmonitor are disabled. This may produce different results from a user's custom Git setup and is not an OS sandbox.
 - Submodule contents are excluded. Rename status is retained, but individual diff previews disable rename detection.

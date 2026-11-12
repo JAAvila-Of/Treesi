@@ -36,6 +36,7 @@ public sealed partial class MainWindow
 
     private void OpenComparisonOptions()
     {
+        Required<Control>("CommitDetailsPanel").IsVisible = false;
         if (Required<Control>("RevisionPanel").IsVisible) CloseRevisionPicker(true, false);
         SetOptionsDraft(_diffOptions);
         Required<Control>("DiffOptionsPanel").IsVisible = true;
