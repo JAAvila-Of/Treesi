@@ -52,6 +52,7 @@ public sealed partial class MainWindow : Window
         _diff.Options.EnableEmailHyperlinks = false;
         _diff.Options.AllowScrollBelowDocument = false;
         _decoration = new DiffDecoration(_diff);
+        InitializeDiffWorkspace();
         _themes.ItemsSource = ThemeCatalog.All;
         _themes.SelectedItem = appearance.Current;
         _themes.SelectionChanged += (_, _) =>
@@ -71,6 +72,10 @@ public sealed partial class MainWindow : Window
         _search.KeyDown += (_, args) => { if (args.Key == Key.Enter) { FindNext(); args.Handled = true; } };
         KeyDown += async (_, args) =>
         {
+            if ((args.KeyModifiers & KeyModifiers.Alt) != 0 && args.Key is Key.Up or Key.Down)
+            {
+                NavigateBlock(args.Key == Key.Up ? -1 : 1); args.Handled = true; return;
+            }
             if (args.Key == Key.Escape) { Cancel(); args.Handled = true; }
             if ((args.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) == 0) return;
             switch (args.Key)
@@ -87,6 +92,7 @@ public sealed partial class MainWindow : Window
             _opening?.Dispose(); _opening = null;
             _loading?.Dispose(); _loading = null;
             _decoration.Dispose();
+            _beforeDecoration.Dispose(); _afterDecoration.Dispose();
         };
         if (initialPath is not null) Opened += async (_, _) => await OpenRepositoryAsync(initialPath);
     }
@@ -97,6 +103,7 @@ public sealed partial class MainWindow : Window
     {
         _themes.SelectedItem = theme;
         _decoration.Refresh();
+        _beforeDecoration.Refresh(); _afterDecoration.Refresh();
     }
 
     private async Task PickAsync(bool file)
@@ -205,14 +212,14 @@ public sealed partial class MainWindow : Window
                 ShowState("No differences here.", "This file has no changes for the selected comparison. Try another comparison above.");
             else
             {
-                _decoration.SetDiff(result);
-                _emptyState.IsVisible = false; _diff.IsVisible = true; _diffLabel.IsVisible = true;
+                SetWorkspaceDiff(result);
+                _emptyState.IsVisible = false; _diffLabel.IsVisible = true;
                 _search.IsEnabled = true; _findNext.IsEnabled = true;
             }
             var added = result.Hunks.Sum(hunk => hunk.Lines.Count(line => line.Kind == DiffLineKind.Added));
             var removed = result.Hunks.Sum(hunk => hunk.Lines.Count(line => line.Kind == DiffLineKind.Removed));
             _added.Text = $"+{added}"; _removed.Text = $"−{removed}";
-            _status.Text = $"{result.Hunks.Count} change blocks · {Stopwatch.GetElapsedTime(start).TotalMilliseconds:F0} ms";
+            _status.Text = $"{result.Hunks.Count} change {(result.Hunks.Count == 1 ? "block" : "blocks")} · {Stopwatch.GetElapsedTime(start).TotalMilliseconds:F0} ms";
         }
         catch (OperationCanceledException) { if (_loading == cancellation) _status.Text = "Diff cancelled"; }
         catch (Exception exception) { if (_loading == cancellation && !cancellation.IsCancellationRequested) ShowError(exception); }
@@ -225,19 +232,27 @@ public sealed partial class MainWindow : Window
         _search.IsEnabled = false; _findNext.IsEnabled = false;
         _emptyTitle.Text = title; _emptyDescription.Text = description;
         _decoration.Clear(); _added.Text = "+0"; _removed.Text = "−0";
+        ClearDiffWorkspace();
     }
 
     private void FindNext()
     {
         var term = _search.Text;
         if (string.IsNullOrEmpty(term)) { _search.Focus(); return; }
-        if (!_diff.IsVisible) { _status.Text = "There is no text diff to search"; return; }
-        var text = _diff.Text;
-        var next = text.IndexOf(term, Math.Min(_diff.SelectionStart + _diff.SelectionLength, text.Length), StringComparison.OrdinalIgnoreCase);
+        if (_currentDiff is null) { _status.Text = "There is no text diff to search"; return; }
+        var editor = ActiveEditor;
+        var text = editor.Text;
+        var next = text.IndexOf(term, Math.Min(editor.SelectionStart + editor.SelectionLength, text.Length), StringComparison.OrdinalIgnoreCase);
+        if (next < 0 && _diffMode.SelectedIndex == 1)
+        {
+            var other = editor == _before ? _after : _before;
+            var match = other.Text.IndexOf(term, StringComparison.OrdinalIgnoreCase);
+            if (match >= 0) { editor = other; text = other.Text; next = match; }
+        }
         if (next < 0) next = text.IndexOf(term, StringComparison.OrdinalIgnoreCase);
         if (next < 0) { _status.Text = "Text not found in the current diff"; return; }
-        _diff.Focus(); _diff.Select(next, term.Length);
-        _diff.ScrollToLine(_diff.Document.GetLineByOffset(next).LineNumber);
+        editor.Focus(); editor.Select(next, term.Length);
+        RevealLine(editor, editor.Document.GetLineByOffset(next).LineNumber);
         _status.Text = "Match selected in diff";
     }
 

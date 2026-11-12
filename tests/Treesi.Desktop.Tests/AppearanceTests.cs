@@ -17,8 +17,69 @@ namespace Treesi.Desktop.Tests;
 [TestFixture]
 public sealed class AppearanceTests
 {
-    private static readonly string Root = Path.Combine(Path.GetTempPath(), "treesi-headless-fixture");
+    private static readonly string Root = Path.Combine(Path.GetPathRoot(Path.GetTempPath())!, "workspace", "treesi");
     private const string Patch = "diff --git a/src/ChangeSummary.cs b/src/ChangeSummary.cs\nindex 20f9d32..fe89263 100644\n--- a/src/ChangeSummary.cs\n+++ b/src/ChangeSummary.cs\n@@ -1,7 +1,10 @@\n namespace Treesi;\n \n public static class ChangeSummary\n {\n-    public static string Describe(int files) => $\"Changes: {files}\";\n+    public static string Describe(int files)\n+    {\n+        ArgumentOutOfRangeException.ThrowIfNegative(files);\n+        return files == 1 ? \"1 changed file\" : $\"{files} changed files\";\n+    }\n }\n";
+
+    [AvaloniaTest]
+    public async Task SplitModePreservesLoadedDataAndRendersBothThemes()
+    {
+        var reader = new FixtureInspector();
+        var themes = new ThemeController(Avalonia.Application.Current!, new MemoryPreferences());
+        var window = new MainWindow(reader, null, themes);
+        try
+        {
+            window.Show(); await window.OpenRepositoryAsync(Root);
+            var calls = reader.DiffCalls;
+            window.FindControl<ComboBox>("DiffModeSelector")!.SelectedIndex = 1;
+            Dispatcher.UIThread.RunJobs();
+            var before = window.FindControl<TextEditor>("BeforeEditor")!;
+            var after = window.FindControl<TextEditor>("AfterEditor")!;
+            before.Text.Contains("Changes: {files}", StringComparison.Ordinal).Test().BeTrue();
+            before.Text.Contains("ThrowIfNegative", StringComparison.Ordinal).Test().BeFalse();
+            after.Text.Contains("ThrowIfNegative", StringComparison.Ordinal).Test().BeTrue();
+            before.Document.LineCount.Test().Be(after.Document.LineCount);
+            window.FindControl<TextEditor>("DiffEditor")!.IsVisible.Test().BeFalse();
+            SaveFrame(window, "split-dark.png");
+            themes.Apply(ThemeCatalog.Light); Dispatcher.UIThread.RunJobs();
+            SaveFrame(window, "split-light.png");
+            window.Width = 900; window.Height = 560; Dispatcher.UIThread.RunJobs();
+            foreach (var name in new[] { "DiffModeSelector", "PreviousBlockButton", "NextBlockButton", "BeforeEditor", "AfterEditor" })
+            {
+                var control = window.FindControl<Control>(name)!;
+                var position = control.TranslatePoint(default, window)!.Value;
+                (position.X >= 0 && position.X + control.Bounds.Width <= window.ClientSize.Width + 1).Test().BeTrue();
+                (position.Y >= 0 && position.Y + control.Bounds.Height <= window.ClientSize.Height + 1).Test().BeTrue();
+            }
+            SaveFrame(window, "split-light-compact.png");
+            window.FindControl<ComboBox>("DiffModeSelector")!.SelectedIndex = 0;
+            window.FindControl<TextEditor>("DiffEditor")!.Text.Test().Be(Patch);
+            reader.DiffCalls.Test().Be(calls);
+        }
+        finally { window.Close(); }
+    }
+
+    [AvaloniaTest]
+    public async Task SplitSearchFindsRemovedTextAndEmptyComparisonsClearBothPanels()
+    {
+        var themes = new ThemeController(Avalonia.Application.Current!, new MemoryPreferences());
+        var window = new MainWindow(new FixtureInspector(), null, themes);
+        try
+        {
+            window.Show(); await window.OpenRepositoryAsync(Root);
+            window.FindControl<ComboBox>("DiffModeSelector")!.SelectedIndex = 1;
+            window.FindControl<TextBox>("DiffSearch")!.Text = "Changes: {files}";
+            window.FindControl<Button>("FindNextButton")!.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+            window.FindControl<TextEditor>("BeforeEditor")!.SelectedText.Test().Be("Changes: {files}");
+            window.FindControl<ComboBox>("ComparisonSelector")!.SelectedIndex = 1;
+            await window.PendingInspection;
+            window.FindControl<Control>("SplitView")!.IsVisible.Test().BeFalse();
+            window.FindControl<TextEditor>("BeforeEditor")!.Text.Test().Be("");
+            window.FindControl<TextEditor>("AfterEditor")!.Text.Test().Be("");
+            window.FindControl<Button>("NextBlockButton")!.IsEnabled.Test().BeFalse();
+            window.FindControl<ComboBox>("DiffModeSelector")!.IsEnabled.Test().BeFalse();
+        }
+        finally { window.Close(); }
+    }
 
     [AvaloniaTest]
     public async Task SwitchingThemesPreservesDiffSelectionAndDoesNotInspectAgain()

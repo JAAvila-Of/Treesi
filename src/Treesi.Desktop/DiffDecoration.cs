@@ -16,11 +16,13 @@ public sealed class DiffDecoration : DocumentColorizingTransformer, IBackgroundR
     private readonly LineNumbers _numbers;
     private readonly Dictionary<int, DiffLine> _lines = [];
     private int _digits = 4;
+    private readonly int _numberColumn;
     public KnownLayer Layer => KnownLayer.Background;
 
-    public DiffDecoration(TextEditor editor)
+    public DiffDecoration(TextEditor editor, int numberColumn = 0)
     {
         _editor = editor;
+        _numberColumn = numberColumn;
         _numbers = new LineNumbers(this);
         editor.TextArea.TextView.LineTransformers.Add(this);
         editor.TextArea.TextView.BackgroundRenderers.Add(this);
@@ -52,6 +54,16 @@ public sealed class DiffDecoration : DocumentColorizingTransformer, IBackgroundR
     }
 
     public void Clear() { _lines.Clear(); _editor.Text = ""; Refresh(); }
+    public void SetDocument(DiffDocument document)
+    {
+        _lines.Clear();
+        foreach (var entry in document.Lines) _lines[entry.Key] = entry.Value;
+        _editor.Text = document.Text;
+        _digits = Math.Max(4, _lines.Values.SelectMany(line => new[] { line.OldLine ?? 0, line.NewLine ?? 0 }).DefaultIfEmpty(0).Max().ToString(CultureInfo.InvariantCulture).Length);
+        _numbers.InvalidateMeasure();
+        _editor.ScrollToHome();
+        Refresh();
+    }
     public void Refresh() { _editor.TextArea.TextView.Redraw(); _numbers.InvalidateVisual(); }
     private IBrush Brush(string name) => _editor.FindResource(_editor.ActualThemeVariant, name) as IBrush ?? _editor.Foreground ?? Brushes.Gray;
 
@@ -94,7 +106,7 @@ public sealed class DiffDecoration : DocumentColorizingTransformer, IBackgroundR
 
     private sealed class LineNumbers(DiffDecoration owner) : AbstractMargin
     {
-        protected override Size MeasureOverride(Size availableSize) => new(Math.Max(88, 24 + (owner._digits * 2 + 1) * 6.7), 0);
+        protected override Size MeasureOverride(Size availableSize) => new(owner._numberColumn == 0 ? Math.Max(88, 24 + (owner._digits * 2 + 1) * 6.7) : 20 + owner._digits * 6.7, 0);
         protected override void OnTextViewChanged(TextView oldTextView, TextView newTextView)
         {
             if (oldTextView is not null) oldTextView.VisualLinesChanged -= Changed;
@@ -113,7 +125,8 @@ public sealed class DiffDecoration : DocumentColorizingTransformer, IBackgroundR
                 if (!owner._lines.TryGetValue(visual.FirstDocumentLine.LineNumber, out var line)) continue;
                 var oldNumber = line.OldLine?.ToString(CultureInfo.InvariantCulture) ?? "";
                 var newNumber = line.NewLine?.ToString(CultureInfo.InvariantCulture) ?? "";
-                var text = new FormattedText($"{oldNumber.PadLeft(owner._digits)} {newNumber.PadLeft(owner._digits)}", CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
+                var label = owner._numberColumn switch { 1 => oldNumber.PadLeft(owner._digits), 2 => newNumber.PadLeft(owner._digits), _ => $"{oldNumber.PadLeft(owner._digits)} {newNumber.PadLeft(owner._digits)}" };
+                var text = new FormattedText(label, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
                     new Typeface(owner._editor.FontFamily), 11, owner.Brush("Text.Subtle"));
                 context.DrawText(text, new Point(8, visual.VisualTop - TextView.VerticalOffset + 1));
             }

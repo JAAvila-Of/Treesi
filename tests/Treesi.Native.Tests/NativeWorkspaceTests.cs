@@ -99,6 +99,18 @@ public sealed class NativeWorkspaceTests
     }
 
     private AppiumElement Element(string id) => _driver!.FindElement(new ByAccessibilityId(id));
+
+    [Test]
+    public void NativeSplitLayoutExposesBlockNavigationAndSearch()
+    {
+        SelectCombo("DiffModeSelector", "Side by side");
+        Element("NextBlockButton").Click();
+        WaitUntil(() => Element("OperationStatus").Text == "Change block 1 of 1");
+        Element("DiffSearch").SendKeys("changed"); Element("FindNextButton").Click();
+        WaitUntil(() => Element("OperationStatus").Text == "Match selected in diff");
+        SelectCombo("DiffModeSelector", "Unified");
+        Element("FileTitle").Text.Test().Be("sample.txt");
+    }
     private string ComboText(string id) => Element(id).Text + " " + Element(id).GetAttribute("Value");
     private void SelectCombo(string id, string option)
     {
