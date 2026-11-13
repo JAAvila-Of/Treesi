@@ -284,12 +284,24 @@
         </Grid>
       </Grid>
     </Border>
+    <Border x:Name="WorktreesPanel" Grid.Row="2" IsVisible="False" ZIndex="35" Width="650" Height="400" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12" Padding="16" CornerRadius="10" Background="{DynamicResource Surface.Panel}" BorderBrush="{DynamicResource Border.Default}" BorderThickness="1" BoxShadow="0 12 32 0 #30000000" AutomationProperties.Name="Related local worktrees">
+      <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="10">
+        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8"><TextBlock Text="Related worktrees" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center" /><Button Grid.Column="1" x:Name="RefreshWorktreesButton" AutomationProperties.AutomationId="RefreshWorktreesButton" Content="Refresh" Classes="quiet" /><Button Grid.Column="2" x:Name="CloseWorktreesButton" AutomationProperties.AutomationId="CloseWorktreesButton" Content="×" Width="30" Classes="quiet" AutomationProperties.Name="Close related worktrees" /></Grid>
+        <TextBlock Grid.Row="1" Text="Shared repository, independent working folders. Open a location to review its changes." Classes="secondary" FontSize="11" TextWrapping="Wrap" />
+        <ListBox Grid.Row="2" x:Name="RelatedWorktrees" AutomationProperties.AutomationId="RelatedWorktrees" AutomationProperties.Name="Registered worktree locations" Background="Transparent" BorderThickness="0">
+          <ListBox.ItemTemplate><DataTemplate x:DataType="workspaces:WorktreeChoice"><Grid ColumnDefinitions="*,180" ColumnSpacing="12"><StackPanel Spacing="2"><TextBlock Text="{Binding Name}" FontWeight="Medium" FontSize="12" TextTrimming="CharacterEllipsis" /><TextBlock Text="{Binding Location}" Classes="secondary" FontSize="10" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Location}" /><TextBlock Text="{Binding State}" Classes="secondary" FontSize="10" TextTrimming="CharacterEllipsis" /></StackPanel><TextBlock Grid.Column="1" Text="{Binding Branch}" Foreground="{DynamicResource Accent.Primary}" FontSize="11" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" /></Grid></DataTemplate></ListBox.ItemTemplate>
+        </ListBox>
+        <TextBlock Grid.Row="3" x:Name="WorktreeDetails" Classes="secondary" FontSize="10" TextWrapping="Wrap" MaxHeight="46" TextTrimming="CharacterEllipsis" />
+        <Grid Grid.Row="4" ColumnDefinitions="*,Auto" ColumnSpacing="12"><TextBlock x:Name="WorktreeNotice" AutomationProperties.AutomationId="WorktreeNotice" AutomationProperties.LiveSetting="Polite" Classes="secondary" FontSize="10" TextWrapping="Wrap" VerticalAlignment="Center" /><Button Grid.Column="1" x:Name="OpenWorktreeButton" AutomationProperties.AutomationId="OpenWorktreeButton" Content="Open selected" Classes="primary" IsEnabled="False" /></Grid>
+      </Grid>
+    </Border>
     <Border x:Name="WorkspacePickerPanel" Grid.Row="2" IsVisible="False" ZIndex="30" Width="650" Height="416" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12" Padding="16" CornerRadius="10" Background="{DynamicResource Surface.Panel}" BorderBrush="{DynamicResource Border.Default}" BorderThickness="1" BoxShadow="0 12 32 0 #30000000" AutomationProperties.Name="Local workspace picker">
       <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="8">
-        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+        <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
           <TextBlock Text="Workspaces" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center" />
-          <Button Grid.Column="1" x:Name="NewWorkspaceGroupButton" AutomationProperties.AutomationId="NewWorkspaceGroupButton" Content="+ New workspace" Classes="quiet" />
-          <Button Grid.Column="2" x:Name="CloseWorkspacePickerButton" AutomationProperties.AutomationId="CloseWorkspacePickerButton" Content="×" Classes="quiet" Width="30" AutomationProperties.Name="Close workspace picker" />
+          <Button Grid.Column="1" x:Name="DiscoverWorktreesButton" AutomationProperties.AutomationId="DiscoverWorktreesButton" Content="Related worktrees" Classes="quiet" ToolTip.Tip="Read registered worktrees of the active repository" IsEnabled="False" />
+          <Button Grid.Column="2" x:Name="NewWorkspaceGroupButton" AutomationProperties.AutomationId="NewWorkspaceGroupButton" Content="+ New workspace" Classes="quiet" />
+          <Button Grid.Column="3" x:Name="CloseWorkspacePickerButton" AutomationProperties.AutomationId="CloseWorkspacePickerButton" Content="×" Classes="quiet" Width="30" AutomationProperties.Name="Close workspace picker" />
         </Grid>
         <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6">
           <TextBox x:Name="WorkspaceNameInput" AutomationProperties.AutomationId="WorkspaceNameInput" MaxLength="64" PlaceholderText="Workspace name" AutomationProperties.Name="Workspace name" />

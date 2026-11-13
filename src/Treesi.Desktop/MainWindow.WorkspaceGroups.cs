@@ -74,6 +74,7 @@ public sealed partial class MainWindow
 
     private void OpenWorkspacePicker()
     {
+        CloseWorktrees(false);
         Cancel(); CloseComparisonOptions(false); CloseRevisionPicker(true, false);
         Required<Control>("CommitDetailsPanel").IsVisible = false;
         Required<Control>("OpenRecoveryNotice").IsVisible = false;
@@ -86,6 +87,7 @@ public sealed partial class MainWindow
 
     private void CloseWorkspacePicker(bool focus = true)
     {
+        CloseWorktrees(false);
         CancelWorkspaceRootCheck();
         Required<Control>("WorkspacePickerPanel").IsVisible = false;
         if (focus) Required<Button>("WorkspacePickerButton").Focus();
@@ -126,6 +128,7 @@ public sealed partial class MainWindow
         var group = _workspaceCatalog.Document.Workspaces.FirstOrDefault(item => item.Id == SelectedWorkspaceId);
         var editing = group is not null && !_creatingWorkspace && !_checkingWorkspaceRoot;
         var selected = SelectedWorkspaceRepository is not null;
+        Required<Button>("DiscoverWorktreesButton").IsEnabled = _snapshot is not null && _worktrees is not null;
         Required<TextBox>("WorkspaceNameInput").IsEnabled = !_checkingWorkspaceRoot && (_creatingWorkspace || group is not null);
         Required<Button>("SaveWorkspaceNameButton").IsEnabled = !_checkingWorkspaceRoot && (_creatingWorkspace || group is not null);
         Required<Button>("SaveWorkspaceNameButton").Content = _creatingWorkspace ? "Create" : "Save name";

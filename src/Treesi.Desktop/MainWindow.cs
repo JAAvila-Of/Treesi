@@ -33,12 +33,13 @@ public sealed partial class MainWindow : Window
     public Task PendingInspection { get; private set; } = Task.CompletedTask;
     public Task PendingMotion => _motion.Pending;
 
-    public MainWindow(IInspectionService inspector, string? initialPath, ThemeController appearance, IMotionPreferenceStore? motionPreferences = null, IWorkspaceHistoryStore? workspaceHistory = null, IRevisionService? revisions = null, IHistoryService? history = null, IWorkspaceCatalogStore? workspaceCatalog = null, IGraphService? graphs = null)
+    public MainWindow(IInspectionService inspector, string? initialPath, ThemeController appearance, IMotionPreferenceStore? motionPreferences = null, IWorkspaceHistoryStore? workspaceHistory = null, IRevisionService? revisions = null, IHistoryService? history = null, IWorkspaceCatalogStore? workspaceCatalog = null, IGraphService? graphs = null, IWorktreeService? worktrees = null)
     {
         _inspector = inspector;
         _revisions = revisions;
         _history = history;
         _graphs = graphs;
+        _worktrees = worktrees;
         _appearance = appearance;
         AvaloniaXamlLoader.Load(this);
         _repositoryName = Required<TextBlock>("RepositoryName"); _repositoryLabel = Required<TextBlock>("RepositoryLocation");
@@ -103,7 +104,8 @@ public sealed partial class MainWindow : Window
             }
             if (args.Key == Key.Escape)
             {
-                if (Required<Control>("WorkspacePickerPanel").IsVisible) CloseWorkspacePicker();
+                if (Required<Control>("WorktreesPanel").IsVisible) CloseWorktrees();
+                else if (Required<Control>("WorkspacePickerPanel").IsVisible) CloseWorkspacePicker();
                 else if (_graphVisible && _graphInspector) { _graphInspector = false; UpdateGraphInspector(); Required<Button>("GraphDetailsButton").Focus(); }
                 else if (Required<Control>("CommitDetailsPanel").IsVisible) CloseCommitDetails();
                 else if (Required<Control>("RevisionPanel").IsVisible) CloseRevisionPicker();
@@ -135,11 +137,13 @@ public sealed partial class MainWindow : Window
         };
         InitializeWorkspaces(workspaceHistory, initialPath);
         InitializeWorkspaceGroups(workspaceCatalog);
+        InitializeWorktrees();
         Closed += (_, _) =>
         {
             SaveCurrentWorkspace();
             _repositoryTabs.Clear(); _activeRepositoryTab = null;
             _closed = true;
+            CloseWorktrees(false);
             _readingGraph?.Cancel(); _readingGraph?.Dispose(); _readingGraph = null;
             _reviewingGraph?.Cancel(); _reviewingGraph?.Dispose(); _reviewingGraph = null;
             CancelWorkspaceRootCheck();
@@ -444,7 +448,7 @@ public sealed partial class MainWindow : Window
         progress.IsIndeterminate = value && !_motion.Reduced;
         progress.IsVisible = value;
     }
-    private void Cancel() { _opening?.Cancel(); _loading?.Cancel(); _comparingRevisions?.Cancel(); _listingReferences?.Cancel(); _listingHistory?.Cancel(); _choosingCommit?.Cancel(); _addingWorkspaceRepository?.Cancel(); _readingGraph?.Cancel(); _reviewingGraph?.Cancel(); }
+    private void Cancel() { _opening?.Cancel(); _loading?.Cancel(); _comparingRevisions?.Cancel(); _listingReferences?.Cancel(); _listingHistory?.Cancel(); _choosingCommit?.Cancel(); _addingWorkspaceRepository?.Cancel(); _readingGraph?.Cancel(); _reviewingGraph?.Cancel(); _listingWorktrees?.Cancel(); }
     private void ShowCancelledDiff()
     {
         ShowState("Comparison cancelled.", "No complete result is available. Select a file or refresh to try again.");

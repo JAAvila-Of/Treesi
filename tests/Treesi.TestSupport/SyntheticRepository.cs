@@ -28,6 +28,14 @@ public sealed class SyntheticRepository : IDisposable
         File.WriteAllText(Path.Combine(Root, "new.txt"), "Synthetic new file\n", new UTF8Encoding(false));
     }
 
+    public string AddLinkedWorktree()
+    {
+        var linked = Path.Combine(Root, "linked-review");
+        Git("-c", "core.hooksPath=", "worktree", "add", "-b", "feature/linked-review", linked);
+        File.WriteAllText(Path.Combine(linked, "sample.txt"), "first\nlinked change\nlast\n", new UTF8Encoding(false));
+        return linked;
+    }
+
     private void Git(params string[] arguments)
     {
         var start = new ProcessStartInfo("git")

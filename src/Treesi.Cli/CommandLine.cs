@@ -14,7 +14,7 @@ public static partial class CommandLine
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
     };
 
-    public static async Task<int> RunAsync(string[] args, TextWriter output, IInspectionService inspector, CancellationToken token = default, IRevisionService? revisions = null, IHistoryService? history = null, IGraphService? graphs = null)
+    public static async Task<int> RunAsync(string[] args, TextWriter output, IInspectionService inspector, CancellationToken token = default, IRevisionService? revisions = null, IHistoryService? history = null, IGraphService? graphs = null, IWorktreeService? worktrees = null)
     {
         var requestId = Guid.NewGuid().ToString("N");
         var start = Stopwatch.GetTimestamp();
@@ -32,7 +32,8 @@ public static partial class CommandLine
                     version = "0.1.0",
                     provider = "git",
                     readOnly = true,
-                    commands = AvailableCommands(revisions, history, graphs),
+                    commands = AvailableCommands(revisions, history, graphs, worktrees),
+                    worktrees = new { available = worktrees is not null, maximumEntries = RepositoryWorktrees.MaximumEntries },
                     graph = new { available = graphs is not null, maximumCommits = GraphQuery.MaximumCommits, maximumReferences = GraphQuery.MaximumReferences, maximumParents = GraphQuery.MaximumParents },
                     comparisons = new[] { "working", "staged", "head" },
                     revisionComparisons = new { available = revisions is not null, modes = new[] { "direct", "merge-base" }, referenceLimit = RevisionLimits.References, fileLimit = RevisionLimits.Files },
@@ -49,6 +50,7 @@ public static partial class CommandLine
                     excluded = revisions is null ? new[] { "submoduleContents", "executableFilters", "nonUtf8Text", "revisionToRevisionDiff" } : ["submoduleContents", "executableFilters", "nonUtf8Text"]
                 },
                 ["inspect", var path] => await inspector.InspectAsync(path, token),
+                ["worktrees", var repository] => await (worktrees ?? throw new InspectionException("capability_unavailable", "This host has no worktree service.")).ListAsync(repository, token),
                 ["diff", var repository, var path, .. var flags] => await ReadDiffAsync(inspector, repository, path, flags, token),
                 ["references", var repository] => await RequireRevisions(revisions).ReferencesAsync(repository, token),
                 ["compare", var repository, var from, var to, .. var flags] => await CompareAsync(RequireRevisions(revisions), repository, from, to, flags, token),

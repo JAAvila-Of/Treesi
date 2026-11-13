@@ -267,6 +267,26 @@ public sealed class NativeWorkspaceTests
         Element("GraphNotice").Text.Contains("2 commits", StringComparison.Ordinal).Test().BeTrue();
     }
 
+    [Test]
+    public void NativeWorktreeDiscoveryOpensLinkedChangesAndReturnsToExistingTab()
+    {
+        var linked = _repository!.AddLinkedWorktree();
+        Element("WorkspacePickerButton").Click(); Element("DiscoverWorktreesButton").Click();
+        WaitUntil(() => Element("WorktreeNotice").Text.Contains("2 registered locations", StringComparison.Ordinal));
+        _driver!.FindElements(By.Name("linked-review")).First(item => item.Displayed).Click();
+        Element("OpenWorktreeButton").Click();
+        WaitUntil(() => Element("DiffSearch").Displayed && Element("DiffSearch").Enabled && Element("FileTitle").Text == "sample.txt");
+        EnterText("DiffSearch", "linked change"); Element("FindNextButton").Click();
+        WaitUntil(() => Element("OperationStatus").Text == "Match selected in diff");
+        Element("WorkspacePickerButton").Click(); Element("DiscoverWorktreesButton").Click();
+        WaitUntil(() => Element("WorktreeNotice").Text.Contains("2 registered locations", StringComparison.Ordinal));
+        _driver.FindElements(By.Name(Path.GetFileName(_repository.Root))).First(item => item.Displayed).Click();
+        Element("OpenWorktreeButton").Click();
+        WaitUntil(() => Element("DiffSearch").Displayed && Element("DiffSearch").Enabled);
+        EnterText("DiffSearch", "changed"); Element("FindNextButton").Click();
+        WaitUntil(() => Element("OperationStatus").Text == "Match selected in diff");
+    }
+
     private void SelectCombo(string id, string option)
     {
         Element(id).Click();

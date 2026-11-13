@@ -6,13 +6,14 @@ namespace Treesi.Cli;
 
 public static partial class CommandLine
 {
-    private static string[] AvailableCommands(IRevisionService? revisions, IHistoryService? history, IGraphService? graphs)
+    private static string[] AvailableCommands(IRevisionService? revisions, IHistoryService? history, IGraphService? graphs, IWorktreeService? worktrees)
     {
         var commands = new List<string> { "capabilities", "inspect", "diff" };
         if (revisions is not null) commands.AddRange(["references", "compare", "revision-diff"]);
         if (history is not null) commands.AddRange(["history", "commit"]);
         if (history is not null && revisions is not null) commands.AddRange(["commit-files", "commit-diff"]);
         if (graphs is not null) commands.Add("graph");
+        if (worktrees is not null) commands.Add("worktrees");
         return commands.ToArray();
     }
 

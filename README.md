@@ -6,6 +6,8 @@ This is an early, read-only prototype. The desktop and JSON CLI share hexagonal 
 
 The desktop supports up to eight [repository tabs](docs/REPOSITORY_SESSIONS.md) with independent in-memory review state and persistent [local workspace groups](docs/LOCAL_WORKSPACES.md). Returning to a tab uses its saved view; Refresh explicitly reads current repository state. Groups organize shortcuts without automatically opening repositories. The [local commit graph](docs/COMMIT_GRAPH.md) provides virtualized topology, reference scopes and direct commit review in the full diff canvas.
 
+Use Related worktrees in the workspace chooser to discover the active repository's registered working folders. Open one explicitly in an independent tab, or resume its existing tab. Discovery reads metadata without opening the other locations; see [related worktrees and CLI](docs/RELATED_WORKTREES.md).
+
 ## Requirements
 
 - .NET SDK 11.0.100 or a newer patch in the same feature band.

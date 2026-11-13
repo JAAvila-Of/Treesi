@@ -15,7 +15,7 @@ For a selected workspace:
 - **Open selected** explicitly opens that repository, or restores its existing tab without reading Git again. Existing tabs keep their state.
 - **Remove group** removes the metadata group; repository files, tabs and recent shortcuts remain intact.
 
-Changing groups changes the picker list and its caption, not the active repository. All open tabs remain available across groups. A repository may belong to several groups. The repository name/path in the context row continues to identify the actual active tab, even when it is outside the selected group. No bulk opening, checkout, fetch or background polling occurs. Worktree roots may be added individually; automatic discovery/grouping of related worktrees is still planned.
+Changing groups changes the picker list and its caption, not the active repository. All open tabs remain available across groups. A repository may belong to several groups. The repository name/path in the context row continues to identify the actual active tab, even when it is outside the selected group. No bulk opening, checkout, fetch or background polling occurs. [Related worktrees](RELATED_WORKTREES.md) discovers registered locations on request. Open one explicitly and use Add current to keep its shortcut in a named group; discovery does not modify groups automatically.
 
 The **Recents** action and + / Ctrl/Cmd+T retain the existing Home chooser. Clearing recent shortcuts does not clear workspace membership, and removing a workspace does not clear recents.
 

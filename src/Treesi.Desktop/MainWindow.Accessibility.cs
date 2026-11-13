@@ -8,12 +8,12 @@ namespace Treesi.Desktop;
 
 public sealed partial class MainWindow
 {
-    private Control? ActiveReviewPanel => new[] { "WorkspacePickerPanel", "CommitDetailsPanel", "RevisionPanel", "DiffOptionsPanel", "OpenRecoveryNotice" }
+    private Control? ActiveReviewPanel => new[] { "WorktreesPanel", "WorkspacePickerPanel", "CommitDetailsPanel", "RevisionPanel", "DiffOptionsPanel", "OpenRecoveryNotice" }
         .Select(Required<Control>).FirstOrDefault(panel => panel.IsVisible);
 
     private void InitializeAccessibility()
     {
-        foreach (var name in new[] { "WorkspacePickerPanel", "CommitDetailsPanel", "RevisionPanel", "DiffOptionsPanel", "OpenRecoveryNotice" })
+        foreach (var name in new[] { "WorktreesPanel", "WorkspacePickerPanel", "CommitDetailsPanel", "RevisionPanel", "DiffOptionsPanel", "OpenRecoveryNotice" })
             KeyboardNavigation.SetTabNavigation(Required<Control>(name), KeyboardNavigationMode.Cycle);
         foreach (var (editor, id) in new[] { (_diff, "UnifiedDiffText"), (_before, "BeforeDiffText"), (_after, "AfterDiffText") })
         {

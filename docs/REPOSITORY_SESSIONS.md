@@ -10,7 +10,7 @@ Restored views are explicitly labeled **Saved tab view**. They may be stale afte
 
 The close button or Ctrl/Cmd+W closes the active tab and releases its retained state. Other tabs keep their views. Closing the final tab returns to Home, with the local repository chooser and theme control still available. Closing a tab never deletes a repository, worktree, branch or recent shortcut. Ctrl/Cmd+T, tab cycling and closing do not operate behind an active options, revision, commit-details or recovery panel. Mouse navigation to another tab dismisses transient drafts rather than applying them.
 
-Opening an already-known normalized root updates its existing tab instead of adding a duplicate. This explicit open performs a fresh inspection; selecting a tab only restores memory. Roots are compared case-insensitively on Windows and ordinally elsewhere, using the validated provider root after full-path and trailing-separator normalization. The desktop does not claim to resolve every filesystem alias or symlink to a unique inode. Linked Git worktrees have distinct working-tree roots and therefore distinct tabs; discovering and grouping related worktrees is still planned.
+Opening an already-known normalized root updates its existing tab instead of adding a duplicate. This explicit open performs a fresh inspection; selecting a tab only restores memory. Roots are compared case-insensitively on Windows and ordinally elsewhere, using the validated provider root after full-path and trailing-separator normalization. The desktop does not claim to resolve every filesystem alias or symlink to a unique inode. Linked Git worktrees have distinct working-tree roots and therefore distinct tabs; [related-worktree discovery](RELATED_WORKTREES.md) groups registered locations for explicit opening and reuses existing tabs.
 
 ## State and architecture
 
@@ -18,7 +18,7 @@ One code-view control tree renders the active tab. Typed presentation snapshots 
 
 Application and domain ports remain independent of Avalonia and tabs. No package, network service, account, repository mutation or automatic AI/analyzer execution is introduced. The session state exists only in memory. Existing recent shortcuts retain their small, opt-in-resume behavior; the set of open tabs and historical patches are not persisted or restored at startup.
 
-[Named local workspace groups](LOCAL_WORKSPACES.md) organize persistent shortcuts independently of these in-memory tabs. Related-worktree discovery, drag-to-reorder tabs, a commit graph and analyzer panels remain planned. The tab bar is horizontally scrollable without a permanent scrollbar; keyboard tab cycling brings the selected item into view. A future overflow list must remain subject to compact-layout and keyboard checks.
+[Named local workspace groups](LOCAL_WORKSPACES.md) organize persistent shortcuts independently of these in-memory tabs. The [commit graph](COMMIT_GRAPH.md) and related-worktree selector share these sessions. Drag-to-reorder tabs and analyzer panels remain planned. The tab bar is horizontally scrollable without a permanent scrollbar; keyboard tab cycling brings the selected item into view. A future overflow list must remain subject to compact-layout and keyboard checks.
 
 ## Verification
 
