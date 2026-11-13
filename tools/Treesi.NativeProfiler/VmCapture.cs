@@ -60,7 +60,7 @@ internal static class VmCapture
                     targetSamples++;
                     var stack = item.CallStackIndex() == CallStackIndex.Invalid ? null : log.CallStacks[item.CallStackIndex()];
                     var frames = new List<ulong>();
-                    while (stack is not null && frames.Count < 64) { frames.Add(stack.CodeAddress.Address); stack = stack.Caller; }
+                    while (stack is not null && frames.Count < 256) { frames.Add(stack.CodeAddress.Address); stack = stack.Caller; }
                     if (stack is not null) bounded = false;
                     if (frames.Count < 2 || !frames.Any(address => modules.Any(module => address >= module.Start && address < module.End))) continue;
                     userStacks++;

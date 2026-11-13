@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Win32;
 using Treesi.Application;
 using Treesi.Git;
 using Treesi.Desktop.Appearance;
@@ -10,7 +11,13 @@ namespace Treesi.Desktop;
 internal static class Program
 {
     [STAThread]
-    public static void Main(string[] args) => AppBuilder.Configure<App>().UsePlatformDetect().StartWithClassicDesktopLifetime(args);
+    public static void Main(string[] args)
+    {
+        var builder = AppBuilder.Configure<App>().UsePlatformDetect();
+        if (OperatingSystem.IsWindows() && WindowsGraphicsProbe.HasHardwareAdapter() == false)
+            builder.With(new Win32PlatformOptions { RenderingMode = [Win32RenderingMode.Software] });
+        builder.StartWithClassicDesktopLifetime(args);
+    }
 }
 
 public sealed class App : Avalonia.Application
