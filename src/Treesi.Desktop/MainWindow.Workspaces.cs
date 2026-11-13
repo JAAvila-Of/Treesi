@@ -84,6 +84,7 @@ public sealed partial class MainWindow
 
     private void ShowRecentWorkspaces()
     {
+        SetGraphVisibility(false);
         CloseWorkspacePicker(false);
         Required<Control>("CommitDetailsPanel").IsVisible = false;
         CloseComparisonOptions(false);
@@ -109,6 +110,7 @@ public sealed partial class MainWindow
 
     private void ShowComparison()
     {
+        SetGraphVisibility(false);
         Required<Control>("HomeSurface").IsVisible = false;
         Required<Control>("WorkspaceFrame").IsVisible = true;
         Required<Button>("FocusWorkspaceButton").IsEnabled = true;

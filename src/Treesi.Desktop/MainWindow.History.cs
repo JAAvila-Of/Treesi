@@ -17,6 +17,7 @@ public sealed partial class MainWindow
     {
         Required<Button>("HistoryButton").Click += (_, _) =>
         {
+            if (_graphVisible) ShowComparison();
             ShowHistorySidebar(true);
             if (_historyPage is null) PendingInspection = LoadHistoryAsync(0);
             else Required<ListBox>("HistoryCommits").Focus();

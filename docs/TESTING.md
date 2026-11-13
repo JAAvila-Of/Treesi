@@ -1,5 +1,7 @@
 # Test execution and isolation
 
+The [commit graph](COMMIT_GRAPH.md) has synthetic Git, headless desktop and isolated native Windows coverage. Headless checks exercise compact geometry, virtualized row creation, merge lanes, snapshot extension, tab state and late-result rejection. They do not open native windows. The native graph scenario searches an initial commit, reviews its full diff and returns to the retained selection.
+
 Treesi separates normal verification, native desktop automation, and performance measurements. Running the regular solution never starts the native UI suite or benchmarks.
 
 | Layer | Entry point | Execution environment |

@@ -33,11 +33,12 @@ public sealed partial class MainWindow : Window
     public Task PendingInspection { get; private set; } = Task.CompletedTask;
     public Task PendingMotion => _motion.Pending;
 
-    public MainWindow(IInspectionService inspector, string? initialPath, ThemeController appearance, IMotionPreferenceStore? motionPreferences = null, IWorkspaceHistoryStore? workspaceHistory = null, IRevisionService? revisions = null, IHistoryService? history = null, IWorkspaceCatalogStore? workspaceCatalog = null)
+    public MainWindow(IInspectionService inspector, string? initialPath, ThemeController appearance, IMotionPreferenceStore? motionPreferences = null, IWorkspaceHistoryStore? workspaceHistory = null, IRevisionService? revisions = null, IHistoryService? history = null, IWorkspaceCatalogStore? workspaceCatalog = null, IGraphService? graphs = null)
     {
         _inspector = inspector;
         _revisions = revisions;
         _history = history;
+        _graphs = graphs;
         _appearance = appearance;
         AvaloniaXamlLoader.Load(this);
         _repositoryName = Required<TextBlock>("RepositoryName"); _repositoryLabel = Required<TextBlock>("RepositoryLocation");
@@ -73,6 +74,7 @@ public sealed partial class MainWindow : Window
         InitializeDiffOptions();
         InitializeRevisions();
         InitializeHistory();
+        InitializeGraph();
         InitializeAccessibility();
         InitializeSessions();
         _themes.ItemsSource = ThemeCatalog.All;
@@ -95,13 +97,14 @@ public sealed partial class MainWindow : Window
         KeyDown += async (_, args) =>
         {
             if (HandleReviewNavigation(args)) return;
-            if (!Required<Control>("HomeSurface").IsVisible && (args.KeyModifiers & KeyModifiers.Alt) != 0 && args.Key is Key.Up or Key.Down)
+            if (!_graphVisible && !Required<Control>("HomeSurface").IsVisible && (args.KeyModifiers & KeyModifiers.Alt) != 0 && args.Key is Key.Up or Key.Down)
             {
                 NavigateBlock(args.Key == Key.Up ? -1 : 1); args.Handled = true; return;
             }
             if (args.Key == Key.Escape)
             {
                 if (Required<Control>("WorkspacePickerPanel").IsVisible) CloseWorkspacePicker();
+                else if (_graphVisible && _graphInspector) { _graphInspector = false; UpdateGraphInspector(); Required<Button>("GraphDetailsButton").Focus(); }
                 else if (Required<Control>("CommitDetailsPanel").IsVisible) CloseCommitDetails();
                 else if (Required<Control>("RevisionPanel").IsVisible) CloseRevisionPicker();
                 else if (Required<Control>("DiffOptionsPanel").IsVisible) CloseComparisonOptions();
@@ -117,7 +120,7 @@ public sealed partial class MainWindow : Window
             switch (args.Key)
             {
                 case Key.O: args.Handled = true; await PickAsync(false); break;
-                case Key.R: args.Handled = true; PendingInspection = RefreshWorkspaceAsync(); await PendingInspection; break;
+                case Key.R: args.Handled = true; PendingInspection = _graphVisible ? LoadGraphAsync(reference: _graphPage?.Scope.Reference) : RefreshWorkspaceAsync(); await PendingInspection; break;
                 case Key.B:
                     if (Required<Control>("HomeSurface").IsVisible) break;
                     args.Handled = true; ToggleFilesPanel(); break;
@@ -125,6 +128,7 @@ public sealed partial class MainWindow : Window
                     if (Required<Control>("HomeSurface").IsVisible) break;
                     args.Handled = true;
                     if ((args.KeyModifiers & KeyModifiers.Shift) != 0) SetFocusMode(!_focusMode);
+                    else if (_graphVisible) Required<TextBox>("GraphFindInput").Focus();
                     else _search.Focus();
                     break;
             }
@@ -136,6 +140,8 @@ public sealed partial class MainWindow : Window
             SaveCurrentWorkspace();
             _repositoryTabs.Clear(); _activeRepositoryTab = null;
             _closed = true;
+            _readingGraph?.Cancel(); _readingGraph?.Dispose(); _readingGraph = null;
+            _reviewingGraph?.Cancel(); _reviewingGraph?.Dispose(); _reviewingGraph = null;
             CancelWorkspaceRootCheck();
             Cancel(); _appearance.Changed -= OnThemeChanged;
             _opening?.Dispose(); _opening = null;
@@ -236,6 +242,7 @@ public sealed partial class MainWindow : Window
             }
             finally { _updatingFiles = false; }
             _snapshot = snapshot; _allFiles = snapshot.Files;
+            if (!SessionRootComparer.Equals(snapshot.Root, previousRoot)) RestoreGraph(null);
             RegisterRepositoryTab(snapshot);
             var selected = snapshot.SelectedPath ?? resume?.SelectedPath ?? (snapshot.Root == previousRoot ? previous : null);
             if (selected is not null && !_allFiles.Any(item => item.Path == selected))
@@ -437,7 +444,7 @@ public sealed partial class MainWindow : Window
         progress.IsIndeterminate = value && !_motion.Reduced;
         progress.IsVisible = value;
     }
-    private void Cancel() { _opening?.Cancel(); _loading?.Cancel(); _comparingRevisions?.Cancel(); _listingReferences?.Cancel(); _listingHistory?.Cancel(); _choosingCommit?.Cancel(); _addingWorkspaceRepository?.Cancel(); }
+    private void Cancel() { _opening?.Cancel(); _loading?.Cancel(); _comparingRevisions?.Cancel(); _listingReferences?.Cancel(); _listingHistory?.Cancel(); _choosingCommit?.Cancel(); _addingWorkspaceRepository?.Cancel(); _readingGraph?.Cancel(); _reviewingGraph?.Cancel(); }
     private void ShowCancelledDiff()
     {
         ShowState("Comparison cancelled.", "No complete result is available. Select a file or refresh to try again.");

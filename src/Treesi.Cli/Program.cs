@@ -8,4 +8,4 @@ var git = new GitInspector();
 var service = new InstrumentedInspectionService(new InspectionService(git));
 var revisions = new InstrumentedRevisionService(new RevisionService(git));
 var history = new InstrumentedHistoryService(new HistoryService(git));
-return await CommandLine.RunAsync(args, Console.Out, service, cancellation.Token, revisions, history);
+return await CommandLine.RunAsync(args, Console.Out, service, cancellation.Token, revisions, history, new InstrumentedGraphService(new GraphService(git)));

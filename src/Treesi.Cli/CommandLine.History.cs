@@ -6,16 +6,36 @@ namespace Treesi.Cli;
 
 public static partial class CommandLine
 {
-    private static string[] AvailableCommands(IRevisionService? revisions, IHistoryService? history)
+    private static string[] AvailableCommands(IRevisionService? revisions, IHistoryService? history, IGraphService? graphs)
     {
         var commands = new List<string> { "capabilities", "inspect", "diff" };
         if (revisions is not null) commands.AddRange(["references", "compare", "revision-diff"]);
         if (history is not null) commands.AddRange(["history", "commit"]);
         if (history is not null && revisions is not null) commands.AddRange(["commit-files", "commit-diff"]);
+        if (graphs is not null) commands.Add("graph");
         return commands.ToArray();
     }
 
     private static IHistoryService RequireHistory(IHistoryService? service) => service ?? throw new InspectionException("capability_unavailable", "This host has no history service.");
+
+    private static async Task<CommitGraphPage> ReadGraphAsync(IGraphService service, string repository, string[] flags, CancellationToken token)
+    {
+        var query = new GraphQuery(); var seen = new HashSet<string>(StringComparer.Ordinal);
+        if (flags.Length % 2 != 0) throw GraphUsage();
+        for (var i = 0; i < flags.Length; i += 2)
+        {
+            if (!seen.Add(flags[i])) throw GraphUsage();
+            query = flags[i] switch
+            {
+                "--start" => query with { Reference = flags[i + 1] },
+                "--limit" => query with { Limit = int.TryParse(flags[i + 1], NumberStyles.None, CultureInfo.InvariantCulture, out var limit) ? limit : throw GraphUsage() },
+                _ => throw GraphUsage()
+            };
+        }
+        return await service.ReadAsync(repository, query, token);
+    }
+
+    private static InspectionException GraphUsage() => new("usage", "Usage: graph <repository> [--start <local-reference-or-commit>] [--limit 1..1000]");
 
     private static async Task<HistoryPage> ReadHistoryAsync(IHistoryService service, string repository, string[] flags, CancellationToken token)
     {

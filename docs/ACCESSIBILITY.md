@@ -24,6 +24,8 @@ Focus borders use semantic accent resources. The code canvas changes its existin
 
 ## Automation contract
 
+The Graph view exposes named reference and commit lists, subject/ID/parent-count row descriptions, search and a polite status region. F6 includes its reference, search, commit and footer regions; F3/Shift+F3 navigates loaded matches and Enter in the commit list opens review. Escape closes the details overlay. Connections supplement row metadata; graph colors are not the only source of parent information. Native graph interaction is covered by the isolated Windows suite; manual assistive-technology review remains pending.
+
 ReadOnlyDiffEditor retains AvaloniaEdit rendering, virtualization, selection and source decorations. Its focused TextArea supplies an Edit automation peer implementing IValueProvider. The stable IDs are UnifiedDiffText, BeforeDiffText and AfterDiffText. Value returns the corresponding displayed document, including diff markers; IsReadOnly is true and SetValue throws. Programmatic display updates raise value-property changes. This provider does not implement a rich text-range/caret TextPattern API.
 
 Names describe the file, comparison side, context and whitespace policy, including a warning when spaces are ignored. Historical sides use their commit labels; an initial commit identifies the empty-tree side. Names never contain the patch. Metadata previews end at Unicode text-element boundaries. Clearing the comparison clears values and removes the previous scope from names.

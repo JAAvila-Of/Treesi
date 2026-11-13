@@ -27,7 +27,7 @@ public sealed class App : Avalonia.Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var git = new GitInspector();
-            desktop.MainWindow = new MainWindow(new InstrumentedInspectionService(new InspectionService(git)), desktop.Args?.FirstOrDefault(), _appearance!, new JsonMotionPreferenceStore(), new JsonWorkspaceHistoryStore(), new InstrumentedRevisionService(new RevisionService(git)), new InstrumentedHistoryService(new HistoryService(git)), new JsonWorkspaceCatalogStore());
+            desktop.MainWindow = new MainWindow(new InstrumentedInspectionService(new InspectionService(git)), desktop.Args?.FirstOrDefault(), _appearance!, new JsonMotionPreferenceStore(), new JsonWorkspaceHistoryStore(), new InstrumentedRevisionService(new RevisionService(git)), new InstrumentedHistoryService(new HistoryService(git)), new JsonWorkspaceCatalogStore(), new InstrumentedGraphService(new GraphService(git)));
         }
         base.OnFrameworkInitializationCompleted();
     }

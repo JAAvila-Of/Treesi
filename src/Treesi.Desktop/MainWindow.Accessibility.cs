@@ -34,7 +34,8 @@ public sealed partial class MainWindow
         }
         if (args.Key == Key.F3 && (args.KeyModifiers & ~KeyModifiers.Shift) == 0)
         {
-            if (_search.IsEffectivelyEnabled) FindNext((args.KeyModifiers & KeyModifiers.Shift) != 0);
+            if (_graphVisible) FindGraphCommit((args.KeyModifiers & KeyModifiers.Shift) != 0);
+            else if (_search.IsEffectivelyEnabled) FindNext((args.KeyModifiers & KeyModifiers.Shift) != 0);
             args.Handled = true; return true;
         }
         if (args.Key != Key.F6 || (args.KeyModifiers & ~KeyModifiers.Shift) != 0) return false;
@@ -50,6 +51,14 @@ public sealed partial class MainWindow
     private List<Control> ReviewRegions()
     {
         var regions = new List<Control> { Required<Button>("OpenFolderButton") };
+        if (_graphVisible)
+        {
+            regions.Add(ListRegion(Required<ListBox>("GraphReferences"), Required<TextBox>("GraphReferenceFilter")));
+            regions.Add(Required<TextBox>("GraphFindInput"));
+            regions.Add(ListRegion(Required<ListBox>("GraphCommits"), Required<TextBox>("GraphStartInput")));
+            regions.Add(Required<CheckBox>("ReduceMotionToggle"));
+            return regions.Where(control => control.IsEffectivelyVisible && control.IsEffectivelyEnabled && control.Focusable).ToList();
+        }
         if (Required<Control>("HomeSurface").IsVisible)
             regions.Add(ListRegion(_recents, Required<Button>("HomeOpenRepositoryButton")));
         else

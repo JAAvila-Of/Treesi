@@ -40,6 +40,7 @@ internal sealed record RepositorySessionState
     public required EditorPosition Before { get; init; }
     public required EditorPosition After { get; init; }
     public required SessionNotice Notice { get; init; }
+    public GraphSession? Graph { get; init; }
 }
 
 internal sealed record EditorPosition(int Start, int Length, double Horizontal, double Vertical);

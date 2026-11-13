@@ -71,6 +71,7 @@ public sealed partial class MainWindow
         _activeRepositoryTab.State = new()
         {
             Snapshot = _snapshot,
+            Graph = CaptureGraph(),
             Files = _allFiles,
             SelectedPath = (_files.SelectedItem as ChangedFileItem)?.Path,
             Comparison = _comparison.SelectedIndex,
@@ -110,6 +111,7 @@ public sealed partial class MainWindow
         CloseWorkspacePicker(false);
         _sessionVersion++;
         Cancel();
+        _readingGraph?.Dispose(); _readingGraph = null; _reviewingGraph?.Dispose(); _reviewingGraph = null;
         foreach (var cancellation in new[] { _opening, _loading, _comparingRevisions, _listingReferences, _listingHistory, _choosingCommit }) cancellation?.Dispose();
         _opening = _loading = _comparingRevisions = _listingReferences = _listingHistory = _choosingCommit = null;
         _isOpeningWorkspace = _isComparingRevisions = false;
@@ -181,6 +183,7 @@ public sealed partial class MainWindow
             _refresh.IsEnabled = true; SetRevisionInputAvailability(true);
             _activeSplitEditor = saved.BeforeActive ? _before : _after;
             ShowComparison();
+            RestoreGraph(saved.Graph);
             RestoreEditorPositions(saved);
             var active = _activeRepositoryTab;
             var version = _sessionVersion;
@@ -238,6 +241,7 @@ public sealed partial class MainWindow
         else
         {
             _snapshot = null; _allFiles = []; _files.ItemsSource = null;
+            RestoreGraph(null);
             ClearRevisionComparison(); ShowState("No repository open.", "Open a local repository or choose a recent shortcut.");
             _repositoryName.Text = "No repository open"; _repositoryLabel.Text = "A local view of your changes";
             _refresh.IsEnabled = _filter.IsEnabled = _comparison.IsEnabled = false;

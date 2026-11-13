@@ -4,6 +4,7 @@
         xmlns:local="clr-namespace:Treesi.Desktop"
         xmlns:workspaces="clr-namespace:Treesi.Desktop.Workspaces"
         xmlns:domain="clr-namespace:Treesi.Domain;assembly=Treesi.Domain"
+        xmlns:graph="clr-namespace:Treesi.Desktop.Graph"
         x:Class="Treesi.Desktop.MainWindow" Classes="workspace"
         Title="Treesi — Change inspection" Width="1180" Height="740" MinWidth="900" MinHeight="560"
         WindowStartupLocation="CenterScreen">
@@ -37,7 +38,8 @@
         <TextBlock x:Name="RepositoryLocation" Text="Choose a local Git working tree" Classes="secondary" FontSize="9" TextTrimming="CharacterEllipsis" />
       </StackPanel>
       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" Margin="10,0" VerticalAlignment="Center">
-        <Border Background="{DynamicResource Surface.Selected}" CornerRadius="5" Padding="11,5"><TextBlock x:Name="WorkspaceContext" Text="Changes" FontSize="12" /></Border>
+        <Button x:Name="GraphViewButton" AutomationProperties.AutomationId="GraphViewButton" Content="Graph" Classes="quiet" IsEnabled="False" />
+        <Button x:Name="ChangesViewButton" AutomationProperties.AutomationId="ChangesViewButton" Classes="quiet active-mode"><TextBlock x:Name="WorkspaceContext" Text="Changes" FontSize="12" /></Button>
         <Button x:Name="HistoryButton" AutomationProperties.AutomationId="HistoryButton" Content="History" Classes="quiet" Padding="9,4" IsEnabled="False" ToolTip.Tip="Browse local repository or file history" />
         <Button x:Name="CompareRevisionsButton" AutomationProperties.AutomationId="CompareRevisionsButton" Content="Compare" Classes="quiet" IsEnabled="False" ToolTip.Tip="Compare existing local commits, branches or tags" />
       </StackPanel>
@@ -180,6 +182,57 @@
               <local:ReadOnlyDiffEditor x:Name="AfterEditor" Grid.Row="1" Grid.Column="2" IsReadOnly="True" ShowLineNumbers="False" FontFamily="Cascadia Mono,Consolas,Menlo,monospace" FontSize="13" Background="{DynamicResource Diff.Canvas}" Foreground="{DynamicResource Text.Primary}" Padding="0,8,0,16" WordWrap="False" AutomationProperties.Name="Read-only after diff" />
             </Grid>
           </Grid>
+          </Border>
+        </Grid>
+      </Grid>
+    </Border>
+    <Border x:Name="GraphFrame" Grid.Row="2" IsVisible="False" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Border.Default}" Background="{DynamicResource Surface.Window}">
+      <Grid x:Name="GraphColumns" ColumnDefinitions="180,1,*">
+        <Grid x:Name="GraphSidebar" RowDefinitions="Auto,Auto,*" Background="{DynamicResource Surface.Sidebar}">
+          <TextBlock Text="References" FontSize="11" Classes="secondary" Margin="14,12,10,10" />
+          <TextBox Grid.Row="1" x:Name="GraphReferenceFilter" AutomationProperties.AutomationId="GraphReferenceFilter" PlaceholderText="Filter references…" Margin="12,0,12,10" AutomationProperties.Name="Filter graph references" />
+          <ListBox Grid.Row="2" x:Name="GraphReferences" Classes="changed-files" AutomationProperties.AutomationId="GraphReferences" AutomationProperties.Name="Graph reference scope" Background="Transparent" BorderThickness="0">
+            <ListBox.ItemTemplate><DataTemplate x:DataType="graph:GraphReferenceChoice"><StackPanel Spacing="2"><TextBlock Text="{Binding Name}" FontSize="12" TextTrimming="CharacterEllipsis" /><TextBlock Text="{Binding Kind}" Classes="secondary" FontSize="10" /></StackPanel></DataTemplate></ListBox.ItemTemplate>
+          </ListBox>
+        </Grid>
+        <Border Grid.Column="1" x:Name="GraphSeparator" Background="{DynamicResource Border.Default}" />
+        <Grid Grid.Column="2" RowDefinitions="34,22,*,28">
+          <Grid Margin="8,1" ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto" ColumnSpacing="5">
+            <TextBox x:Name="GraphStartInput" AutomationProperties.AutomationId="GraphStartInput" Width="150" PlaceholderText="All local references" MaxLength="512" AutomationProperties.Name="Graph start reference; blank includes local reference tips" />
+            <Button Grid.Column="1" x:Name="GraphGoButton" AutomationProperties.AutomationId="GraphGoButton" Content="Go" Classes="quiet" Padding="7,3" />
+            <Button Grid.Column="2" x:Name="GraphRefreshButton" AutomationProperties.AutomationId="GraphRefreshButton" Content="Refresh" Classes="quiet" Padding="7,3" ToolTip.Tip="Resolve current graph reference tips again" />
+            <TextBox Grid.Column="4" x:Name="GraphFindInput" AutomationProperties.AutomationId="GraphFindInput" Width="120" PlaceholderText="Find a commit…" AutomationProperties.Name="Find in loaded graph; Enter selects next match" />
+            <Button Grid.Column="5" x:Name="GraphDetailsButton" AutomationProperties.AutomationId="GraphDetailsButton" Content="Details" Classes="quiet" Padding="7,3" />
+            <Button Grid.Column="6" x:Name="GraphReviewButton" AutomationProperties.AutomationId="GraphReviewButton" Content="Review" Classes="quiet" Padding="7,3" IsEnabled="False" />
+          </Grid>
+          <Grid Grid.Row="1" ColumnDefinitions="116,144,*,96,64" Background="{DynamicResource Surface.Sidebar}">
+            <TextBlock Text="References" Classes="secondary" FontSize="10" Margin="8,3" /><TextBlock Grid.Column="1" Text="Graph" Classes="secondary" FontSize="10" Margin="8,3" /><TextBlock Grid.Column="2" Text="Commit" Classes="secondary" FontSize="10" Margin="8,3" /><TextBlock Grid.Column="3" Text="Author" Classes="secondary" FontSize="10" Margin="4,3" /><TextBlock Grid.Column="4" Text="Date" Classes="secondary" FontSize="10" Margin="4,3" />
+          </Grid>
+          <ListBox Grid.Row="2" x:Name="GraphCommits" Classes="graph-rows" AutomationProperties.AutomationId="GraphCommits" AutomationProperties.Name="Commit graph; child commits precede parents" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemsPanel><ItemsPanelTemplate><VirtualizingStackPanel /></ItemsPanelTemplate></ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="graph:GraphRow">
+                <Grid ColumnDefinitions="114,144,*,96,64" Height="36" AutomationProperties.Name="{Binding AccessibleName}">
+                  <TextBlock Text="{Binding ReferenceLabel}" Foreground="{DynamicResource Accent.Primary}" FontSize="10" Margin="6,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding References}" />
+                  <graph:GraphLaneCanvas Grid.Column="1" Row="{Binding}" Height="36" IsHitTestVisible="False" />
+                  <TextBlock Grid.Column="2" Text="{Binding Subject}" FontSize="12" VerticalAlignment="Center" Margin="8,0" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Subject}" />
+                  <TextBlock Grid.Column="3" Text="{Binding Author}" Classes="secondary" FontSize="10" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="4,0" />
+                  <TextBlock Grid.Column="4" Text="{Binding Date}" Classes="secondary" FontSize="9" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="4,0" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <TextBlock Grid.Row="2" x:Name="EmptyGraph" Text="No graph loaded. Choose Go or Refresh to read local commits." Classes="secondary" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="360" Margin="20" />
+          <Grid Grid.Row="3" ColumnDefinitions="*,Auto" ColumnSpacing="8" Margin="10,0">
+            <TextBlock x:Name="GraphNotice" AutomationProperties.AutomationId="GraphNotice" AutomationProperties.LiveSetting="Polite" Classes="secondary" FontSize="10" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+            <Button Grid.Column="1" x:Name="MoreGraphButton" AutomationProperties.AutomationId="MoreGraphButton" Content="Load more" Classes="quiet" MinHeight="26" Padding="7,2" FontSize="11" IsEnabled="False" />
+          </Grid>
+          <Border Grid.Row="1" Grid.RowSpan="3" x:Name="GraphInspector" IsVisible="False" ZIndex="5" Width="272" HorizontalAlignment="Right" Padding="16" Background="{DynamicResource Surface.Panel}" BorderBrush="{DynamicResource Border.Default}" BorderThickness="1,0,0,0" BoxShadow="-8 0 24 0 #20000000">
+            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="12">
+              <Grid ColumnDefinitions="*,Auto"><TextBlock Text="Selected commit" Classes="secondary" FontSize="11" /><Button Grid.Column="1" x:Name="CloseGraphDetailsButton" Content="×" Classes="quiet" MinHeight="24" Padding="5,0" AutomationProperties.Name="Close graph details" /></Grid>
+              <ScrollViewer Grid.Row="1"><StackPanel Spacing="16"><TextBlock x:Name="GraphCommitTitle" AutomationProperties.AutomationId="GraphCommitTitle" FontSize="17" TextWrapping="Wrap" /><TextBlock x:Name="GraphCommitIdentity" FontFamily="monospace" FontSize="10" TextWrapping="Wrap" /><TextBlock x:Name="GraphCommitAuthor" Classes="secondary" FontSize="12" TextWrapping="Wrap" /><TextBlock x:Name="GraphCommitParents" Classes="secondary" FontSize="10" TextWrapping="Wrap" /><TextBlock Text="Review opens the parent-to-commit comparison in the full code canvas." Classes="secondary" FontSize="11" TextWrapping="Wrap" /></StackPanel></ScrollViewer>
+              <Button Grid.Row="2" x:Name="ReviewGraphCommitButton" AutomationProperties.AutomationId="ReviewGraphCommitButton" Content="Review changes →" Classes="primary" HorizontalAlignment="Stretch" />
+            </Grid>
           </Border>
         </Grid>
       </Grid>
@@ -385,6 +438,7 @@
       <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
         <Path Data="M3,10 L3,6 A5,5 0 0 1 13,6 L13,10 M1,10 L15,10 L15,21 L1,21 Z" Width="10" Height="12" Stretch="Uniform" Stroke="{DynamicResource Text.Secondary}" StrokeThickness="1.5" />
         <TextBlock Text="Read-only" Classes="secondary" FontSize="10" />
+        <Button x:Name="BackToGraphButton" AutomationProperties.AutomationId="BackToGraphButton" Content="← Graph" Classes="quiet" IsVisible="False" FontSize="10" MinHeight="24" Padding="5,0" ToolTip.Tip="Return to the saved graph selection without reading Git" />
       </StackPanel>
       <TextBlock Grid.Column="1" x:Name="OperationStatus" AutomationProperties.LiveSetting="Polite" AutomationProperties.AutomationId="OperationStatus" Text="Open a repository to begin" Classes="secondary" FontSize="10" Margin="18,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
       <CheckBox Grid.Column="2" x:Name="ReduceMotionToggle" AutomationProperties.AutomationId="ReduceMotionToggle" Content="Reduce motion" FontSize="10" MinHeight="24" ToolTip.Tip="Reduce decorative motion" VerticalAlignment="Center" />

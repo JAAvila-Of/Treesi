@@ -250,6 +250,23 @@ public sealed class NativeWorkspaceTests
         Element("FileTitle").Text.Test().Be("sample.txt");
     }
 
+    [Test]
+    public void NativeGraphFindsInitialCommitReviewsItAndReturnsToSelection()
+    {
+        Element("GraphViewButton").Click();
+        WaitUntil(() => Element("GraphReviewButton").Enabled && Element("GraphNotice").Text.Contains("2 commits", StringComparison.Ordinal));
+        EnterText("GraphFindInput", "test: create isolated fixture"); Element("GraphFindInput").SendKeys(Keys.Enter);
+        Element("GraphDetailsButton").Click();
+        WaitUntil(() => Element("GraphCommitTitle").Text == "test: create isolated fixture");
+        Element("ReviewGraphCommitButton").Click();
+        WaitUntil(() => Element("RevisionEndpointsButton").Text.Contains("Empty tree", StringComparison.Ordinal) && Element("DiffSearch").Enabled);
+        EnterText("DiffSearch", "original"); Element("FindNextButton").Click();
+        WaitUntil(() => Element("OperationStatus").Text == "Match selected in diff");
+        Element("BackToGraphButton").Click();
+        WaitUntil(() => Element("GraphCommitTitle").Displayed && Element("GraphCommitTitle").Text == "test: create isolated fixture");
+        Element("GraphNotice").Text.Contains("2 commits", StringComparison.Ordinal).Test().BeTrue();
+    }
+
     private void SelectCombo(string id, string option)
     {
         Element(id).Click();
