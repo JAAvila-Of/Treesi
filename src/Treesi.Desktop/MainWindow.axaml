@@ -7,8 +7,23 @@
         x:Class="Treesi.Desktop.MainWindow" Classes="workspace"
         Title="Treesi — Change inspection" Width="1180" Height="740" MinWidth="900" MinHeight="560"
         WindowStartupLocation="CenterScreen">
-  <Grid RowDefinitions="Auto,*,26">
-    <Grid x:Name="WorkspaceHeader" Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="12,4" Height="34">
+  <Grid RowDefinitions="Auto,Auto,*,26">
+    <Grid x:Name="RepositoryTabBar" IsVisible="False" ColumnDefinitions="*,Auto" Background="{DynamicResource Surface.Sidebar}" Margin="0,0,0,1">
+      <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" MaxHeight="28">
+        <TabStrip x:Name="RepositoryTabs" Classes="repository-tabs" AutomationProperties.AutomationId="RepositoryTabs" AutomationProperties.Name="Open repository tabs" Background="Transparent">
+          <TabStrip.ItemTemplate>
+            <DataTemplate x:DataType="workspaces:RepositoryTab">
+              <StackPanel Orientation="Horizontal" Spacing="8" ToolTip.Tip="{Binding Root}">
+                <TextBlock Text="{Binding Name}" MaxWidth="160" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" FontSize="12" />
+                <Button Content="×" Tag="{Binding}" Click="CloseRepositoryTab" Classes="quiet" MinHeight="22" Padding="4,0" FontSize="14" AutomationProperties.Name="{Binding CloseLabel}" ToolTip.Tip="Close tab; repository files are not changed" />
+              </StackPanel>
+            </DataTemplate>
+          </TabStrip.ItemTemplate>
+        </TabStrip>
+      </ScrollViewer>
+      <Button Grid.Column="1" x:Name="NewRepositoryTabButton" AutomationProperties.AutomationId="NewRepositoryTabButton" Content="+" Classes="quiet" MinHeight="28" Height="28" Padding="12,0" FontSize="18" AutomationProperties.Name="Open another repository tab" ToolTip.Tip="Choose a local repository (Ctrl+T)" />
+    </Grid>
+    <Grid x:Name="WorkspaceHeader" Grid.Row="1" ColumnDefinitions="Auto,*,Auto" Margin="12,4" Height="34">
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <Border Width="28" Height="28" Background="{DynamicResource Accent.Soft}" BorderBrush="{DynamicResource Border.Default}" BorderThickness="1" CornerRadius="12">
           <Path Data="M9,6 L9,22 M9,15 C9,10 21,15 21,8 M6,6 A3,3 0 1 0 12,6 A3,3 0 1 0 6,6 M18,5 A3,3 0 1 0 24,5 A3,3 0 1 0 18,5 M6,25 A3,3 0 1 0 12,25 A3,3 0 1 0 6,25"
@@ -32,8 +47,8 @@
         <ComboBox x:Name="ThemeSelector" AutomationProperties.AutomationId="ThemeSelector" Width="108" AutomationProperties.Name="Appearance theme" ToolTip.Tip="Appearance theme" />
       </StackPanel>
     </Grid>
-    <ProgressBar x:Name="BusyIndicator" Grid.Row="0" IsVisible="False" IsIndeterminate="False" Value="100" Height="2" VerticalAlignment="Bottom" Margin="12,0" Foreground="{DynamicResource Accent.Primary}" Background="Transparent" AutomationProperties.Name="Inspection in progress" />
-    <Border x:Name="WorkspaceFrame" Grid.Row="1" Margin="6,0,6,2" CornerRadius="10" ClipToBounds="True" BorderThickness="1" BorderBrush="{DynamicResource Border.Default}" BoxShadow="0 8 30 0 #14000000">
+    <ProgressBar x:Name="BusyIndicator" Grid.Row="1" IsVisible="False" IsIndeterminate="False" Value="100" Height="2" VerticalAlignment="Bottom" Margin="12,0" Foreground="{DynamicResource Accent.Primary}" Background="Transparent" AutomationProperties.Name="Inspection in progress" />
+    <Border x:Name="WorkspaceFrame" Grid.Row="2" Margin="6,0,6,2" CornerRadius="10" ClipToBounds="True" BorderThickness="1" BorderBrush="{DynamicResource Border.Default}" BoxShadow="0 8 30 0 #14000000">
       <Grid x:Name="WorkspaceColumns" ColumnDefinitions="190,1,*">
         <Grid x:Name="FilesPanel" Grid.Column="0" RowDefinitions="Auto,Auto,Auto,*,Auto" Background="{DynamicResource Surface.Sidebar}">
           <Border Margin="8,8,8,12" Padding="10" CornerRadius="10" BorderThickness="1" BorderBrush="{DynamicResource Border.Default}" Background="{DynamicResource Surface.Control}">
@@ -185,7 +200,7 @@
         </Grid>
       </Grid>
     </Border>
-    <Border x:Name="HomeSurface" Grid.Row="1" Margin="6,0,6,2" IsVisible="False" CornerRadius="10" BorderThickness="1" BorderBrush="{DynamicResource Border.Default}" Background="{DynamicResource Surface.Panel}">
+    <Border x:Name="HomeSurface" Grid.Row="2" Margin="6,0,6,2" IsVisible="False" CornerRadius="10" BorderThickness="1" BorderBrush="{DynamicResource Border.Default}" Background="{DynamicResource Surface.Panel}">
       <Grid RowDefinitions="Auto,*,Auto" Margin="28,18" MaxWidth="820">
         <StackPanel Spacing="8" Margin="0,0,0,14">
           <TextBlock Text="LOCAL WORKSPACES" Classes="eyebrow" />
@@ -232,7 +247,7 @@
         </Grid>
       </Grid>
     </Border>
-    <Border x:Name="OpenRecoveryNotice" Grid.Row="1" IsVisible="False" ZIndex="10" Width="400" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="16" Padding="16" CornerRadius="10" Background="{DynamicResource Surface.Panel}" BorderBrush="{DynamicResource Status.Warning}" BorderThickness="1" BoxShadow="0 8 24 0 #30000000">
+    <Border x:Name="OpenRecoveryNotice" Grid.Row="2" IsVisible="False" ZIndex="10" Width="400" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="16" Padding="16" CornerRadius="10" Background="{DynamicResource Surface.Panel}" BorderBrush="{DynamicResource Status.Warning}" BorderThickness="1" BoxShadow="0 8 24 0 #30000000">
       <StackPanel Spacing="10">
         <TextBlock Text="The location could not be opened." FontWeight="SemiBold" />
         <TextBlock x:Name="OpenRecoveryMessage" AutomationProperties.LiveSetting="Polite" AutomationProperties.AutomationId="OpenRecoveryMessage" TextWrapping="Wrap" Classes="secondary" />
@@ -244,7 +259,7 @@
         </StackPanel>
       </StackPanel>
     </Border>
-    <Border x:Name="DiffOptionsPanel" Grid.Row="1" IsVisible="False" ZIndex="20" Width="368" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="16" Padding="18" CornerRadius="10" Background="{DynamicResource Surface.Panel}" BorderBrush="{DynamicResource Border.Default}" BorderThickness="1" BoxShadow="0 8 24 0 #30000000" AutomationProperties.Name="Comparison options">
+    <Border x:Name="DiffOptionsPanel" Grid.Row="2" IsVisible="False" ZIndex="20" Width="368" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="16" Padding="18" CornerRadius="10" Background="{DynamicResource Surface.Panel}" BorderBrush="{DynamicResource Border.Default}" BorderThickness="1" BoxShadow="0 8 24 0 #30000000" AutomationProperties.Name="Comparison options">
       <StackPanel Spacing="12">
         <TextBlock Text="Comparison options" FontSize="18" FontWeight="SemiBold" />
         <TextBlock Text="Apply to the current comparison. Repository files remain unchanged." Classes="secondary" FontSize="11" TextWrapping="Wrap" />
@@ -271,7 +286,7 @@
         </Grid>
       </StackPanel>
     </Border>
-    <Border x:Name="RevisionPanel" Grid.Row="1" IsVisible="False" ZIndex="25" Width="460" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="16" Padding="16" CornerRadius="10" Background="{DynamicResource Surface.Panel}" BorderBrush="{DynamicResource Border.Default}" BorderThickness="1" BoxShadow="0 8 24 0 #30000000" AutomationProperties.Name="Compare local revisions">
+    <Border x:Name="RevisionPanel" Grid.Row="2" IsVisible="False" ZIndex="25" Width="460" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="16" Padding="16" CornerRadius="10" Background="{DynamicResource Surface.Panel}" BorderBrush="{DynamicResource Border.Default}" BorderThickness="1" BoxShadow="0 8 24 0 #30000000" AutomationProperties.Name="Compare local revisions">
       <Grid x:Name="RevisionPanelLayout" RowDefinitions="Auto,*,Auto" Height="320" RowSpacing="12">
         <TextBlock Text="Compare local revisions" FontSize="18" FontWeight="SemiBold" />
         <StackPanel x:Name="RevisionDraft" Grid.Row="1" Spacing="8">
@@ -311,7 +326,7 @@
         </Grid>
       </Grid>
     </Border>
-    <Border x:Name="CommitDetailsPanel" Grid.Row="1" IsVisible="False" ZIndex="26" Width="430" MaxHeight="410" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="16" Padding="16" CornerRadius="10" Background="{DynamicResource Surface.Panel}" BorderBrush="{DynamicResource Border.Default}" BorderThickness="1" BoxShadow="0 8 24 0 #30000000">
+    <Border x:Name="CommitDetailsPanel" Grid.Row="2" IsVisible="False" ZIndex="26" Width="430" MaxHeight="410" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="16" Padding="16" CornerRadius="10" Background="{DynamicResource Surface.Panel}" BorderBrush="{DynamicResource Border.Default}" BorderThickness="1" BoxShadow="0 8 24 0 #30000000">
       <Grid RowDefinitions="Auto,Auto,Auto,*,Auto,Auto" RowSpacing="10">
         <TextBlock Text="Commit details" FontSize="16" FontWeight="SemiBold" />
         <TextBlock Grid.Row="1" x:Name="CommitIdentity" AutomationProperties.AutomationId="CommitIdentity" FontFamily="monospace" FontSize="10" TextWrapping="Wrap" />
@@ -325,7 +340,7 @@
         </Grid>
       </Grid>
     </Border>
-    <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="12,0">
+    <Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="12,0">
       <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
         <Path Data="M3,10 L3,6 A5,5 0 0 1 13,6 L13,10 M1,10 L15,10 L15,21 L1,21 Z" Width="10" Height="12" Stretch="Uniform" Stroke="{DynamicResource Text.Secondary}" StrokeThickness="1.5" />
         <TextBlock Text="Read-only" Classes="secondary" FontSize="10" />

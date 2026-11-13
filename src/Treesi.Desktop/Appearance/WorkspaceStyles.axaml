@@ -4,22 +4,22 @@
     <ResourceDictionary>
       <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Light">
-          <SolidColorBrush x:Key="Surface.Window">#EDF2F0</SolidColorBrush>
-          <SolidColorBrush x:Key="Surface.Panel">#FFFFFF</SolidColorBrush>
-          <SolidColorBrush x:Key="Surface.Sidebar">#F3F7F5</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Window">#F0F1F4</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Panel">#F6F6F8</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Sidebar">#F0F1F4</SolidColorBrush>
           <SolidColorBrush x:Key="Surface.Control">#FFFFFF</SolidColorBrush>
-          <SolidColorBrush x:Key="Surface.Hover">#EDF1F5</SolidColorBrush>
-          <SolidColorBrush x:Key="Surface.Selected">#DCEEE8</SolidColorBrush>
-          <SolidColorBrush x:Key="Border.Default">#DCE3E9</SolidColorBrush>
-          <SolidColorBrush x:Key="Text.Primary">#1B2939</SolidColorBrush>
-          <SolidColorBrush x:Key="Text.Secondary">#536579</SolidColorBrush>
-          <SolidColorBrush x:Key="Text.Subtle">#607286</SolidColorBrush>
-          <SolidColorBrush x:Key="Accent.Primary">#146C58</SolidColorBrush>
-          <SolidColorBrush x:Key="Accent.Hover">#105A49</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Hover">#E9EAEE</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Selected">#E6E9F0</SolidColorBrush>
+          <SolidColorBrush x:Key="Border.Default">#D6D8DF</SolidColorBrush>
+          <SolidColorBrush x:Key="Text.Primary">#24262D</SolidColorBrush>
+          <SolidColorBrush x:Key="Text.Secondary">#5D626F</SolidColorBrush>
+          <SolidColorBrush x:Key="Text.Subtle">#6C707B</SolidColorBrush>
+          <SolidColorBrush x:Key="Accent.Primary">#25704E</SolidColorBrush>
+          <SolidColorBrush x:Key="Accent.Hover">#1E6042</SolidColorBrush>
           <SolidColorBrush x:Key="Accent.Contrast">#FFFFFF</SolidColorBrush>
-          <SolidColorBrush x:Key="Accent.Soft">#DCEEE8</SolidColorBrush>
+          <SolidColorBrush x:Key="Accent.Soft">#E9EBF0</SolidColorBrush>
           <SolidColorBrush x:Key="Diff.Canvas">#FFFFFF</SolidColorBrush>
-          <SolidColorBrush x:Key="Diff.Gutter">#F6F8FA</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.Gutter">#F6F6F8</SolidColorBrush>
           <SolidColorBrush x:Key="Diff.AddBackground">#E5F4E9</SolidColorBrush>
           <SolidColorBrush x:Key="Diff.AddText">#216039</SolidColorBrush>
           <SolidColorBrush x:Key="Diff.RemoveBackground">#FCE9EB</SolidColorBrush>
@@ -35,22 +35,22 @@
           <SolidColorBrush x:Key="Status.Warning">#8A550B</SolidColorBrush>
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
-          <SolidColorBrush x:Key="Surface.Window">#0B1219</SolidColorBrush>
-          <SolidColorBrush x:Key="Surface.Panel">#14202A</SolidColorBrush>
-          <SolidColorBrush x:Key="Surface.Sidebar">#101B23</SolidColorBrush>
-          <SolidColorBrush x:Key="Surface.Control">#192832</SolidColorBrush>
-          <SolidColorBrush x:Key="Surface.Hover">#23313E</SolidColorBrush>
-          <SolidColorBrush x:Key="Surface.Selected">#193D34</SolidColorBrush>
-          <SolidColorBrush x:Key="Border.Default">#2B3846</SolidColorBrush>
-          <SolidColorBrush x:Key="Text.Primary">#E5EDF5</SolidColorBrush>
-          <SolidColorBrush x:Key="Text.Secondary">#A4B3C3</SolidColorBrush>
-          <SolidColorBrush x:Key="Text.Subtle">#97A9BB</SolidColorBrush>
-          <SolidColorBrush x:Key="Accent.Primary">#74DCC0</SolidColorBrush>
-          <SolidColorBrush x:Key="Accent.Hover">#98E8D2</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Window">#17181C</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Panel">#202126</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Sidebar">#1C1D22</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Control">#202126</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Hover">#2A2C33</SolidColorBrush>
+          <SolidColorBrush x:Key="Surface.Selected">#2D3039</SolidColorBrush>
+          <SolidColorBrush x:Key="Border.Default">#34363E</SolidColorBrush>
+          <SolidColorBrush x:Key="Text.Primary">#E8E9ED</SolidColorBrush>
+          <SolidColorBrush x:Key="Text.Secondary">#AAACB6</SolidColorBrush>
+          <SolidColorBrush x:Key="Text.Subtle">#858995</SolidColorBrush>
+          <SolidColorBrush x:Key="Accent.Primary">#8DD6B5</SolidColorBrush>
+          <SolidColorBrush x:Key="Accent.Hover">#A6E3C7</SolidColorBrush>
           <SolidColorBrush x:Key="Accent.Contrast">#10251F</SolidColorBrush>
-          <SolidColorBrush x:Key="Accent.Soft">#203C36</SolidColorBrush>
-          <SolidColorBrush x:Key="Diff.Canvas">#0E1821</SolidColorBrush>
-          <SolidColorBrush x:Key="Diff.Gutter">#121F29</SolidColorBrush>
+          <SolidColorBrush x:Key="Accent.Soft">#2A2C33</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.Canvas">#17181C</SolidColorBrush>
+          <SolidColorBrush x:Key="Diff.Gutter">#1C1D22</SolidColorBrush>
           <SolidColorBrush x:Key="Diff.AddBackground">#173729</SolidColorBrush>
           <SolidColorBrush x:Key="Diff.AddText">#A5E7B9</SolidColorBrush>
           <SolidColorBrush x:Key="Diff.RemoveBackground">#3B222B</SolidColorBrush>
@@ -163,6 +163,10 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Accent.Primary}" />
   </Style>
   <Style Selector="TextBlock.file-status"><Setter Property="Foreground" Value="{DynamicResource Accent.Primary}" /></Style>
+  <Style Selector="TabStrip.repository-tabs TabStripItem">
+    <Setter Property="MinHeight" Value="28" /><Setter Property="Height" Value="28" />
+    <Setter Property="Padding" Value="10,0" /><Setter Property="FontSize" Value="12" />
+  </Style>
   <Style Selector="TabStrip.diff-modes TabStripItem">
     <Setter Property="Theme">
       <ControlTheme TargetType="TabStripItem">

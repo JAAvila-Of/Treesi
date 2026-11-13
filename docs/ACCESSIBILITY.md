@@ -6,6 +6,9 @@ Treesi provides keyboard review and read-only automation values on its existing 
 
 | Key | Action |
 | --- | --- |
+| Ctrl/Cmd+Tab / Ctrl/Cmd+Shift+Tab | Next / previous repository tab |
+| Ctrl/Cmd+T | Show the local repository chooser without closing existing tabs |
+| Ctrl/Cmd+W | Close the active repository tab without deleting files |
 | F6 / Shift+F6 | Next / previous visible region: header, file/history navigation, search, code pane(s), footer |
 | Tab / Shift+Tab | Normal control traversal; leave read-only code; cycle inside an open review panel |
 | F3 / Shift+F3 | Next / previous search match |

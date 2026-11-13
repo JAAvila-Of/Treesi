@@ -138,9 +138,10 @@ public sealed partial class MainWindow
         if (_blockIndex >= 0)
         {
             ScrollToBlock();
+            var expected = _currentDiff; var version = _sessionVersion;
             Dispatcher.UIThread.Post(() =>
             {
-                if (!_closed && _currentDiff is not null && _blockIndex >= 0) ScrollToBlock();
+                if (!_closed && version == _sessionVersion && ReferenceEquals(_currentDiff, expected) && _blockIndex >= 0) ScrollToBlock();
             }, DispatcherPriority.Loaded);
         }
     }

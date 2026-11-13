@@ -101,6 +101,23 @@ public sealed class NativeWorkspaceTests
     private AppiumElement Element(string id) => _driver!.FindElement(new ByAccessibilityId(id));
 
     [Test]
+    public void NativeRepositoryTabReturnsFromHomeAndClosesWithoutDeletingFiles()
+    {
+        var path = _repository!.SamplePath;
+        var original = File.ReadAllText(path);
+        var name = Path.GetFileName(Path.GetDirectoryName(path)!);
+        Element("RepositoryTabs").Displayed.Test().BeTrue();
+        Element("NewRepositoryTabButton").Click();
+        WaitUntil(() => Element("ReturnToWorkspaceButton").Displayed);
+        _driver!.FindElements(By.Name(name)).First(item => item.Displayed).Click();
+        WaitUntil(() => Element("FileTitle").Text == "sample.txt" && Element("DiffSearch").Enabled);
+        _driver.FindElement(By.Name("Close repository tab: " + name)).Click();
+        WaitUntil(() => !_driver.FindElements(new ByAccessibilityId("ReturnToWorkspaceButton")).Any(item => item.Displayed) && Element("HomeOpenRepositoryButton").Displayed);
+        File.ReadAllText(path).Test().Be(original);
+        Directory.Exists(Path.Combine(Path.GetDirectoryName(path)!, ".git")).Test().BeTrue();
+    }
+
+    [Test]
     public void NativeLocalRevisionComparisonUsesCommittedDataAndCanReturnToWorkingChanges()
     {
         Element("CompareRevisionsButton").Click();

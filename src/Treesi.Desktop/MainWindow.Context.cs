@@ -36,7 +36,8 @@ public sealed partial class MainWindow
         var selection = saved.Anchor.SelectedText;
         var length = selection.Length <= line.EndOffset - offset && editor.Document.GetText(offset, selection.Length) == selection ? selection.Length : 0;
         editor.Select(offset, length);
-        void Reveal() { if (!_closed && ReferenceEquals(_currentDiff, expected)) RevealLine(editor, row); }
+        var version = _sessionVersion;
+        void Reveal() { if (!_closed && version == _sessionVersion && ReferenceEquals(_currentDiff, expected)) RevealLine(editor, row); }
         Reveal(); Dispatcher.UIThread.Post(Reveal, DispatcherPriority.Loaded);
     }
 

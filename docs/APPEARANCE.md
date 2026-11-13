@@ -1,6 +1,6 @@
 # Appearance and UI verification
 
-The workspace provides Light and Dark themes with a restrained green accent, clear type hierarchy, compact actions, and distinct repository, file-list, and diff surfaces. Theme changes apply immediately and preserve the current file, comparison, filter, and text selection.
+The workspace provides Light and Dark themes with neutral graphite or white/gray surfaces, a restrained green accent, clear type hierarchy, compact actions, and distinct repository, file-list, and diff surfaces. Selections and broad surfaces stay neutral so source colors and graph/diff semantics remain prominent. Theme changes apply immediately and preserve the current file, comparison, filter, and text selection.
 
 The visual shell uses a rounded workspace frame, a compact repository card, a small file heading, colored addition/removal counters, and a framed diff canvas. A single-row toolbar exposes endpoints, Unified and Side by side, file-panel visibility and change-block navigation. Search stays beside the file heading. Selected files and keyboard focus have explicit outlines; color is accompanied by status text and diff prefixes.
 
@@ -62,7 +62,7 @@ The file heading exposes Options without adding another toolbar row. Its in-wind
 
 A WS ignored badge remains visible for every non-Exact mode, even with an empty result. Empty filtered results say No differences for these options and explain how to return to Exact. The file list continues to reflect unfiltered Git status, and counters reflect the loaded filtered hunks. Whitespace filtering can hide significant string contents, so it is never represented as an exact or clean result. Filtered context follows Git's patch rather than reconstructing both whitespace variants.
 
-Options are session-only, excluded from recent-workspace metadata and restored to 3/Exact when the repository root changes. Applying new options cancels superseded loads; late results cannot overwrite a newer selection. Switching layout or theme retains the current options without reading Git again. Existing timeout, output and UTF-8 boundaries remain unchanged; context is not a request for unlimited content.
+Options belong to each repository tab in memory and are excluded from recent-workspace metadata. A freshly opened different root starts at 3/Exact; selecting an existing tab restores its options without reading Git. Applying new options cancels superseded loads; late results cannot overwrite a newer selection or another tab. Switching layout or theme retains the current options without reading Git again. Existing timeout, output and UTF-8 boundaries remain unchanged; context is not a request for unlimited content.
 
 Headless tests cover draft cancellation, unchanged Apply, defaults, invalid input, filtered-empty recovery, stale requests, root changes and compact bounds in both themes and layouts. The code canvas retains its height and area requirements with the warning visible. Contrast checks include warning text against the panel. Native isolated verification types context, selects whitespace, applies changes and verifies the persistent warning and return to defaults.
 
@@ -84,6 +84,6 @@ The code canvas uses its existing border for focus indication, without changing 
 
 Full file context is available in the same Options draft. Reloads retain the previous code on errors, cancellation or preview-limit refusal, with a source-line anchor on successful expansion/contraction. See [full-context review](FULL_CONTEXT.md). It adds no permanent toolbar or extra canvas row.
 
-Code token colors and inline edit backgrounds use semantic theme resources and one cached presentation model across unified/before/after editors. Options drafts include two display toggles; Apply changes presentation without another repository request, Cancel discards drafts, and Defaults restores both to enabled. Display choices last for the process session across repositories and are not persisted in recents. Search, selection and loaded text remain unchanged. The document model and its limits are described in [source presentation](SOURCE_PRESENTATION.md).
+Code token colors and inline edit backgrounds use semantic theme resources and one cached presentation model across unified/before/after editors. Options drafts include two display toggles; Apply changes presentation without another repository request, Cancel discards drafts, and Defaults restores both to enabled. Display choices belong to each repository tab in memory and are not persisted in recents. Search, selection and loaded text remain unchanged. The document model and its limits are described in [source presentation](SOURCE_PRESENTATION.md).
 
 Primary references: [Avalonia headless platform](https://docs.avaloniaui.net/docs/testing/setting-up-the-headless-platform), [dynamic theme resources](https://docs.avaloniaui.net/docs/app-development/resources), [AvaloniaEdit](https://github.com/AvaloniaUI/AvaloniaEdit).

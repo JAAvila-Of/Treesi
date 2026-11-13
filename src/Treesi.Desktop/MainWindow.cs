@@ -74,6 +74,7 @@ public sealed partial class MainWindow : Window
         InitializeRevisions();
         InitializeHistory();
         InitializeAccessibility();
+        InitializeSessions();
         _themes.ItemsSource = ThemeCatalog.All;
         _themes.SelectedItem = appearance.Current;
         _themes.SelectionChanged += (_, _) =>
@@ -131,6 +132,7 @@ public sealed partial class MainWindow : Window
         Closed += (_, _) =>
         {
             SaveCurrentWorkspace();
+            _repositoryTabs.Clear(); _activeRepositoryTab = null;
             _closed = true;
             Cancel(); _appearance.Changed -= OnThemeChanged;
             _opening?.Dispose(); _opening = null;
@@ -175,6 +177,8 @@ public sealed partial class MainWindow : Window
     {
         Required<Control>("CommitDetailsPanel").IsVisible = false;
         Cancel();
+        SaveRepositorySession();
+        _sessionVersion++;
         CloseRevisionPicker(true, false);
         _comparingRevisions?.Dispose(); _comparingRevisions = null; _isComparingRevisions = false;
         CloseComparisonOptions(false);
@@ -202,10 +206,20 @@ public sealed partial class MainWindow : Window
                 _status.Text = "Opening cancelled; no new workspace was loaded.";
                 return;
             }
+            if (FindRepositoryTab(snapshot.Root) is null && _repositoryTabs.Count >= MaximumRepositoryTabs)
+                throw new InspectionException("session_limit", "Eight repository tabs are already open. Close a tab before opening another repository.");
             _updatingFiles = true;
             try
             {
-                if (snapshot.Root != previousRoot) ResetWorkspaceDiffOptions();
+                if (!SessionRootComparer.Equals(snapshot.Root, previousRoot))
+                {
+                    ResetWorkspaceDiffOptions();
+                    _search.Text = ""; _viewOptions = new();
+                    foreach (var decoration in new[] { _decoration, _beforeDecoration, _afterDecoration }) decoration.SetViewOptions(_viewOptions);
+                    UpdateOptionsIndicator();
+                    _comparison.SelectedIndex = 0; _diffMode.SelectedIndex = 0;
+                    _focusMode = false; _filesPanelVisible = true; ApplyPresentation();
+                }
                 ClearRevisionComparison();
                 _files.ItemsSource = null;
                 _filter.Text = "";
@@ -218,6 +232,7 @@ public sealed partial class MainWindow : Window
             }
             finally { _updatingFiles = false; }
             _snapshot = snapshot; _allFiles = snapshot.Files;
+            RegisterRepositoryTab(snapshot);
             var selected = snapshot.SelectedPath ?? resume?.SelectedPath ?? (snapshot.Root == previousRoot ? previous : null);
             if (selected is not null && !_allFiles.Any(item => item.Path == selected))
                 _allFiles = [new FileChange(selected, null, ".", "."), .. _allFiles];
