@@ -28,11 +28,19 @@ public sealed class SyntheticRepository : IDisposable
         File.WriteAllText(Path.Combine(Root, "new.txt"), "Synthetic new file\n", new UTF8Encoding(false));
     }
 
-    public string AddLinkedWorktree()
+    public string AddLinkedWorktree() => AddLinkedWorktreeCore("linked-review", "linked change");
+
+    public string AddLinkedWorktree(int sequence)
     {
-        var linked = Path.Combine(Root, "linked-review");
-        Git("-c", "core.hooksPath=", "worktree", "add", "-b", "feature/linked-review", linked);
-        File.WriteAllText(Path.Combine(linked, "sample.txt"), "first\nlinked change\nlast\n", new UTF8Encoding(false));
+        if (sequence is < 1 or > 7) throw new ArgumentOutOfRangeException(nameof(sequence));
+        return AddLinkedWorktreeCore("linked-review-" + sequence, "linked change " + sequence);
+    }
+
+    private string AddLinkedWorktreeCore(string name, string change)
+    {
+        var linked = Path.Combine(Root, name);
+        Git("-c", "core.hooksPath=", "worktree", "add", "-b", "feature/" + name, linked);
+        File.WriteAllText(Path.Combine(linked, "sample.txt"), $"first\n{change}\nlast\n", new UTF8Encoding(false));
         return linked;
     }
 

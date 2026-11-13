@@ -15,6 +15,7 @@ Package versions are centralized in `Directory.Packages.props`. The SDK version 
 | NUnit3TestAdapter | 6.3.1 | MIT | Test discovery and execution |
 | Appium.WebDriver | 9.0.0 | Apache-2.0 | Isolated native UI tests only |
 | BenchmarkDotNet | 0.15.8 | MIT | Isolated benchmarks only |
+| PresentMon standalone console | 2.6.0, SHA-256 pinned in the tool manifest | MIT with upstream third-party notices retained | Isolated Windows presentation probe only; no service or product dependency |
 | Microsoft.NET.Test.Sdk | 18.12.0 | MIT | Test host |
 | Git | Supplied by the user | GPL-2.0 and upstream notices | Separate CLI process |
 

@@ -53,6 +53,20 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           & './eng/native-tools/node_modules/.bin/appium.cmd' driver install --source=local "$pwd/eng/native-tools/node_modules/appium-wincore-driver"
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Prepare the pinned standalone presentation collector
+        shell: pwsh
+        run: |
+          $manifest = Get-Content eng/performance-tools/presentmon.json -Raw | ConvertFrom-Json
+          $tools = Join-Path $env:RUNNER_TEMP 'treesi-presentmon'
+          New-Item -ItemType Directory -Force $tools, $env:TREESI_NATIVE_RESULTS | Out-Null
+          $executable = Join-Path $tools 'PresentMon.exe'
+          Invoke-WebRequest -Uri $manifest.url -OutFile $executable
+          if ((Get-FileHash -LiteralPath $executable -Algorithm SHA256).Hash.ToLowerInvariant() -ne $manifest.sha256) { throw 'PresentMon SHA-256 verification failed.' }
+          Invoke-WebRequest -Uri $manifest.licenseUrl -OutFile "$env:TREESI_NATIVE_RESULTS/PresentMon-LICENSE.txt"
+          Invoke-WebRequest -Uri $manifest.thirdPartyNoticesUrl -OutFile "$env:TREESI_NATIVE_RESULTS/PresentMon-THIRD_PARTY.txt"
+          Copy-Item -LiteralPath eng/performance-tools/presentmon.json -Destination "$env:TREESI_NATIVE_RESULTS/presentmon-manifest.json"
+          "TREESI_PRESENTMON_EXE=$executable" >> $env:GITHUB_ENV
+          "TREESI_PRESENTMON_SHA256=$($manifest.sha256)" >> $env:GITHUB_ENV
       - name: Record environment and run the isolated process measurements
         shell: pwsh
         run: |

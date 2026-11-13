@@ -38,6 +38,8 @@ dotnet test Treesi.slnx --configuration Release --no-build
 
 The correctness workflow filters out `NativePerformance`. That category runs only through the separate manual workflow with `TREESI_ISOLATED_SUITE=native-performance`. It records three owned-process launches and idle/graph resource samples; see [native observation scope](NATIVE_PERFORMANCE.md). The two modes cannot substitute for each other's opt-in. A native test command without a category filter includes the performance test and therefore fails admission in correctness mode; use the documented workflows.
 
+The same manual category also exercises [eight-tab retention and a per-PID presentation probe](SESSION_PERFORMANCE.md). Resource phases retain all samples; a missing/unsupported ETW capture remains explicit unavailable presentation evidence. Passing that test's resource/session protocol is not a frame-pacing certification.
+
 The workflow publishes Treesi, installs pinned Appium tools only in the disposable VM, binds the server to loopback, and exercises a generated Git fixture. Native checks cover direct file opening, accessibility IDs, change counts, Light/Dark selection, filtering, comparison changes, and search. The session closes its own application. Failure diagnostics contain only the synthetic fixture and accessible workspace.
 
 Appium 3.9.0 is paired with WinCore 3.3.2. The newer WinCore 4 line requires Appium 4, so installing the newest driver major with the stable Appium 3 server would be incompatible. The tool package lock records the dependency graph. The .NET Appium client is 9.0.0. These automation components are Apache-2.0 licensed.

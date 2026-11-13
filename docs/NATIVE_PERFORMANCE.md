@@ -34,3 +34,5 @@ Initial investigation thresholds, chosen before measurement, are 2 seconds to ob
 The artifact retains `native-process-performance.json`, TRX, exact source SHA, SDK/Git/OS/CPU/display-driver/power-plan context and automation logs. JSON contains every resource sample, individual launch/action observations, provisional thresholds, failure/completion status and measurement scope. Counter aggregation is checked by regular FluentOperations tests. A passing workflow proves measurement completion, not that all threshold flags are true.
 
 Controlled native startup, presentation-frame timestamps, long idle sessions, eight-tab retention and macOS/Linux native resource behavior remain additional acceptance work. Repeat baseline and candidate under matching power, display, caching and workload conditions before attributing a regression or improvement.
+
+The [eight-tab and presentation-probe protocol](SESSION_PERFORMANCE.md) extends this workflow with independent session graphs, two 60-second idle windows, tab closure and a pinned per-PID ETW collector. Its resource completion and presentation-support status are evaluated separately.

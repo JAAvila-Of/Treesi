@@ -34,7 +34,7 @@
     </Grid>
     <Grid x:Name="WorkspaceHeader" Grid.Row="1" ColumnDefinitions="190,*,Auto" Height="40" Background="{DynamicResource Surface.Window}">
       <StackPanel Spacing="1" Margin="14,0,10,0" VerticalAlignment="Center" ToolTip.Tip="Inspect the active local repository">
-        <TextBlock x:Name="RepositoryName" Text="No repository open" FontWeight="SemiBold" FontSize="13" TextTrimming="CharacterEllipsis" />
+        <TextBlock x:Name="RepositoryName" AutomationProperties.AutomationId="RepositoryName" Text="No repository open" FontWeight="SemiBold" FontSize="13" TextTrimming="CharacterEllipsis" />
         <TextBlock x:Name="RepositoryLocation" Text="Choose a local Git working tree" Classes="secondary" FontSize="9" TextTrimming="CharacterEllipsis" />
       </StackPanel>
       <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" Margin="10,0" VerticalAlignment="Center">

@@ -11,7 +11,7 @@ using Treesi.TestSupport;
 namespace Treesi.Native.Tests;
 
 [TestFixture, NonParallelizable, Category("NativePerformance")]
-public sealed class NativePerformanceTests
+public sealed partial class NativePerformanceTests
 {
     private sealed record IdleObservation(ProcessResourceSummary Summary, IReadOnlyList<ProcessResourceSample> Samples);
     private sealed record Interaction(string Operation, double ObservedMs);
@@ -146,13 +146,13 @@ public sealed class NativePerformanceTests
         }
     }
 
-    private static async Task<IdleObservation> ObserveIdleAsync(Process process)
+    private static async Task<IdleObservation> ObserveIdleAsync(Process process, int intervals = 10, int intervalMs = 500)
     {
         await Task.Delay(3000);
         var elapsed = Stopwatch.StartNew(); var samples = new List<ProcessResourceSample>();
-        for (var index = 0; index <= 10; index++)
+        for (var index = 0; index <= intervals; index++)
         {
-            if (index != 0) await Task.Delay(500);
+            if (index != 0) await Task.Delay(intervalMs);
             process.Refresh();
             if (process.HasExited) throw new InvalidOperationException("The owned application exited during idle observation.");
             samples.Add(new(elapsed.Elapsed.TotalMilliseconds, process.TotalProcessorTime.TotalMilliseconds, process.WorkingSet64, process.PrivateMemorySize64, process.PeakWorkingSet64));
