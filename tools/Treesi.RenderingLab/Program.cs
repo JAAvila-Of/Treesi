@@ -12,6 +12,16 @@ internal static class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        if (args is ["drag-source", var file])
+        {
+            IsolatedExecution.Require("native-ui");
+            if (!Path.IsPathFullyQualified(file)
+                || !Path.GetFullPath(file).StartsWith(Path.GetFullPath(Path.GetTempPath()).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+                || !File.Exists(file))
+                throw new ArgumentException("The drag source must be an existing temporary fixture file.");
+            AppBuilder.Configure<DragSourceApplication>().UsePlatformDetect().StartWithClassicDesktopLifetime([file]);
+            return;
+        }
         IsolatedExecution.Require("native-performance");
         if (args is not ["angle" or "software", _, _]) throw new ArgumentException("A renderer, diagnostic path and fixture path are required.");
         var directory = Environment.GetEnvironmentVariable("TREESI_NATIVE_RESULTS");

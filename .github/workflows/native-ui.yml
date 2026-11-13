@@ -38,6 +38,14 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '26.13.1'
+      - name: Publish the isolated drag source without changing product startup
+        shell: pwsh
+        run: |
+          dotnet restore tools/Treesi.RenderingLab --locked-mode
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          dotnet publish tools/Treesi.RenderingLab -c Release --self-contained false --no-restore --output "$env:RUNNER_TEMP/treesi-drag-source"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          "TREESI_NATIVE_DRAG_SOURCE=$env:RUNNER_TEMP/treesi-drag-source/Treesi.RenderingLab.exe" >> $env:GITHUB_ENV
       - name: Publish application and compile native tests
         shell: pwsh
         run: |
@@ -69,7 +77,7 @@ jobs:
               Start-Sleep -Seconds 1
             }
             if (-not $ready) { throw 'Appium did not become ready on loopback.' }
-            dotnet test tests/Treesi.Native.Tests --configuration Release --no-build --filter 'TestCategory!=NativePerformance|TestCategory=NativeUiPreference' --logger trx --results-directory "$env:TREESI_NATIVE_RESULTS/tests"
+            dotnet test tests/Treesi.Native.Tests --configuration Release --no-build --filter 'TestCategory!=NativePerformance|TestCategory=NativeUiPreference|TestCategory=NativeUiDrop' --logger trx --results-directory "$env:TREESI_NATIVE_RESULTS/tests"
             if ($LASTEXITCODE) { throw "Native UI tests failed (exit $LASTEXITCODE)." }
           }
           finally {
