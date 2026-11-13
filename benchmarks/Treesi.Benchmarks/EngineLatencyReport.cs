@@ -38,11 +38,20 @@ internal static class EngineLatencyReport
         }
         var report = new
         {
-            schemaVersion = "1", sourceCommit = commit, measuredAtUtc = DateTimeOffset.UtcNow,
+            schemaVersion = "1",
+            sourceCommit = commit,
+            measuredAtUtc = DateTimeOffset.UtcNow,
             scope = "Sequential warm engine operations including Git child processes; no native UI or process startup measurement.",
-            runtime = RuntimeInformation.FrameworkDescription, os = RuntimeInformation.OSDescription, architecture = RuntimeInformation.ProcessArchitecture.ToString(), processors = Environment.ProcessorCount,
+            runtime = RuntimeInformation.FrameworkDescription,
+            os = RuntimeInformation.OSDescription,
+            architecture = RuntimeInformation.ProcessArchitecture.ToString(),
+            processors = Environment.ProcessorCount,
             fixture = new { backgroundFiles = 1000, importedHistoryCommits = commits, worktrees = 2 },
-            warmupsPerOperation = warmups, measuredSamplesPerOperation = samples, percentile = "nearest-rank", targets = "provisional-reference-host-observations-not-a-shared-CI-gate", results = rows
+            warmupsPerOperation = warmups,
+            measuredSamplesPerOperation = samples,
+            percentile = "nearest-rank",
+            targets = "provisional-reference-host-observations-not-a-shared-CI-gate",
+            results = rows
         };
         var full = Path.GetFullPath(destination); Directory.CreateDirectory(Path.GetDirectoryName(full)!);
         await File.WriteAllTextAsync(full, JsonSerializer.Serialize(report, new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true }));

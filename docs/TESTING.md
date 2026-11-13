@@ -9,6 +9,7 @@ Treesi separates normal verification, native desktop automation, and performance
 | Domain, application, Git, CLI, architecture, isolation policy | `Treesi.slnx` | Local terminal or hosted CI |
 | Theme, layout, search, filtering, rendered diff checks | `Treesi.slnx` | Avalonia Headless, in memory |
 | Real Windows accessibility and interactions | `Treesi.Native.Tests` | Explicitly enabled interactive GitHub-hosted Windows VM |
+| Observed Windows launch and idle process resources | `NativePerformance` category, manual `native-performance.yml` | Separate interactive GitHub-hosted Windows VM with its own opt-in |
 | Git inspection and selected diff benchmarks | `Treesi.Benchmarks` | Hosted smoke job or a configured macOS performance host |
 
 ## Automatic verification
@@ -34,6 +35,8 @@ dotnet test Treesi.slnx --configuration Release --no-build
 ## Native Windows verification
 
 `native-ui.yml` uses a fresh standard Windows VM on pushes to main or manual dispatch. Admission checks require a GitHub-hosted interactive Windows session. The suite repeats the guard before creating any driver session. A developer desktop, self-hosted runner, missing opt-in, or Windows service session fails rather than skipping tests or reporting success.
+
+The correctness workflow filters out `NativePerformance`. That category runs only through the separate manual workflow with `TREESI_ISOLATED_SUITE=native-performance`. It records three owned-process launches and idle/graph resource samples; see [native observation scope](NATIVE_PERFORMANCE.md). The two modes cannot substitute for each other's opt-in. A native test command without a category filter includes the performance test and therefore fails admission in correctness mode; use the documented workflows.
 
 The workflow publishes Treesi, installs pinned Appium tools only in the disposable VM, binds the server to loopback, and exercises a generated Git fixture. Native checks cover direct file opening, accessibility IDs, change counts, Light/Dark selection, filtering, comparison changes, and search. The session closes its own application. Failure diagnostics contain only the synthetic fixture and accessible workspace.
 

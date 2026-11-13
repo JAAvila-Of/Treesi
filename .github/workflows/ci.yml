@@ -38,6 +38,7 @@ jobs:
         run: |
           dotnet restore Treesi.Isolated.slnx --locked-mode
           dotnet build Treesi.Isolated.slnx --configuration Release --no-restore
+          dotnet format Treesi.Isolated.slnx --no-restore --verify-no-changes
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:

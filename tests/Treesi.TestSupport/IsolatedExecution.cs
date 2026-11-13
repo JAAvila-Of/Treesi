@@ -7,12 +7,12 @@ public static class IsolatedExecution
 {
     public static string? Refusal(string suite, LabEnvironment environment) => suite switch
     {
-        "native-ui" when environment.Mode != "native-ui" => "Native UI execution was not explicitly enabled.",
-        "native-ui" when !environment.GitHubActions || environment.RunnerEnvironment != "github-hosted" =>
+        "native-ui" or "native-performance" when environment.Mode != suite => "Native suite execution was not explicitly enabled for this mode.",
+        "native-ui" or "native-performance" when !environment.GitHubActions || environment.RunnerEnvironment != "github-hosted" =>
             "Native UI tests require an isolated GitHub-hosted runner, never a developer desktop or self-hosted runner.",
-        "native-ui" when environment.RunnerOs != "Windows" || !environment.Interactive || environment.SessionId == 0 =>
+        "native-ui" or "native-performance" when environment.RunnerOs != "Windows" || !environment.Interactive || environment.SessionId == 0 =>
             "Native Windows tests require an interactive desktop in the isolated runner VM.",
-        "native-ui" => null,
+        "native-ui" or "native-performance" => null,
         "benchmarks" when environment.Mode != "benchmarks" => "Benchmark execution was not explicitly enabled.",
         "benchmarks" when environment.GitHubActions && environment.RunnerEnvironment == "github-hosted" => null,
         "benchmarks" when environment.MacOs && !environment.GitHubActions => null,

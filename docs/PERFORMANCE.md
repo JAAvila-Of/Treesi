@@ -2,6 +2,8 @@
 
 Performance results have three distinct layers: synthetic engine operations, headless layout correctness and native desktop behavior. This protocol measures the first. It does not establish native startup, frame pacing, idle CPU, application working set or end-to-end input latency.
 
+The separate [native process protocol](NATIVE_PERFORMANCE.md) records observed Windows launch/readiness, idle process resources and graph interactions in an isolated VM. Its measurements and limitations remain separate from engine benchmarks.
+
 ## Workloads
 
 `GitInspectionBenchmarks` retains inspection and selected-file diff cases with 100/1,000 background files. `EngineReviewBenchmarks` adds six operations with 1,000 background files, 1,000 or 10,000 imported linear commits and two registered worktrees:

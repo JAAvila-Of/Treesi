@@ -50,4 +50,14 @@ public sealed class IsolationPolicyTests
         File.ReadAllText(fixture.SamplePath).Test().Contain("changed");
         Directory.Exists(Path.Combine(fixture.Root, ".git")).Test().BeTrue();
     }
+
+    [Test]
+    public void NativePerformanceRequiresItsOwnHostedInteractiveOptIn()
+    {
+        var hosted = new LabEnvironment(true, "github-hosted", "Windows", true, 1, false, "native-performance");
+        IsolatedExecution.Refusal("native-performance", hosted).Test().BeNull();
+        foreach (var denied in new[] { hosted with { Mode = "native-ui" }, hosted with { GitHubActions = false }, hosted with { RunnerEnvironment = "self-hosted" }, hosted with { SessionId = 0 }, hosted with { Interactive = false }, hosted with { RunnerOs = "Linux" } })
+            IsolatedExecution.Refusal("native-performance", denied).Test().NotBeNull();
+        IsolatedExecution.Refusal("native-ui", hosted).Test().NotBeNull();
+    }
 }
