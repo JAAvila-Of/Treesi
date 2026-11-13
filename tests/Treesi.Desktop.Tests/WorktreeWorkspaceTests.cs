@@ -97,6 +97,25 @@ public sealed class WorktreeWorkspaceTests
     }
 
     private sealed class Preferences(string theme) : IThemePreferenceStore { public string? Load() => theme; public bool Save(string themeId) => true; }
+
+    [AvaloniaTest]
+    public async Task NavigationEntersTheSelectedItemBeforeHomeAndDown()
+    {
+        var window = Create(new(), new());
+        try
+        {
+            window.Show(); await window.OpenRepositoryAsync(Root); Discover(window); await window.PendingInspection;
+            using var frame = window.CaptureRenderedFrame();
+            Get<Button>(window, "RefreshWorktreesButton").Focus();
+            foreach (var key in new[] { Key.Tab, Key.Tab })
+            { window.KeyPress(key, RawInputModifiers.None, PhysicalKey.None, null); window.KeyRelease(key, RawInputModifiers.None, PhysicalKey.None, null); Avalonia.Threading.Dispatcher.UIThread.RunJobs(); }
+            Get<ListBox>(window, "RelatedWorktrees").IsKeyboardFocusWithin.Test().BeTrue();
+            foreach (var key in new[] { Key.Home, Key.Down })
+            { window.KeyPress(key, RawInputModifiers.None, PhysicalKey.None, null); window.KeyRelease(key, RawInputModifiers.None, PhysicalKey.None, null); Avalonia.Threading.Dispatcher.UIThread.RunJobs(); }
+            Get<ListBox>(window, "RelatedWorktrees").SelectedIndex.Test().Be(1);
+        }
+        finally { window.Close(); }
+    }
     private sealed class Working : IInspectionService
     {
         public int Reads { get; private set; }

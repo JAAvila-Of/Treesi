@@ -6,7 +6,6 @@ using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Windows;
-using OpenQA.Selenium.Interactions;
 using Treesi.TestSupport;
 
 namespace Treesi.Native.Tests;
@@ -49,7 +48,8 @@ public sealed partial class NativePerformanceTests
                 var root = roots[index];
                 Element(driver, "WorkspacePickerButton").Click(); Element(driver, "DiscoverWorktreesButton").Click();
                 WaitUntil(() => Element(driver, "WorktreeNotice").Text.StartsWith("8 registered locations", StringComparison.Ordinal));
-                Element(driver, "RelatedWorktrees").SendKeys(Keys.Home + string.Concat(Enumerable.Repeat(Keys.ArrowDown, index)));
+                FocusNative(driver, "RefreshWorktreesButton");
+                SendNativeKeys(driver, new[] { 0x09, 0x09, 0x24 }.Concat(Enumerable.Repeat(0x28, index)).ToArray());
                 Element(driver, "OpenWorktreeButton").Click();
                 WaitUntil(() => Element(driver, "RepositoryName").Text == Path.GetFileName(root) && Element(driver, "DiffSearch").Displayed && Element(driver, "DiffSearch").Enabled);
                 LoadGraph1000(driver);
@@ -59,7 +59,7 @@ public sealed partial class NativePerformanceTests
                 for (var index = 0; index < 8; index++)
                 {
                     var expected = Path.GetFileName(roots[index]);
-                    Element(driver, "GraphFindInput").SendKeys(Keys.Control + Keys.Tab + Keys.Null);
+                    NativeShortcut(driver, 0x09);
                     WaitUntil(() => Element(driver, "RepositoryName").Text == expected && Element(driver, "GraphReviewButton").Displayed && !Element(driver, "MoreGraphButton").Enabled);
                     visited.Add(expected);
                 }
@@ -68,7 +68,7 @@ public sealed partial class NativePerformanceTests
             phases.Add(new("eight-tabs-after-cycles-long-idle", 8, await ObserveIdleAsync(process, 60, 1000)));
             for (var index = 7; index > 0; index--)
             {
-                Element(driver, "GraphFindInput").SendKeys(Keys.Control + "w" + Keys.Null);
+                NativeShortcut(driver, 0x57);
                 var expected = Path.GetFileName(roots[index - 1]);
                 WaitUntil(() => Element(driver, "RepositoryName").Text == expected && Element(driver, "GraphReviewButton").Displayed);
             }
@@ -142,9 +142,9 @@ public sealed partial class NativePerformanceTests
         {
             await Task.Delay(1000);
             Element(driver, "GraphCommits").Click();
-            var actions = new Actions(driver);
-            for (var index = 0; index < 180; index++) actions.SendKeys(Keys.ArrowDown).Pause(TimeSpan.FromMilliseconds(50));
-            actions.Perform();
+            var actions = new List<Dictionary<string, object>>();
+            for (var index = 0; index < 180; index++) { actions.Add(new() { ["virtualKeyCode"] = 0x28 }); actions.Add(new() { ["pause"] = 50 }); }
+            driver.ExecuteScript("windows: keys", new Dictionary<string, object> { ["actions"] = actions });
             using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(40));
             await collector.WaitForExitAsync(timeout.Token);
             await File.WriteAllTextAsync(Path.Combine(directory, "presentmon.stdout.log"), await stdout);
@@ -156,5 +156,27 @@ public sealed partial class NativePerformanceTests
             return new(capture.Status, 0, capture);
         }
         finally { if (!collector.HasExited) { collector.Kill(true); collector.WaitForExit(5000); } }
+    }
+
+    private static void FocusNative(WindowsDriver driver, string id) =>
+        driver.ExecuteScript("windows: setFocus", new Dictionary<string, object> { ["elementId"] = Element(driver, id).Id });
+
+    private static void SendNativeKeys(WindowsDriver driver, params int[] keys) =>
+        driver.ExecuteScript("windows: keys", new Dictionary<string, object> { ["actions"] = keys.Select(key => new Dictionary<string, object> { ["virtualKeyCode"] = key }).ToArray() });
+
+    private static void NativeShortcut(WindowsDriver driver, int key)
+    {
+        FocusNative(driver, "GraphFindInput");
+        try
+        {
+            driver.ExecuteScript("windows: keys", new Dictionary<string, object>
+            {
+                ["actions"] = new[] {
+                new Dictionary<string, object> { ["virtualKeyCode"] = 0x11, ["down"] = true },
+                new Dictionary<string, object> { ["virtualKeyCode"] = key },
+                new Dictionary<string, object> { ["virtualKeyCode"] = 0x11, ["down"] = false } }
+            });
+        }
+        finally { driver.ExecuteScript("windows: keys", new Dictionary<string, object> { ["actions"] = new[] { new Dictionary<string, object> { ["virtualKeyCode"] = 0x11, ["down"] = false } } }); }
     }
 }
