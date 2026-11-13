@@ -84,6 +84,7 @@ public sealed partial class MainWindow
 
     private void ShowRecentWorkspaces()
     {
+        CloseWorkspacePicker(false);
         Required<Control>("CommitDetailsPanel").IsVisible = false;
         CloseComparisonOptions(false);
         CloseRevisionPicker(true, false);

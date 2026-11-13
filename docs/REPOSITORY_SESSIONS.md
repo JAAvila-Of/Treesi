@@ -18,7 +18,7 @@ One code-view control tree renders the active tab. Typed presentation snapshots 
 
 Application and domain ports remain independent of Avalonia and tabs. No package, network service, account, repository mutation or automatic AI/analyzer execution is introduced. The session state exists only in memory. Existing recent shortcuts retain their small, opt-in-resume behavior; the set of open tabs and historical patches are not persisted or restored at startup.
 
-Named local workspace groups, workspace editing, related-worktree discovery, drag-to-reorder tabs, a commit graph and analyzer panels are not implemented by this change. The tab bar is horizontally scrollable without a permanent scrollbar; keyboard tab cycling brings the selected item into view. A future overflow list must remain subject to compact-layout and keyboard checks.
+[Named local workspace groups](LOCAL_WORKSPACES.md) organize persistent shortcuts independently of these in-memory tabs. Related-worktree discovery, drag-to-reorder tabs, a commit graph and analyzer panels remain planned. The tab bar is horizontally scrollable without a permanent scrollbar; keyboard tab cycling brings the selected item into view. A future overflow list must remain subject to compact-layout and keyboard checks.
 
 ## Verification
 

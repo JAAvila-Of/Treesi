@@ -4,7 +4,7 @@ Treesi is a desktop change inspector focused on UX, security, and performance. O
 
 This is an early, read-only prototype. The desktop and JSON CLI share hexagonal application ports. There is no account requirement, network service, embedded AI model, or repository mutation command.
 
-The desktop supports up to eight [repository tabs](docs/REPOSITORY_SESSIONS.md) with independent in-memory review state. Returning to a tab uses its saved view; Refresh explicitly reads current repository state. Named workspace groups and the commit graph remain planned.
+The desktop supports up to eight [repository tabs](docs/REPOSITORY_SESSIONS.md) with independent in-memory review state and persistent [local workspace groups](docs/LOCAL_WORKSPACES.md). Returning to a tab uses its saved view; Refresh explicitly reads current repository state. Groups organize shortcuts without automatically opening repositories. The commit graph remains planned.
 
 ## Requirements
 

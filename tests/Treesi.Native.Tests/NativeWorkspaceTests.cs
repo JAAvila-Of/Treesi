@@ -101,6 +101,28 @@ public sealed class NativeWorkspaceTests
     private AppiumElement Element(string id) => _driver!.FindElement(new ByAccessibilityId(id));
 
     [Test]
+    public void NativeWorkspaceGroupsCanBeCreatedRenamedAndRemovedWithoutChangingRepositoryFiles()
+    {
+        var original = File.ReadAllText(_repository!.SamplePath);
+        var name = "Review " + Guid.NewGuid().ToString("N")[..8];
+        Element("WorkspacePickerButton").Click();
+        Element("NewWorkspaceGroupButton").Click();
+        EnterText("WorkspaceNameInput", name); Element("SaveWorkspaceNameButton").Click();
+        WaitUntil(() => Element("WorkspacePickerCaption").Text == name && Element("AddCurrentWorkspaceRepositoryButton").Enabled);
+        Element("AddCurrentWorkspaceRepositoryButton").Click();
+        WaitUntil(() => Element("OpenWorkspaceRepositoryButton").Enabled);
+        EnterText("WorkspaceNameInput", name + " renamed"); Element("SaveWorkspaceNameButton").Click();
+        WaitUntil(() => Element("WorkspacePickerCaption").Text == name + " renamed");
+        Element("OpenWorkspaceRepositoryButton").Click();
+        WaitUntil(() => Element("DiffSearch").Enabled && Element("FileTitle").Text == "sample.txt");
+        Element("WorkspacePickerButton").Click(); Element("DeleteWorkspaceGroupButton").Click();
+        WaitUntil(() => Element("WorkspacePickerCaption").Text == "Local repositories");
+        Element("CloseWorkspacePickerButton").Click();
+        File.ReadAllText(_repository.SamplePath).Test().Be(original);
+        Element("FileTitle").Text.Test().Be("sample.txt");
+    }
+
+    [Test]
     public void NativeRepositoryTabReturnsFromHomeAndClosesWithoutDeletingFiles()
     {
         var path = _repository!.SamplePath;

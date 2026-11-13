@@ -9,12 +9,12 @@
         WindowStartupLocation="CenterScreen">
   <Grid RowDefinitions="Auto,Auto,*,26">
     <Grid x:Name="RepositoryTabBar" ColumnDefinitions="190,*,Auto,Auto" Background="{DynamicResource Surface.Sidebar}" Height="36">
-      <Button x:Name="RecentWorkspacesButton" AutomationProperties.AutomationId="RecentWorkspacesButton" Classes="quiet workspace-picker" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" ToolTip.Tip="Choose from local repository shortcuts; named workspace groups are not available yet">
-        <StackPanel Orientation="Horizontal" Spacing="10">
+      <Button x:Name="WorkspacePickerButton" AutomationProperties.AutomationId="WorkspacePickerButton" Classes="quiet workspace-picker" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" ToolTip.Tip="Choose a local workspace; groups organize shortcuts without opening repositories">
+        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
           <Path Data="M9,6 L9,22 M9,15 C9,10 21,15 21,8 M6,6 A3,3 0 1 0 12,6 A3,3 0 1 0 6,6 M18,5 A3,3 0 1 0 24,5 A3,3 0 1 0 18,5" Width="17" Height="20" Stretch="Uniform" Stroke="{DynamicResource Accent.Primary}" StrokeThickness="1.6" VerticalAlignment="Center" />
-          <TextBlock Text="Local repositories" FontSize="12" VerticalAlignment="Center" />
-          <Path Data="M1,1 L5,5 L9,1" Width="8" Height="4" Stroke="{DynamicResource Text.Secondary}" StrokeThickness="1.4" VerticalAlignment="Center" />
-        </StackPanel>
+          <TextBlock Grid.Column="1" x:Name="WorkspacePickerCaption" AutomationProperties.AutomationId="WorkspacePickerCaption" Text="Local repositories" MaxWidth="128" TextTrimming="CharacterEllipsis" FontSize="12" VerticalAlignment="Center" />
+          <Path Grid.Column="2" Data="M1,1 L5,5 L9,1" Width="8" Height="4" Stroke="{DynamicResource Text.Secondary}" StrokeThickness="1.4" VerticalAlignment="Center" />
+        </Grid>
       </Button>
       <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" Height="36">
         <TabStrip x:Name="RepositoryTabs" Classes="repository-tabs" AutomationProperties.AutomationId="RepositoryTabs" AutomationProperties.Name="Open repository tabs" Background="Transparent">
@@ -42,6 +42,7 @@
         <Button x:Name="CompareRevisionsButton" AutomationProperties.AutomationId="CompareRevisionsButton" Content="Compare" Classes="quiet" IsEnabled="False" ToolTip.Tip="Compare existing local commits, branches or tags" />
       </StackPanel>
       <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" Margin="0,0,12,0" VerticalAlignment="Center">
+        <Button x:Name="RecentWorkspacesButton" AutomationProperties.AutomationId="RecentWorkspacesButton" Content="Recents" Classes="quiet" ToolTip.Tip="Open the recent repository chooser" />
         <Button x:Name="OpenFileButton" AutomationProperties.AutomationId="OpenFileButton" Content="Open file" Classes="quiet" ToolTip.Tip="Open a file inside a repository" />
         <Button x:Name="OpenFolderButton" AutomationProperties.AutomationId="OpenFolderButton" Content="Open repository" Classes="quiet" ToolTip.Tip="Open a local repository (Ctrl+O)" />
       </StackPanel>
@@ -227,6 +228,63 @@
           <Button Grid.Column="1" x:Name="RetryOpenButton" AutomationProperties.AutomationId="RetryOpenButton" Content="Retry location" IsVisible="False" />
           <Button Grid.Column="2" x:Name="RemoveRecentButton" AutomationProperties.AutomationId="RemoveRecentButton" Content="Remove shortcut" Classes="quiet" />
           <Button Grid.Column="3" x:Name="ResumeWorkspaceButton" AutomationProperties.AutomationId="ResumeWorkspaceButton" Content="Resume selected" Classes="primary" />
+        </Grid>
+      </Grid>
+    </Border>
+    <Border x:Name="WorkspacePickerPanel" Grid.Row="2" IsVisible="False" ZIndex="30" Width="650" Height="416" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12" Padding="16" CornerRadius="10" Background="{DynamicResource Surface.Panel}" BorderBrush="{DynamicResource Border.Default}" BorderThickness="1" BoxShadow="0 12 32 0 #30000000" AutomationProperties.Name="Local workspace picker">
+      <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="8">
+        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+          <TextBlock Text="Workspaces" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center" />
+          <Button Grid.Column="1" x:Name="NewWorkspaceGroupButton" AutomationProperties.AutomationId="NewWorkspaceGroupButton" Content="+ New workspace" Classes="quiet" />
+          <Button Grid.Column="2" x:Name="CloseWorkspacePickerButton" AutomationProperties.AutomationId="CloseWorkspacePickerButton" Content="×" Classes="quiet" Width="30" AutomationProperties.Name="Close workspace picker" />
+        </Grid>
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6">
+          <TextBox x:Name="WorkspaceNameInput" AutomationProperties.AutomationId="WorkspaceNameInput" MaxLength="64" PlaceholderText="Workspace name" AutomationProperties.Name="Workspace name" />
+          <Button Grid.Column="1" x:Name="SaveWorkspaceNameButton" AutomationProperties.AutomationId="SaveWorkspaceNameButton" Content="Save name" />
+          <Button Grid.Column="2" x:Name="CancelWorkspaceNameButton" AutomationProperties.AutomationId="CancelWorkspaceNameButton" Content="Cancel" Classes="quiet" IsVisible="False" />
+          <Button Grid.Column="3" x:Name="DeleteWorkspaceGroupButton" AutomationProperties.AutomationId="DeleteWorkspaceGroupButton" Content="Remove group" Classes="quiet" ToolTip.Tip="Remove this group of shortcuts; repository files and tabs are not changed" />
+        </Grid>
+        <Grid Grid.Row="2" ColumnDefinitions="164,1,*" ColumnSpacing="10">
+          <ListBox x:Name="WorkspaceGroupsList" Classes="changed-files" AutomationProperties.AutomationId="WorkspaceGroupsList" AutomationProperties.Name="Local workspaces" Background="Transparent" BorderThickness="0">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="workspaces:WorkspaceGroupChoice">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="5">
+                  <TextBlock Text="{Binding Name}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
+                  <TextBlock Grid.Column="1" Text="{Binding Count}" Classes="secondary" FontSize="10" VerticalAlignment="Center" />
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+          <Border Grid.Column="1" Background="{DynamicResource Border.Default}" />
+          <Grid Grid.Column="2" RowDefinitions="*,Auto" RowSpacing="6">
+            <ListBox x:Name="WorkspaceRepositoriesList" Classes="changed-files" AutomationProperties.AutomationId="WorkspaceRepositoriesList" AutomationProperties.Name="Workspace repository shortcuts" Background="Transparent" BorderThickness="0">
+              <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="workspaces:WorkspaceRepositoryChoice">
+                  <StackPanel Spacing="2">
+                    <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Root}" Classes="secondary" FontSize="10" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Root}" />
+                    <TextBlock Text="{Binding State}" Classes="secondary" FontSize="10" />
+                  </StackPanel>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock x:Name="EmptyWorkspaceGroup" Text="No repositories here yet. Add the current repository or choose a local folder." Classes="secondary" FontSize="12" TextWrapping="Wrap" VerticalAlignment="Center" Margin="12" />
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="4">
+              <Button x:Name="AddCurrentWorkspaceRepositoryButton" AutomationProperties.AutomationId="AddCurrentWorkspaceRepositoryButton" Content="Add current" Classes="quiet" Padding="7,4" ToolTip.Tip="Add the validated active repository without reading Git again" />
+              <Button x:Name="AddWorkspaceRepositoryButton" AutomationProperties.AutomationId="AddWorkspaceRepositoryButton" Content="Add folder…" Classes="quiet" Padding="7,4" />
+              <Button x:Name="ReplaceWorkspaceRepositoryButton" AutomationProperties.AutomationId="ReplaceWorkspaceRepositoryButton" Content="Replace location…" Classes="quiet" Padding="7,4" ToolTip.Tip="Choose and validate a replacement shortcut; no files are moved" />
+            </StackPanel>
+          </Grid>
+        </Grid>
+        <StackPanel Grid.Row="3" Spacing="3">
+          <TextBlock x:Name="WorkspaceGroupNotice" AutomationProperties.AutomationId="WorkspaceGroupNotice" AutomationProperties.LiveSetting="Polite" Classes="secondary" FontSize="11" TextWrapping="Wrap" MaxHeight="48" TextTrimming="CharacterEllipsis" />
+          <TextBlock x:Name="WorkspaceSessionNotice" Text="Session only · workspace settings are not being saved" IsVisible="False" Foreground="{DynamicResource Status.Warning}" FontSize="10" />
+        </StackPanel>
+        <Grid Grid.Row="4" ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="8">
+          <Button x:Name="RemoveWorkspaceRepositoryButton" AutomationProperties.AutomationId="RemoveWorkspaceRepositoryButton" Content="Remove shortcut" Classes="quiet" />
+          <ProgressBar Grid.Column="1" x:Name="WorkspaceValidationIndicator" IsVisible="False" IsIndeterminate="False" Value="100" Width="36" Height="2" VerticalAlignment="Center" AutomationProperties.Name="Validating repository location" />
+          <Button Grid.Column="3" x:Name="CancelWorkspaceValidationButton" AutomationProperties.AutomationId="CancelWorkspaceValidationButton" IsVisible="False" Content="Cancel validation" Classes="quiet" />
+          <Button Grid.Column="4" x:Name="OpenWorkspaceRepositoryButton" AutomationProperties.AutomationId="OpenWorkspaceRepositoryButton" Content="Open selected" Classes="primary" />
         </Grid>
       </Grid>
     </Border>

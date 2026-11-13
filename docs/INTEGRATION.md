@@ -2,6 +2,8 @@
 
 The first supported transport is a finite, read-only JSON CLI. Run one process per request, supply arguments as an array, and parse its single stdout JSON line. Do not shell-concatenate repository paths. No diagnostic log output is mixed with the response.
 
+Named local workspace metadata is managed by `WorkspaceCatalog` through `IWorkspaceCatalogStore`, independently of Git and the desktop. The desktop provides a bounded local JSON adapter. These groups are not yet exposed as CLI commands or MCP capabilities; see [workspace scope and persistence](LOCAL_WORKSPACES.md).
+
 ## Commands
 
 All three diff commands also accept `--context full`. Responses set `options.fullContext=true`; the retained numeric `contextLines` is then inactive. Capabilities advertises `diffOptions.context.full`. See [full-context semantics and limits](FULL_CONTEXT.md).

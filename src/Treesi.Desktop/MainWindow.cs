@@ -33,7 +33,7 @@ public sealed partial class MainWindow : Window
     public Task PendingInspection { get; private set; } = Task.CompletedTask;
     public Task PendingMotion => _motion.Pending;
 
-    public MainWindow(IInspectionService inspector, string? initialPath, ThemeController appearance, IMotionPreferenceStore? motionPreferences = null, IWorkspaceHistoryStore? workspaceHistory = null, IRevisionService? revisions = null, IHistoryService? history = null)
+    public MainWindow(IInspectionService inspector, string? initialPath, ThemeController appearance, IMotionPreferenceStore? motionPreferences = null, IWorkspaceHistoryStore? workspaceHistory = null, IRevisionService? revisions = null, IHistoryService? history = null, IWorkspaceCatalogStore? workspaceCatalog = null)
     {
         _inspector = inspector;
         _revisions = revisions;
@@ -101,7 +101,8 @@ public sealed partial class MainWindow : Window
             }
             if (args.Key == Key.Escape)
             {
-                if (Required<Control>("CommitDetailsPanel").IsVisible) CloseCommitDetails();
+                if (Required<Control>("WorkspacePickerPanel").IsVisible) CloseWorkspacePicker();
+                else if (Required<Control>("CommitDetailsPanel").IsVisible) CloseCommitDetails();
                 else if (Required<Control>("RevisionPanel").IsVisible) CloseRevisionPicker();
                 else if (Required<Control>("DiffOptionsPanel").IsVisible) CloseComparisonOptions();
                 else if (Required<Control>("OpenRecoveryNotice").IsVisible) DismissOpenRecovery();
@@ -129,11 +130,13 @@ public sealed partial class MainWindow : Window
             }
         };
         InitializeWorkspaces(workspaceHistory, initialPath);
+        InitializeWorkspaceGroups(workspaceCatalog);
         Closed += (_, _) =>
         {
             SaveCurrentWorkspace();
             _repositoryTabs.Clear(); _activeRepositoryTab = null;
             _closed = true;
+            CancelWorkspaceRootCheck();
             Cancel(); _appearance.Changed -= OnThemeChanged;
             _opening?.Dispose(); _opening = null;
             _loading?.Dispose(); _loading = null;
@@ -175,6 +178,7 @@ public sealed partial class MainWindow : Window
 
     private async Task OpenWorkspaceAsync(string path, WorkspaceEntry? resume)
     {
+        CloseWorkspacePicker(false);
         Required<Control>("CommitDetailsPanel").IsVisible = false;
         Cancel();
         SaveRepositorySession();
@@ -433,7 +437,7 @@ public sealed partial class MainWindow : Window
         progress.IsIndeterminate = value && !_motion.Reduced;
         progress.IsVisible = value;
     }
-    private void Cancel() { _opening?.Cancel(); _loading?.Cancel(); _comparingRevisions?.Cancel(); _listingReferences?.Cancel(); _listingHistory?.Cancel(); _choosingCommit?.Cancel(); }
+    private void Cancel() { _opening?.Cancel(); _loading?.Cancel(); _comparingRevisions?.Cancel(); _listingReferences?.Cancel(); _listingHistory?.Cancel(); _choosingCommit?.Cancel(); _addingWorkspaceRepository?.Cancel(); }
     private void ShowCancelledDiff()
     {
         ShowState("Comparison cancelled.", "No complete result is available. Select a file or refresh to try again.");

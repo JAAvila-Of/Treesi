@@ -107,6 +107,7 @@ public sealed partial class MainWindow
 
     private void InvalidateSessionRequests()
     {
+        CloseWorkspacePicker(false);
         _sessionVersion++;
         Cancel();
         foreach (var cancellation in new[] { _opening, _loading, _comparingRevisions, _listingReferences, _listingHistory, _choosingCommit }) cancellation?.Dispose();
@@ -126,6 +127,7 @@ public sealed partial class MainWindow
         if (_closed || !_repositoryTabs.Contains(tab)) return;
         if (tab == _activeRepositoryTab)
         {
+            CloseWorkspacePicker(false);
             if (_snapshot is not null) ShowComparison();
             RevealRepositoryTab(tab);
             return;
