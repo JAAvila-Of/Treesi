@@ -84,4 +84,4 @@ See [test execution and isolation](docs/TESTING.md) for hosted CI, native Window
 - UTF-8 text is supported. Binary files are identified; alternate encodings and link traversal are rejected. LFS pointers are shown as ordinary text; LFS content is not fetched.
 - The repository can change during inspection. Results are live observations, not an atomic snapshot. Refresh before relying on results for another operation. The UI discards superseded requests.
 - Light and Dark are available. Additional themes can be registered through the theme catalog and semantic resource dictionaries; loading arbitrary external themes is not implemented.
-- Performance budgets, packaging, full accessibility, and macOS/Linux runtime behavior still require validation. No performance target is claimed as achieved.
+- Native startup, idle CPU, total desktop memory, frame responsiveness, packaging and full accessibility still require validation. The [engine performance protocol](docs/PERFORMANCE.md) defines synthetic workloads and provisional warm-operation targets separately from desktop acceptance.

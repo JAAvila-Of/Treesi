@@ -36,19 +36,44 @@ public sealed class SyntheticRepository : IDisposable
         return linked;
     }
 
-    private void Git(params string[] arguments)
+    public string AddLinearHistory(int commitCount)
+    {
+        if (commitCount is < 1 or > 10000) throw new ArgumentOutOfRangeException(nameof(commitCount));
+        var parent = Git("rev-parse", "HEAD").Trim();
+        var input = new StringBuilder();
+        for (var index = 1; index <= commitCount; index++)
+        {
+            var message = $"perf: synthetic revision {index}\n";
+            var content = $"first\nrevision {index}\nlast\n";
+            input.Append("commit refs/heads/benchmark-history\nmark :").Append(index).Append('\n');
+            input.Append("committer Treesi Lab <lab@example.invalid> ").Append(1700000000L + index).Append(" +0000\n");
+            input.Append("data ").Append(Encoding.UTF8.GetByteCount(message)).Append('\n').Append(message);
+            input.Append("from ").Append(index == 1 ? parent : ":" + (index - 1)).Append('\n');
+            input.Append("M 100644 inline sample.txt\ndata ").Append(Encoding.UTF8.GetByteCount(content)).Append('\n').Append(content).Append('\n');
+        }
+        input.Append("done\n");
+        GitWithInput(input.ToString(), "-c", "core.hooksPath=", "fast-import", "--quiet", "--done");
+        return Git("rev-parse", "refs/heads/benchmark-history").Trim();
+    }
+
+    private string Git(params string[] arguments) => GitWithInput(null, arguments);
+
+    private string GitWithInput(string? input, params string[] arguments)
     {
         var start = new ProcessStartInfo("git")
-        { WorkingDirectory = Root, UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
+        { WorkingDirectory = Root, UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true };
         foreach (var key in start.Environment.Keys.Where(key => key.StartsWith("GIT_", StringComparison.OrdinalIgnoreCase)).ToArray()) start.Environment.Remove(key);
         start.Environment["GIT_CONFIG_NOSYSTEM"] = "1";
         start.Environment["GIT_CONFIG_GLOBAL"] = OperatingSystem.IsWindows() ? "NUL" : "/dev/null";
         foreach (var argument in arguments) start.ArgumentList.Add(argument);
         using var process = Process.Start(start)!;
         var output = process.StandardOutput.ReadToEndAsync(); var error = process.StandardError.ReadToEndAsync();
+        async Task SendInputAsync() { if (input is not null) await process.StandardInput.WriteAsync(input); process.StandardInput.Close(); }
+        var write = SendInputAsync();
         if (!process.WaitForExit(30000)) { process.Kill(true); throw new TimeoutException("Fixture creation exceeded its Git timeout."); }
-        Task.WaitAll(output, error);
+        Task.WaitAll(output, error, write);
         if (process.ExitCode != 0) throw new InvalidOperationException("Synthetic repository creation failed.");
+        return output.GetAwaiter().GetResult();
     }
 
     public void Dispose()
