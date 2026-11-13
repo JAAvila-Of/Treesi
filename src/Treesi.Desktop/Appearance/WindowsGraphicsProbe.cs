@@ -23,7 +23,7 @@ internal static class WindowsGraphicsProbe
                 try
                 {
                     if (Method<GetDescription>(adapter, 10)(adapter, out var description) < 0) return null;
-                    if ((description.Flags & 2) == 0) return true;
+                    if ((description.Flags & 2) == 0 && CanCreateHardwareDevice(adapter)) return true;
                 }
                 finally { Marshal.Release(adapter); }
             }
@@ -34,6 +34,12 @@ internal static class WindowsGraphicsProbe
     }
 
     private static T Method<T>(IntPtr instance, int slot) where T : Delegate => Marshal.GetDelegateForFunctionPointer<T>(Marshal.ReadIntPtr(Marshal.ReadIntPtr(instance), slot * IntPtr.Size));
+    private static bool CanCreateHardwareDevice(IntPtr adapter)
+    {
+        var device = IntPtr.Zero; var context = IntPtr.Zero;
+        try { return D3D11CreateDevice(adapter, 0, IntPtr.Zero, 0, IntPtr.Zero, 0, 7, out device, out _, out context) >= 0 && device != IntPtr.Zero; }
+        finally { if (context != IntPtr.Zero) Marshal.Release(context); if (device != IntPtr.Zero) Marshal.Release(device); }
+    }
     [UnmanagedFunctionPointer(CallingConvention.StdCall)] private delegate int EnumAdapters(IntPtr factory, uint index, out IntPtr adapter);
     [UnmanagedFunctionPointer(CallingConvention.StdCall)] private delegate int GetDescription(IntPtr adapter, out AdapterDescription description);
     [StructLayout(LayoutKind.Sequential)] private struct Luid { public uint Low; public int High; }
@@ -49,4 +55,7 @@ internal static class WindowsGraphicsProbe
     [DllImport("dxgi.dll", ExactSpelling = true)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     private static extern int CreateDXGIFactory1(ref Guid id, out IntPtr factory);
+    [DllImport("d3d11.dll", ExactSpelling = true)]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    private static extern int D3D11CreateDevice(IntPtr adapter, int driverType, IntPtr software, uint flags, IntPtr featureLevels, uint featureLevelCount, uint sdkVersion, out IntPtr device, out uint selectedFeatureLevel, out IntPtr context);
 }
