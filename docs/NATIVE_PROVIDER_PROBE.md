@@ -6,6 +6,8 @@ Two owned console children run identical bounded CPU loads. A unique ETW system-
 
 The [TraceEvent](https://github.com/microsoft/perfview) dependency is centrally pinned to stable 4.0.0 with a lock file, is MIT-licensed, and belongs only to this isolated diagnostic executable. It adds no product dependency or installed service.
 
+Classic profile stack walking is configured explicitly on the owned session with `TraceSetInformation`; no global flags or sampling interval are enabled by that call. When a CPU event lacks a PID, attribution requires an OS thread ID and creation time present at both endpoints in the same owned child. A known control thread and an unresolved thread remain separate rejection counts. PID attribution from a missing header is never guessed from a process name.
+
 Acceptance requires all of the following:
 
 - At least 4.5 seconds of recording and 500 ms of measured CPU from **each** synthetic child, including the excluded negative control.

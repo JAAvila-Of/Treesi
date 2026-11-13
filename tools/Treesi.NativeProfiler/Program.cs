@@ -31,16 +31,19 @@ internal static class Program
         var tracePath = Path.Combine(directory, "native-provider-probe.etl");
         var status = "unavailable"; string? failure = null; var targetSamples = 0; var foreignSamples = 0; var stacks = 0; long lost = 0;
         var eventKinds = new Dictionary<string, int>();
+        var controlSamples = 0; var unresolvedSamples = 0; var samplesResolvedByThread = 0;
         double targetCpu = 0, controlCpu = 0, durationMs = 0;
         try
         {
             await Task.Delay(1000);
             var modules = target.Modules.Cast<ProcessModule>().Select(item => (Start: (ulong)item.BaseAddress.ToInt64(), End: (ulong)item.BaseAddress.ToInt64() + (ulong)item.ModuleMemorySize)).ToArray();
+            var targetBeforeThreads = ThreadIdentities(target); var controlBeforeThreads = ThreadIdentities(control);
             var targetBefore = target.TotalProcessorTime.TotalMilliseconds; var controlBefore = control.TotalProcessorTime.TotalMilliseconds;
             using (var privilege = new ProfilePrivilege())
             using (var session = new TraceEventSession(sessionName, tracePath, TraceEventSessionOptions.Create | TraceEventSessionOptions.NoRestartOnCreate) { BufferSizeMB = 16 })
             {
                 session.EnableKernelProvider(KernelTraceEventParser.Keywords.None);
+                ClassicStackCapture.Enable(sessionName);
                 session.EnableProvider(ProfileProvider, TraceEventLevel.Verbose, 1,
                     new TraceEventProviderOptions { ProcessIDFilter = [target.Id], StacksEnabled = true });
                 var elapsed = Stopwatch.StartNew();
@@ -50,6 +53,8 @@ internal static class Program
             }
             target.Refresh(); control.Refresh();
             targetCpu = target.TotalProcessorTime.TotalMilliseconds - targetBefore; controlCpu = control.TotalProcessorTime.TotalMilliseconds - controlBefore;
+            var targetThreads = targetBeforeThreads.Intersect(ThreadIdentities(target)).Select(item => item.Id).ToHashSet();
+            var controlThreads = controlBeforeThreads.Intersect(ThreadIdentities(control)).Select(item => item.Id).ToHashSet();
             if (new FileInfo(tracePath).Length > 64 * 1024 * 1024) throw new InvalidOperationException("The native probe exceeded 64 MiB.");
             var etlx = TraceLog.CreateFromEventTraceLogFile(tracePath);
             using (var log = new TraceLog(etlx))
@@ -60,7 +65,14 @@ internal static class Program
                     var key = item.ProviderName + "/" + item.EventName;
                     eventKinds[key] = eventKinds.GetValueOrDefault(key) + 1;
                     if (item is not SampledProfileTraceData) continue;
-                    if (item.ProcessID != target.Id) { foreignSamples++; continue; }
+                    var isTarget = item.ProcessID == target.Id;
+                    if (item.ProcessID < 0 && targetThreads.Contains(item.ThreadID) && !controlThreads.Contains(item.ThreadID)) { isTarget = true; samplesResolvedByThread++; }
+                    if (!isTarget)
+                    {
+                        foreignSamples++;
+                        if (item.ProcessID == control.Id || controlThreads.Contains(item.ThreadID)) controlSamples++; else unresolvedSamples++;
+                        continue;
+                    }
                     targetSamples++;
                     var stack = item.CallStackIndex() == CallStackIndex.Invalid ? null : log.CallStacks[item.CallStackIndex()];
                     var depth = 0; var userFrame = false;
@@ -95,6 +107,9 @@ internal static class Program
                 controlCpuMs = controlCpu,
                 targetSamples,
                 foreignSamples,
+                controlSamples,
+                unresolvedSamples,
+                samplesResolvedByThread,
                 stacks,
                 lost,
                 eventKinds,
@@ -110,5 +125,19 @@ internal static class Program
         var start = new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false, CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden };
         start.ArgumentList.Add("--burn");
         return Process.Start(start) ?? throw new InvalidOperationException("The owned CPU probe did not start.");
+    }
+
+    private static HashSet<(int Id, long Created)> ThreadIdentities(Process owned)
+    {
+        if (!OperatingSystem.IsWindows()) throw new PlatformNotSupportedException("The isolated native probe requires Windows.");
+        owned.Refresh(); var result = new HashSet<(int, long)>(); var threads = owned.Threads;
+        try
+        {
+            foreach (ProcessThread thread in threads)
+                try { result.Add((thread.Id, thread.StartTime.ToUniversalTime().Ticks)); }
+                catch (Exception error) when (error is System.ComponentModel.Win32Exception or InvalidOperationException) { }
+        }
+        finally { foreach (ProcessThread thread in threads) thread.Dispose(); }
+        return result;
     }
 }
