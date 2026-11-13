@@ -2,18 +2,21 @@
 
 The isolated Windows performance workflow additionally exercises eight worktrees in one owned Treesi process. Each working folder contains 1,000 background files and its own modified probe; all share a repository with 10,000 imported linear commits. Every tab explicitly loads a 1,000-commit graph. Fixture setup is outside measurement, and no user repository participates.
 
-The report `native-session-performance.json` retains four resource phases:
+The report `native-session-performance.json` (schema version 2) retains five resource phases:
 
 | Phase | Open tabs | Idle sampling |
 | --- | ---: | --- |
 | Initial loaded graph | 1 | 10 intervals of 500 ms |
 | All graphs loaded | 8 | 10 intervals of 500 ms |
 | After two complete tab cycles and capture workload | 8 | 60 intervals of 1 second |
-| After closing seven tabs | 1 | 60 intervals of 1 second |
+| After closing seven tabs, search input focused | 1 | 60 intervals of 1 second |
+| Same remaining tab, graph focused | 1 | 60 intervals of 1 second |
 
 Every phase first settles for three seconds. No input or UIA queries are sent during idle sampling. The harness verifies that cycling reaches eight distinct repositories and restores their loaded graph views, then closes tabs through the product's normal Ctrl+W handling. It never forces garbage collection, trims the working set or changes runtime settings. Resident/private memory changes alone neither prove a leak nor establish that a particular object remains reachable; allocators can retain pages after tabs close.
 
-Provisional observation thresholds are 512 MiB sampled working set, 600 MiB private committed memory and 2% idle CPU on the one-core scale. Flags are reported per phase, without becoming shared-runner correctness gates. Existing process ownership, admission, counter definitions and cleanup rules follow the [native process protocol](NATIVE_PERFORMANCE.md). The measurement excludes aggregate Git-child peaks, and two 60-second windows are not a long-duration soak test.
+The first post-close phase preserves focus in the graph search input left by Ctrl+W navigation. The final phase focuses the graph in the same process, then repeats the 60-second observation. Both results remain in the report. This separates two user-visible idle states without disabling the caret, animations or runtime behavior. It does not isolate every source of CPU activity or establish causation from one run.
+
+Provisional observation thresholds are 512 MiB sampled working set, 600 MiB private committed memory and 2% idle CPU on the one-core scale. Flags are reported per phase, without becoming shared-runner correctness gates. Existing process ownership, admission, counter definitions and cleanup rules follow the [native process protocol](NATIVE_PERFORMANCE.md). The measurement excludes aggregate Git-child peaks, and three 60-second windows are not a long-duration soak test.
 
 ## Presentation capture
 

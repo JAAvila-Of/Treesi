@@ -35,4 +35,4 @@ The artifact retains `native-process-performance.json`, TRX, exact source SHA, S
 
 Controlled native startup, presentation-frame timestamps, long idle sessions, eight-tab retention and macOS/Linux native resource behavior remain additional acceptance work. Repeat baseline and candidate under matching power, display, caching and workload conditions before attributing a regression or improvement.
 
-The [eight-tab and presentation-probe protocol](SESSION_PERFORMANCE.md) extends this workflow with independent session graphs, two 60-second idle windows, tab closure and a pinned per-PID ETW collector. Its resource completion and presentation-support status are evaluated separately.
+The [eight-tab and presentation-probe protocol](SESSION_PERFORMANCE.md) extends this workflow with independent session graphs, three 60-second idle windows, a post-close focus comparison and a pinned per-PID ETW collector. Its resource completion and presentation-support status are evaluated separately.

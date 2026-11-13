@@ -72,8 +72,11 @@ public sealed partial class NativePerformanceTests
                 var expected = Path.GetFileName(roots[index - 1]);
                 WaitUntil(() => Element(driver, "RepositoryName").Text == expected && Element(driver, "GraphReviewButton").Displayed);
             }
-            phases.Add(new("one-tab-after-closing-seven-long-idle", 1, await ObserveIdleAsync(process, 60, 1000)));
-            phases.Count.Test().Be(4);
+            FocusNative(driver, "GraphFindInput");
+            phases.Add(new("one-tab-after-closing-seven-search-focus-long-idle", 1, await ObserveIdleAsync(process, 60, 1000)));
+            Element(driver, "GraphCommits").Click();
+            phases.Add(new("one-tab-after-closing-seven-graph-focus-long-idle", 1, await ObserveIdleAsync(process, 60, 1000)));
+            phases.Count.Test().Be(5);
             phases.Skip(2).All(item => item.Resources.Summary.DurationMs >= 55000).Test().BeTrue();
         }
         catch (Exception error) { failure = error.GetType().Name; throw; }
@@ -87,13 +90,14 @@ public sealed partial class NativePerformanceTests
                 Directory.CreateDirectory(directory);
                 var report = new
                 {
-                    schemaVersion = "1",
+                    schemaVersion = "2",
                     sourceCommit = Environment.GetEnvironmentVariable("GITHUB_SHA"),
                     measuredAtUtc = DateTimeOffset.UtcNow,
-                    completed = failure is null && phases.Count == 4,
+                    completed = failure is null && phases.Count == 5,
                     failure,
                     fixture = new { backgroundFilesPerTree = 1000, importedLinearCommits = 10000, worktrees = 8, graphCommitsPerTab = 1000 },
                     tabCycles = 2,
+                    postCloseFocusComparison = "Search input retains focus after closing tabs; the final phase moves focus to the graph in the same process. No caret, animation or runtime settings are changed.",
                     distinctTabsObserved = visited.Count,
                     method = "Owned process counters; no UIA/input during idle; no forced GC. Resident/private changes do not alone establish object retention or leaks.",
                     provisionalTargets = new { workingSetBytes = 512L * 1024 * 1024, privateCommitBytes = 600L * 1024 * 1024, idleOneCoreCpuPercent = 2, enforcement = "Observations, not shared-runner gates." },
