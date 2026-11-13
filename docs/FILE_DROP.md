@@ -1,0 +1,11 @@
+# Open by dropping a local file or folder
+
+Drop one local file or folder anywhere in the workspace to open its read-only review. A temporary outline and hint appear during a file drag; leaving the window removes them. The content area keeps its layout. Hover reads transfer-format metadata without resolving the file payload or inspecting repositories.
+
+The opening request starts only on Drop and uses the same inspection, selection, cancellation, session and recovery path as Open file or Open repository. Files inside a repository select that file when available. An unavailable path or failed inspection preserves the previous comparison and offers the existing recovery actions. A later opening supersedes earlier requests even if an old provider completes late. Existing repository limits still apply.
+
+Only a single file-format item with an absolute file-system path of at most 4,096 characters is accepted. UNC locations and non-file storage items are refused. Text, URLs and HTML are never interpreted as opening commands. Multiple items are rejected without resolving their payloads. Copy is the only accepted drag effect: Treesi does not move, import or copy the original file. Provider failures show a generic notice rather than exposing their details. The borrowed transfer is resolved synchronously; only its path is retained for asynchronous inspection.
+
+Close an active options, revision or workspace panel before dropping an item, so pending drafts remain intact. The window handles file-format events before editor instance handlers; ordinary text dragging is left to the existing controls. No permanent polling or renderer override is introduced.
+
+Headless tests exercise Avalonia's raw drag-target event pipeline, hit testing and routing on real storage items in owned temporary folders. They cover both themes at compact size, content geometry, payload laziness, mixed text/file input, editor interception, multiplicity, Move refusal, provider failures, draft protection, recovery and stale openings. Hosted native Windows regression tests remain separate. OS shell-to-window dragging and platform-specific file-provider behavior still require native/manual acceptance on the supported desktop platforms.

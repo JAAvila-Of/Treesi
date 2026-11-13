@@ -246,7 +246,7 @@
             <TextBlock Text="Pick up where you left off." FontSize="25" FontWeight="SemiBold" />
             <Button Grid.Column="1" x:Name="ReturnToWorkspaceButton" AutomationProperties.AutomationId="ReturnToWorkspaceButton" Content="Back to comparison" Classes="quiet" IsVisible="False" />
           </Grid>
-          <TextBlock Text="Open a repository or a single file. Recent locations are inspected only when you choose one." Classes="secondary" TextWrapping="Wrap" />
+          <TextBlock Text="Open a repository or a single file, or drop one here. Recent locations are inspected only when you choose one." Classes="secondary" TextWrapping="Wrap" />
           <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,2">
             <Button x:Name="HomeOpenRepositoryButton" AutomationProperties.AutomationId="HomeOpenRepositoryButton" Content="Open repository" Classes="primary" />
             <Button x:Name="HomeOpenFileButton" AutomationProperties.AutomationId="HomeOpenFileButton" Content="Open a file" />
@@ -445,6 +445,22 @@
           <Button Grid.Column="1" x:Name="CloseCommitDetailsButton" AutomationProperties.AutomationId="CloseCommitDetailsButton" Content="Close" Classes="quiet" Padding="8,5" />
           <Button Grid.Column="2" x:Name="ApplyCommitParentButton" AutomationProperties.AutomationId="ApplyCommitParentButton" Content="Compare" Classes="primary" Padding="8,5" />
         </Grid>
+      </Grid>
+    </Border>
+    <Border x:Name="FileDropIndicator" AutomationProperties.AutomationId="FileDropIndicator" Grid.Row="2" ZIndex="50"
+            IsVisible="False" IsHitTestVisible="False" Margin="10" CornerRadius="10" BorderThickness="2"
+            BorderBrush="{DynamicResource Accent.Primary}" Background="Transparent">
+      <Grid>
+      <Border Background="{DynamicResource Surface.Window}" Opacity="0.94" CornerRadius="8" />
+      <Border HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="350" Margin="16" Padding="24,18"
+              CornerRadius="10" Background="{DynamicResource Surface.Panel}" BorderBrush="{DynamicResource Border.Default}"
+              BorderThickness="1" BoxShadow="0 8 24 0 #30000000">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Open local changes" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource Text.Primary}" />
+          <TextBlock Text="Drop one file or folder to inspect it." TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource Text.Primary}" />
+          <TextBlock Text="Read-only · Original files stay in place" Classes="secondary" FontSize="11" TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
       </Grid>
     </Border>
     <Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="12,0">

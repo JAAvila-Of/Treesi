@@ -149,6 +149,7 @@ public sealed partial class MainWindow : Window
         InitializeWorkspaces(workspaceHistory, initialPath);
         InitializeWorkspaceGroups(workspaceCatalog);
         InitializeWorktrees();
+        InitializeFileDrop();
         Closed += (_, _) =>
         {
             SaveCurrentWorkspace();
