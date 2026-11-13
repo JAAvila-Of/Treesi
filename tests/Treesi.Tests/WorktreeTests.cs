@@ -28,9 +28,11 @@ public sealed class WorktreeTests
         var before = fixture.Git("worktree", "list", "--porcelain", "-z");
         var result = await Service().ListAsync(linked);
         result.Items.Count.Test().Be(3);
-        var branch = result.Items.Single(item => Path.GetFullPath(item.Root) == linked);
+        var canonicalLinked = Path.GetFullPath(fixture.Git("-C", linked, "rev-parse", "--show-toplevel").TrimEnd('\r', '\n'));
+        var canonicalDetached = Path.GetFullPath(fixture.Git("-C", detached, "rev-parse", "--show-toplevel").TrimEnd('\r', '\n'));
+        var branch = result.Items.Single(item => Path.GetFullPath(item.Root) == canonicalLinked);
         branch.Branch.Test().Be("refs/heads/feature/review"); branch.IsLocked.Test().BeTrue(); branch.LockReason.Test().Be("Portable\nlocation");
-        result.Items.Single(item => Path.GetFullPath(item.Root) == detached).IsDetached.Test().BeTrue();
+        result.Items.Single(item => Path.GetFullPath(item.Root) == canonicalDetached).IsDetached.Test().BeTrue();
         result.Items.All(item => item.CommitId!.Length == (sha256 ? 64 : 40)).Test().BeTrue();
         fixture.Git("worktree", "list", "--porcelain", "-z").Test().Be(before);
         SHA256.HashData(File.ReadAllBytes(indexPath)).SequenceEqual(index).Test().BeTrue();
@@ -45,7 +47,8 @@ public sealed class WorktreeTests
         var result = await Service().ListAsync(fixture.Root); result.Items.Single(item => item.IsPrunable).PruneReason.Test().NotBeNull();
         fixture.Git("checkout", "--orphan", "unborn"); fixture.Git("update-ref", "-d", "refs/heads/main");
         result = await Service().ListAsync(fixture.Root);
-        var current = result.Items.Single(item => Path.GetFullPath(item.Root) == fixture.Root);
+        var canonicalRoot = Path.GetFullPath(fixture.Git("rev-parse", "--show-toplevel").TrimEnd('\r', '\n'));
+        var current = result.Items.Single(item => Path.GetFullPath(item.Root) == canonicalRoot);
         current.CommitId.Test().BeNull(); current.Branch.Test().Be("refs/heads/unborn"); current.IsDetached.Test().BeFalse();
     }
 
