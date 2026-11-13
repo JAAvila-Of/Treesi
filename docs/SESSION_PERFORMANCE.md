@@ -2,7 +2,7 @@
 
 The isolated Windows performance workflow additionally exercises eight worktrees in one owned Treesi process. Each working folder contains 1,000 background files and its own modified probe; all share a repository with 10,000 imported linear commits. Every tab explicitly loads a 1,000-commit graph. Fixture setup is outside measurement, and no user repository participates.
 
-The report `native-session-performance.json` (schema version 4) retains five resource phases:
+The report `native-session-performance.json` (schema version 5) retains five resource phases:
 
 | Phase | Open tabs | Idle sampling |
 | --- | ---: | --- |
@@ -33,6 +33,18 @@ After all five unprofiled resource phases, the same owned process receives two a
 The VM installs [dotnet-trace 10.0.750501](https://github.com/dotnet/diagnostics/releases/tag/v10.0.750501) from a SHA-512-verified NuGet package declared in `eng/performance-tools/dotnet-trace.json`. The package is the only installation source; no global tool, service or product dependency is added. Its MIT license and packaged third-party notices accompany results. Each command owns its process, has a 120-second timeout and retains stdout/stderr. Collection uses `dotnet-sampled-thread-time`, a 16 MiB dropping buffer and a 30-second duration; completed trace files above 64 MiB are rejected. No heap dump, forced GC, native profiler or machine-wide trace is requested.
 
 Raw `.nettrace` files and inclusive/exclusive top-40 reports are retained separately by focus state. [Managed thread sampling](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/dotnet-trace) estimates sampled thread time: waits and native boundaries can appear in stacks. Report percentages are **not process CPU percentages**. These traces do not resolve native rendering stacks or measure presentation, input latency or FPS. Compare the stacks with the preceding unprofiled process counters before attributing a cause; a periodic caret callback alone does not establish where rendering cost occurs.
+
+## Native stacks in the disposable VM
+
+After the managed profiles, two additional 20-second captures observe search and graph focus. This mode requires `TREESI_NATIVE_CAPTURE_SCOPE=disposable-vm-pid-export` in addition to the hosted-VM admission guard. The caller supplies the exact owned PID and process creation time; the exporter also checks the expected application executable. No process is discovered by name.
+
+The [capability probe](NATIVE_PROVIDER_PROBE.md) found that the source PID filter must not be assumed effective. This is a **different, explicit mode**: a unique temporary VM-wide kernel sampling session with no legacy global keywords, no sampling-interval change and no restart of other sessions. Only the sampler's already-assigned profiling privilege is enabled temporarily in its own token. It never runs on a developer desktop, SSH benchmark host or self-hosted runner.
+
+Raw ETL/ETLX files stay in a generated temporary directory outside artifact paths. The exporter accepts only thread identities present with the same ID and creation time at both endpoints in the owned process; a nonnegative conflicting PID is rejected. Other samples are excluded, with only an aggregate exclusion count retained. Kernel ISR/DPC samples are not charged to the target. The entire raw trace is deleted **before** symbol lookup, and again during cleanup; a killed sampler can leave transient files only in the disposable VM, outside uploads. Conversion output is suppressed so unrelated trace details do not enter logs. The report retains only target stacks, module basenames/versions and sample counts.
+
+Bounds are 64 MiB raw files, 4,096 threads, 2,048 distinct target stacks and 64 frames per stack. Hitting a stack bound or losing events is explicit and fails the capture. The harness rejects exports above 4 MiB and requires search-focus user-stack evidence. Graph focus may produce no target samples while idle; that status does not prove zero CPU or presentation acceptance.
+
+Symbol lookup occurs after capture and raw deletion, only for the top five leaf modules. It uses the MIT TraceEvent symbol reader and Microsoft's public HTTPS symbol store, with a five-second request timeout, no NGen generation, no source download and no acceptance of PDBs from unsafe local probe locations. Unavailable symbols remain module-relative offsets; questionable symbol matches retain their marker. PDB caches are not uploaded. Sample counts and instrumented captures are not unprofiled CPU percentages, fixed-rate FPS or input latency.
 
 ## Presentation capture
 

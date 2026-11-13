@@ -28,6 +28,7 @@ public sealed partial class NativePerformanceTests
         var roots = new[] { fixture.Root }.Concat(Enumerable.Range(1, 7).Select(fixture.AddLinkedWorktree)).ToArray();
         var phases = new List<SessionPhase>(); var visited = new HashSet<string>(StringComparer.Ordinal);
         var managedProfiles = new List<ManagedProfile>();
+        var nativeProfiles = new List<JsonElement>();
         PresentProbe? presentProbe = null; string? failure = null;
         var start = new ProcessStartInfo(executable) { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(executable)! };
         start.ArgumentList.Add(fixture.SamplePath);
@@ -86,6 +87,10 @@ public sealed partial class NativePerformanceTests
             await Task.Delay(3000);
             managedProfiles.Add(await CaptureManagedProfileAsync(process.Id, directory, "graph-focus"));
             managedProfiles.Count.Test().Be(2);
+            FocusNative(driver, "GraphFindInput"); await Task.Delay(3000);
+            nativeProfiles.Add(await CaptureNativeProfileAsync(process, directory, "search-focus"));
+            Element(driver, "GraphCommits").Click(); await Task.Delay(3000);
+            nativeProfiles.Add(await CaptureNativeProfileAsync(process, directory, "graph-focus"));
         }
         catch (Exception error) { failure = error.GetType().Name; throw; }
         finally
@@ -98,10 +103,11 @@ public sealed partial class NativePerformanceTests
                 Directory.CreateDirectory(directory);
                 var report = new
                 {
-                    schemaVersion = "4",
+                    schemaVersion = "5",
+                    ownedProcessId = process.Id,
                     sourceCommit = Environment.GetEnvironmentVariable("GITHUB_SHA"),
                     measuredAtUtc = DateTimeOffset.UtcNow,
-                    completed = failure is null && phases.Count == 5 && managedProfiles.Count == 2,
+                    completed = failure is null && phases.Count == 5 && managedProfiles.Count == 2 && nativeProfiles.Count == 2,
                     failure,
                     fixture = new { backgroundFilesPerTree = 1000, importedLinearCommits = 10000, worktrees = 8, graphCommitsPerTab = 1000 },
                     tabCycles = 2,
@@ -120,6 +126,7 @@ public sealed partial class NativePerformanceTests
                     }),
                     presentProbe,
                     managedProfiles,
+                    nativeProfiles,
                     managedProfileScope = "Two 30-second EventPipe stack samples after all unprofiled resource phases. Sampled managed thread time includes waits and native boundaries; it is not CPU percentage, a native stack profile or presentation timing. Profiler overhead is excluded from resource phases.",
                     presentationScope = "Per-PID ETW probe during paced keyboard selection/scrolling. Present/display intervals include input gaps and are not fixed-rate FPS, render cost or input-to-photon latency. Missing events remain unavailable evidence."
                 };

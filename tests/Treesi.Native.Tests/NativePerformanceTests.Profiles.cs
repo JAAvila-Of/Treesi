@@ -7,6 +7,22 @@ public sealed partial class NativePerformanceTests
 {
     private sealed record ManagedProfile(string Focus, string TraceFile, long TraceBytes, int CollectionExitCode, int InclusiveReportExitCode, int ExclusiveReportExitCode, ThreadObservation Threads);
 
+    private static async Task<System.Text.Json.JsonElement> CaptureNativeProfileAsync(Process owned, string directory, string focus)
+    {
+        var executable = Environment.GetEnvironmentVariable("TREESI_NATIVE_PROFILER");
+        if (executable is null || !Path.IsPathFullyQualified(executable) || !File.Exists(executable)) throw new InvalidOperationException("The isolated native exporter must be configured.");
+        var code = await RunProfileCommandAsync(executable, directory, "native-" + focus,
+            ["collect-vm", owned.Id.ToString(System.Globalization.CultureInfo.InvariantCulture), owned.StartTime.ToUniversalTime().Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture), focus]);
+        if (code != 0) throw new InvalidOperationException("Native stack export did not complete; inspect its retained status and logs.");
+        var path = Path.Combine(directory, "native-" + focus + ".json");
+        if (new FileInfo(path).Length > 4 * 1024 * 1024) throw new InvalidOperationException("The native export exceeded 4 MiB.");
+        using var json = System.Text.Json.JsonDocument.Parse(await File.ReadAllTextAsync(path));
+        var root = json.RootElement;
+        if (root.GetProperty("ownedPid").GetInt32() != owned.Id || root.GetProperty("focus").GetString() != focus
+            || (focus == "search-focus" && root.GetProperty("status").GetString() != "captured")) throw new InvalidOperationException("Native stack evidence or identity is incomplete.");
+        return root.Clone();
+    }
+
     private static async Task<ManagedProfile> CaptureManagedProfileAsync(int ownedPid, string directory, string focus)
     {
         var executable = Environment.GetEnvironmentVariable("TREESI_DOTNET_TRACE");

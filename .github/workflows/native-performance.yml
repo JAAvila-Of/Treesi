@@ -18,6 +18,7 @@ jobs:
       DOTNET_CLI_TELEMETRY_OPTOUT: '1'
       TESTINGPLATFORM_TELEMETRY_OPTOUT: '1'
       TREESI_ISOLATED_SUITE: native-performance
+      TREESI_NATIVE_CAPTURE_SCOPE: disposable-vm-pid-export
     steps:
       - name: Require a disposable interactive hosted VM
         shell: pwsh
@@ -46,6 +47,14 @@ jobs:
           dotnet build tests/Treesi.Native.Tests --configuration Release --no-restore
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           "TREESI_NATIVE_APP=$env:RUNNER_TEMP/treesi-app/Treesi.Desktop.exe" >> $env:GITHUB_ENV
+      - name: Publish the isolated native stack exporter
+        shell: pwsh
+        run: |
+          dotnet restore tools/Treesi.NativeProfiler --locked-mode
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          dotnet publish tools/Treesi.NativeProfiler -c Release --no-restore --output "$env:RUNNER_TEMP/treesi-native-profiler"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          "TREESI_NATIVE_PROFILER=$env:RUNNER_TEMP/treesi-native-profiler/Treesi.NativeProfiler.exe" >> $env:GITHUB_ENV
       - name: Install pinned Appium tools only inside this VM
         shell: pwsh
         run: |

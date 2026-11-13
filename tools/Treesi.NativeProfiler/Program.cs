@@ -16,6 +16,8 @@ internal static class Program
     public static async Task<int> Main(string[] args)
     {
         IsolatedExecution.Require("native-performance");
+        if (args is ["collect-vm", var pid, var created, var focus])
+            return await VmCapture.RunAsync(int.Parse(pid, System.Globalization.CultureInfo.InvariantCulture), long.Parse(created, System.Globalization.CultureInfo.InvariantCulture), focus);
         if (args is ["--burn"])
         {
             var timer = Stopwatch.StartNew();
