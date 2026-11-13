@@ -17,6 +17,7 @@ Package versions are centralized in `Directory.Packages.props`. The SDK version 
 | BenchmarkDotNet | 0.15.8 | MIT | Isolated benchmarks only |
 | PresentMon standalone console | 2.6.0, SHA-256 pinned in the tool manifest | MIT with upstream third-party notices retained | Isolated Windows presentation probe only; no service or product dependency |
 | dotnet-trace | 10.0.750501, NuGet SHA-512 pinned in the tool manifest | MIT with packaged third-party notices retained | Managed stack sampling after resource measurements in the isolated VM; no global install or product dependency |
+| Microsoft.Diagnostics.Tracing.TraceEvent | 4.0.0 | MIT | Isolated native provider capability probe only; not a product dependency |
 | Microsoft.NET.Test.Sdk | 18.12.0 | MIT | Test host |
 | Git | Supplied by the user | GPL-2.0 and upstream notices | Separate CLI process |
 

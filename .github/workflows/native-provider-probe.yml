@@ -1,0 +1,42 @@
+name: Native CPU provider capability
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    env:
+      TREESI_ISOLATED_SUITE: native-performance
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          global-json-file: global.json
+      - name: Publish and run the isolated provider probe
+        shell: pwsh
+        run: |
+          if ($env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or -not [Environment]::UserInteractive -or [Diagnostics.Process]::GetCurrentProcess().SessionId -eq 0) { throw 'An isolated interactive hosted VM is required.' }
+          $env:TREESI_NATIVE_RESULTS = Join-Path $env:RUNNER_TEMP 'treesi-native-provider-results'
+          New-Item -ItemType Directory -Force $env:TREESI_NATIVE_RESULTS | Out-Null
+          dotnet restore tools/Treesi.NativeProfiler --locked-mode
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          dotnet publish tools/Treesi.NativeProfiler -c Release --no-restore --output "$env:RUNNER_TEMP/treesi-native-profiler"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & "$env:RUNNER_TEMP/treesi-native-profiler/Treesi.NativeProfiler.exe" probe
+          $probeExit = $LASTEXITCODE
+          Get-Content "$env:TREESI_NATIVE_RESULTS/native-provider-probe.json"
+          if ($probeExit) { exit $probeExit }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: native-provider-results
+          path: ${{ runner.temp }}/treesi-native-provider-results
+          retention-days: 3

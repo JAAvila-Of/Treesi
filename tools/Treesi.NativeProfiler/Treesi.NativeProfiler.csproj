@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><IsPackable>false</IsPackable></PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" />
+    <ProjectReference Include="../../tests/Treesi.TestSupport/Treesi.TestSupport.csproj" />
+  </ItemGroup>
+</Project>
