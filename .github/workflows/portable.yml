@@ -66,7 +66,7 @@ jobs:
           $response = & (Join-Path $directory.FullName $hostName) capabilities
           if ($LASTEXITCODE) { throw 'Extracted CLI failed.' }
           $envelope = $response | ConvertFrom-Json
-          if (!$envelope.success -or $envelope.schemaVersion -ne '1') { throw 'Invalid capabilities envelope.' }
+          if (!$envelope.ok -or $envelope.schemaVersion -ne '1') { throw 'Invalid capabilities envelope.' }
           if ($envelope.data.version.Split('+')[0] -ne $manifest.productVersion) { throw 'Executable version mismatch.' }
           $response | Set-Content '${{ runner.temp }}/portable/output/capabilities.json'
           $fixture = New-Item -ItemType Directory '${{ runner.temp }}/inspection-fixture'
@@ -74,7 +74,7 @@ jobs:
           if ($LASTEXITCODE) { throw 'Git fixture creation failed.' }
           'portable inspection fixture' | Set-Content (Join-Path $fixture.FullName 'sample.txt')
           $inspection = & (Join-Path $directory.FullName $hostName) inspect $fixture.FullName
-          if ($LASTEXITCODE -or !($inspection | ConvertFrom-Json).success) { throw 'Extracted CLI inspection failed.' }
+          if ($LASTEXITCODE -or !($inspection | ConvertFrom-Json).ok) { throw 'Extracted CLI inspection failed.' }
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: portable-${{ matrix.rid }}
