@@ -24,6 +24,7 @@ public sealed partial class NativePerformanceTests
     public async Task RecordOwnedProcessOpeningAndIdleResources()
     {
         IsolatedExecution.Require("native-performance");
+        NativeGraphicsDiagnostic.Write("native-performance");
         var executable = Environment.GetEnvironmentVariable("TREESI_NATIVE_APP");
         var directory = Environment.GetEnvironmentVariable("TREESI_NATIVE_RESULTS");
         var commit = Environment.GetEnvironmentVariable("GITHUB_SHA");

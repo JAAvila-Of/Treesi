@@ -17,7 +17,7 @@ public sealed class NativeWorkspaceTests
     private SyntheticRepository? _repository;
 
     [OneTimeSetUp]
-    public void RequireIsolatedDesktop() => IsolatedExecution.Require("native-ui");
+    public void RequireIsolatedDesktop() => NativeGraphicsDiagnostic.Write("native-ui");
 
     [SetUp]
     public void LaunchOnlyTheFixtureApplication()
