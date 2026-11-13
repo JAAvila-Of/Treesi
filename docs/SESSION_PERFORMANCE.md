@@ -2,7 +2,7 @@
 
 The isolated Windows performance workflow additionally exercises eight worktrees in one owned Treesi process. Each working folder contains 1,000 background files and its own modified probe; all share a repository with 10,000 imported linear commits. Every tab explicitly loads a 1,000-commit graph. Fixture setup is outside measurement, and no user repository participates.
 
-The report `native-session-performance.json` (schema version 3) retains five resource phases:
+The report `native-session-performance.json` (schema version 4) retains five resource phases:
 
 | Phase | Open tabs | Idle sampling |
 | --- | ---: | --- |
@@ -17,6 +17,14 @@ Every phase first settles for three seconds. No input or UIA queries are sent du
 The first post-close phase preserves focus in the graph search input left by Ctrl+W navigation. The final phase focuses the graph in the same process, then repeats the 60-second observation. Both results remain in the report. This separates two user-visible idle states without disabling the caret, animations or runtime behavior. It does not isolate every source of CPU activity or establish causation from one run.
 
 Provisional observation thresholds are 512 MiB sampled working set, 600 MiB private committed memory and 2% idle CPU on the one-core scale. Flags are reported per phase, without becoming shared-runner correctness gates. Existing process ownership, admission, counter definitions and cleanup rules follow the [native process protocol](NATIVE_PERFORMANCE.md). The measurement excludes aggregate Git-child peaks, and three 60-second windows are not a long-duration soak test.
+
+## Per-thread CPU attribution
+
+Each resource phase reads the owned process's threads immediately before and after the existing process-counter sampling loop. Snapshots retain read start/end times, per-thread observation timestamps, creation time, user/kernel CPU counters and optional descriptions. Read-only thread handles use `THREAD_QUERY_LIMITED_INFORMATION`; the owning PID is checked on the same handle before counters or descriptions are read. Handles and description buffers are released. Snapshots are bounded to 4,096 threads and descriptions to 128 characters. No thread is suspended, injected into or modified.
+
+Only pairs with the same OS thread ID **and creation time** produce deltas. Each pair uses its measured wall interval. New, ended/reused and unreadable thread IDs remain explicit; their CPU is not guessed. Endpoint reads are not simultaneous, can miss short-lived threads, and surround rather than exactly coincide with the process-counter interval. Summed matched thread CPU need not equal process CPU. Empty descriptions and inaccessible/exited threads do not establish zero activity. These observations identify candidate threads, not native functions or presentation timing.
+
+The two managed-profile collections also retain thread snapshots, separately from unprofiled measurements. Their counters include collector attachment/rundown effects and must not be used as unprofiled budget results. Match OS thread IDs to the raw trace from the **same owned process and run**, checking identity and thread churn before assigning a role. Thread names alone are not attribution evidence. See [GetThreadTimes](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getthreadtimes) and [GetThreadDescription](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getthreaddescription).
 
 ## Managed stack profiles
 

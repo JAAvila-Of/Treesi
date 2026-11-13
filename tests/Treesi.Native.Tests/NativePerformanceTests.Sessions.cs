@@ -98,7 +98,7 @@ public sealed partial class NativePerformanceTests
                 Directory.CreateDirectory(directory);
                 var report = new
                 {
-                    schemaVersion = "3",
+                    schemaVersion = "4",
                     sourceCommit = Environment.GetEnvironmentVariable("GITHUB_SHA"),
                     measuredAtUtc = DateTimeOffset.UtcNow,
                     completed = failure is null && phases.Count == 5 && managedProfiles.Count == 2,

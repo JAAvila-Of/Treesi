@@ -13,7 +13,7 @@ namespace Treesi.Native.Tests;
 [TestFixture, NonParallelizable, Category("NativePerformance")]
 public sealed partial class NativePerformanceTests
 {
-    private sealed record IdleObservation(ProcessResourceSummary Summary, IReadOnlyList<ProcessResourceSample> Samples);
+    private sealed record IdleObservation(ProcessResourceSummary Summary, IReadOnlyList<ProcessResourceSample> Samples, ThreadObservation Threads);
     private sealed record Interaction(string Operation, double ObservedMs);
     private sealed record LaunchObservation(int Sequence, int OwnedProcessId, double WindowObservedMs, double AppiumAttachMs,
         double ReviewObservedMs, string Theme, uint Dpi, IdleObservation WorkingIdle, IReadOnlyList<Interaction> Interactions,
@@ -47,7 +47,7 @@ public sealed partial class NativePerformanceTests
             Directory.CreateDirectory(directory);
             var report = new
             {
-                schemaVersion = "1",
+                schemaVersion = "2",
                 sourceCommit = commit,
                 measuredAtUtc = DateTimeOffset.UtcNow,
                 completed = failure is null && observations.Count == 3,
@@ -150,6 +150,7 @@ public sealed partial class NativePerformanceTests
     {
         await Task.Delay(3000);
         var elapsed = Stopwatch.StartNew(); var samples = new List<ProcessResourceSample>();
+        var threadsBefore = ReadThreads(process, elapsed);
         for (var index = 0; index <= intervals; index++)
         {
             if (index != 0) await Task.Delay(intervalMs);
@@ -157,7 +158,9 @@ public sealed partial class NativePerformanceTests
             if (process.HasExited) throw new InvalidOperationException("The owned application exited during idle observation.");
             samples.Add(new(elapsed.Elapsed.TotalMilliseconds, process.TotalProcessorTime.TotalMilliseconds, process.WorkingSet64, process.PrivateMemorySize64, process.PeakWorkingSet64));
         }
-        return new(ProcessResourceSummary.From(samples, Environment.ProcessorCount), samples);
+        var threadsAfter = ReadThreads(process, elapsed);
+        return new(ProcessResourceSummary.From(samples, Environment.ProcessorCount), samples,
+            new(threadsBefore, threadsAfter, ThreadCpuWindow.From(threadsBefore.Samples, threadsAfter.Samples)));
     }
 
     private static async Task WaitForWindowAsync(Process process)

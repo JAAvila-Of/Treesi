@@ -1,10 +1,11 @@
 using System.Diagnostics;
+using Treesi.TestSupport;
 
 namespace Treesi.Native.Tests;
 
 public sealed partial class NativePerformanceTests
 {
-    private sealed record ManagedProfile(string Focus, string TraceFile, long TraceBytes, int CollectionExitCode, int InclusiveReportExitCode, int ExclusiveReportExitCode);
+    private sealed record ManagedProfile(string Focus, string TraceFile, long TraceBytes, int CollectionExitCode, int InclusiveReportExitCode, int ExclusiveReportExitCode, ThreadObservation Threads);
 
     private static async Task<ManagedProfile> CaptureManagedProfileAsync(int ownedPid, string directory, string focus)
     {
@@ -13,15 +14,19 @@ public sealed partial class NativePerformanceTests
             throw new InvalidOperationException("The pinned managed sampler must be configured in the isolated VM.");
         Directory.CreateDirectory(directory);
         var trace = Path.Combine(directory, focus + ".nettrace");
+        using var process = Process.GetProcessById(ownedPid);
+        var elapsed = Stopwatch.StartNew(); var before = ReadThreads(process, elapsed);
         var collected = await RunProfileCommandAsync(executable, directory, focus + "-collect",
             ["collect", "--process-id", ownedPid.ToString(System.Globalization.CultureInfo.InvariantCulture), "--duration", "00:00:00:30",
              "--profile", "dotnet-sampled-thread-time", "--buffersize", "16", "--buffering-mode", "Drop", "--output", trace]);
+        var after = ReadThreads(process, elapsed);
         if (collected != 0 || !File.Exists(trace) || new FileInfo(trace).Length is <= 0 or > 64 * 1024 * 1024)
             throw new InvalidOperationException("Managed collection failed or exceeded its 64 MiB trace bound; inspect the retained logs.");
         var inclusive = await RunProfileCommandAsync(executable, directory, focus + "-inclusive", ["report", trace, "topN", "--number", "40", "--inclusive", "--verbose"]);
         var exclusive = await RunProfileCommandAsync(executable, directory, focus + "-exclusive", ["report", trace, "topN", "--number", "40", "--verbose"]);
         if (inclusive != 0 || exclusive != 0) throw new InvalidOperationException("Managed stack reports failed; inspect the retained trace and logs.");
-        return new(focus, Path.GetFileName(trace), new FileInfo(trace).Length, collected, inclusive, exclusive);
+        return new(focus, Path.GetFileName(trace), new FileInfo(trace).Length, collected, inclusive, exclusive,
+            new(before, after, ThreadCpuWindow.From(before.Samples, after.Samples)));
     }
 
     private static async Task<int> RunProfileCommandAsync(string executable, string directory, string name, string[] arguments)
