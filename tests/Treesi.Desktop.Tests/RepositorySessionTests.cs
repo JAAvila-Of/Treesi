@@ -139,7 +139,7 @@ public sealed class RepositorySessionTests
             Get<TabStrip>(window, "RepositoryTabs").Items.Count.Test().Be(0);
             Get<Control>(window, "HomeSurface").IsVisible.Test().BeTrue();
             Get<Button>(window, "ReturnToWorkspaceButton").IsVisible.Test().BeFalse();
-            Get<Control>(window, "RepositoryTabBar").IsVisible.Test().BeFalse();
+            Get<Control>(window, "RepositoryTabBar").IsVisible.Test().BeTrue();
             await window.OpenRepositoryAsync(Root("third"));
             Get<TextBlock>(window, "RepositoryName").Text.Test().Be("third");
         }

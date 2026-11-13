@@ -84,7 +84,7 @@
     <Setter Property="Background" Value="{DynamicResource Surface.Control}" />
     <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="9" />
+    <Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="6" />
     <Setter Property="Padding" Value="9,5" /><Setter Property="MinHeight" Value="30" />
     <Setter Property="FontSize" Value="12" /><Setter Property="FontWeight" Value="Medium" />
   </Style>
@@ -132,6 +132,10 @@
     <Setter Property="Background" Value="Transparent" /><Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="Foreground" Value="{DynamicResource Text.Secondary}" />
   </Style>
+  <Style Selector="Button.quiet:disabled /template/ ContentPresenter">
+    <Setter Property="Background" Value="Transparent" /><Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Text.Subtle}" />
+  </Style>
   <Style Selector="Button:focus-visible"><Setter Property="BorderBrush" Value="{DynamicResource Accent.Primary}" /></Style>
   <Style Selector="TextBox:focus-visible, ComboBox:focus-visible, ListBoxItem:focus-visible"><Setter Property="BorderBrush" Value="{DynamicResource Accent.Primary}" /></Style>
   <Style Selector="Border#DiffSurface"><Setter Property="BorderBrush" Value="{DynamicResource Border.Default}" /></Style>
@@ -140,7 +144,7 @@
     <Setter Property="Background" Value="{DynamicResource Surface.Control}" />
     <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Border.Default}" />
-    <Setter Property="CornerRadius" Value="8" /><Setter Property="FontSize" Value="12" />
+    <Setter Property="CornerRadius" Value="6" /><Setter Property="FontSize" Value="12" />
     <Setter Property="PlaceholderForeground" Value="{DynamicResource Text.Secondary}" />
     <Setter Property="MinHeight" Value="30" /><Setter Property="Padding" Value="8,4" />
   </Style>
@@ -148,7 +152,7 @@
     <Setter Property="Background" Value="{DynamicResource Surface.Control}" />
     <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Border.Default}" />
-    <Setter Property="CornerRadius" Value="8" /><Setter Property="MinHeight" Value="30" />
+    <Setter Property="CornerRadius" Value="6" /><Setter Property="MinHeight" Value="30" />
     <Setter Property="FontSize" Value="12" /><Setter Property="Padding" Value="8,4" />
   </Style>
   <Style Selector="ListBoxItem">
@@ -164,8 +168,38 @@
   </Style>
   <Style Selector="TextBlock.file-status"><Setter Property="Foreground" Value="{DynamicResource Accent.Primary}" /></Style>
   <Style Selector="TabStrip.repository-tabs TabStripItem">
-    <Setter Property="MinHeight" Value="28" /><Setter Property="Height" Value="28" />
-    <Setter Property="Padding" Value="10,0" /><Setter Property="FontSize" Value="12" />
+    <Setter Property="Theme">
+      <ControlTheme TargetType="TabStripItem">
+        <Setter Property="MinHeight" Value="36" /><Setter Property="Height" Value="36" />
+        <Setter Property="Padding" Value="12,0" /><Setter Property="FontSize" Value="12" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource Text.Secondary}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Template">
+          <ControlTemplate>
+            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="0,2,0,0" Padding="{TemplateBinding Padding}">
+              <ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center" />
+            </Border>
+          </ControlTemplate>
+        </Setter>
+      </ControlTheme>
+    </Setter>
+  </Style>
+  <Style Selector="TabStrip.repository-tabs TabStripItem:selected">
+    <Setter Property="Background" Value="{DynamicResource Surface.Window}" />
+    <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent.Primary}" />
+  </Style>
+  <Style Selector="TabStrip.repository-tabs TabStripItem:pointerover:not(:selected)"><Setter Property="Background" Value="{DynamicResource Surface.Hover}" /></Style>
+  <Style Selector="TabStrip.repository-tabs TabStripItem:focus-visible"><Setter Property="BorderBrush" Value="{DynamicResource Accent.Primary}" /></Style>
+  <Style Selector="Button.workspace-picker">
+    <Setter Property="CornerRadius" Value="0" /><Setter Property="Padding" Value="14,0" />
+    <Setter Property="BorderThickness" Value="0,0,1,0" /><Setter Property="BorderBrush" Value="{DynamicResource Border.Default}" />
+  </Style>
+  <Style Selector="ListBox.changed-files ListBoxItem, Grid.history-navigation ListBoxItem">
+    <Setter Property="Margin" Value="0" /><Setter Property="CornerRadius" Value="0" />
+    <Setter Property="Padding" Value="12,8" /><Setter Property="MinHeight" Value="44" />
+    <Setter Property="BorderThickness" Value="2,0,0,0" />
   </Style>
   <Style Selector="TabStrip.diff-modes TabStripItem">
     <Setter Property="Theme">

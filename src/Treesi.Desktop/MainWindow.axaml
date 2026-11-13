@@ -8,86 +8,72 @@
         Title="Treesi — Change inspection" Width="1180" Height="740" MinWidth="900" MinHeight="560"
         WindowStartupLocation="CenterScreen">
   <Grid RowDefinitions="Auto,Auto,*,26">
-    <Grid x:Name="RepositoryTabBar" IsVisible="False" ColumnDefinitions="*,Auto" Background="{DynamicResource Surface.Sidebar}" Margin="0,0,0,1">
-      <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" MaxHeight="28">
+    <Grid x:Name="RepositoryTabBar" ColumnDefinitions="190,*,Auto,Auto" Background="{DynamicResource Surface.Sidebar}" Height="36">
+      <Button x:Name="RecentWorkspacesButton" AutomationProperties.AutomationId="RecentWorkspacesButton" Classes="quiet workspace-picker" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" ToolTip.Tip="Choose from local repository shortcuts; named workspace groups are not available yet">
+        <StackPanel Orientation="Horizontal" Spacing="10">
+          <Path Data="M9,6 L9,22 M9,15 C9,10 21,15 21,8 M6,6 A3,3 0 1 0 12,6 A3,3 0 1 0 6,6 M18,5 A3,3 0 1 0 24,5 A3,3 0 1 0 18,5" Width="17" Height="20" Stretch="Uniform" Stroke="{DynamicResource Accent.Primary}" StrokeThickness="1.6" VerticalAlignment="Center" />
+          <TextBlock Text="Local repositories" FontSize="12" VerticalAlignment="Center" />
+          <Path Data="M1,1 L5,5 L9,1" Width="8" Height="4" Stroke="{DynamicResource Text.Secondary}" StrokeThickness="1.4" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" Height="36">
         <TabStrip x:Name="RepositoryTabs" Classes="repository-tabs" AutomationProperties.AutomationId="RepositoryTabs" AutomationProperties.Name="Open repository tabs" Background="Transparent">
           <TabStrip.ItemTemplate>
             <DataTemplate x:DataType="workspaces:RepositoryTab">
               <StackPanel Orientation="Horizontal" Spacing="8" ToolTip.Tip="{Binding Root}">
                 <TextBlock Text="{Binding Name}" MaxWidth="160" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" FontSize="12" />
-                <Button Content="×" Tag="{Binding}" Click="CloseRepositoryTab" Classes="quiet" MinHeight="22" Padding="4,0" FontSize="14" AutomationProperties.Name="{Binding CloseLabel}" ToolTip.Tip="Close tab; repository files are not changed" />
+                <Button Content="×" Tag="{Binding}" Click="CloseRepositoryTab" Classes="quiet" MinHeight="24" Padding="4,0" FontSize="14" AutomationProperties.Name="{Binding CloseLabel}" ToolTip.Tip="Close tab; repository files are not changed" />
               </StackPanel>
             </DataTemplate>
           </TabStrip.ItemTemplate>
         </TabStrip>
       </ScrollViewer>
-      <Button Grid.Column="1" x:Name="NewRepositoryTabButton" AutomationProperties.AutomationId="NewRepositoryTabButton" Content="+" Classes="quiet" MinHeight="28" Height="28" Padding="12,0" FontSize="18" AutomationProperties.Name="Open another repository tab" ToolTip.Tip="Choose a local repository (Ctrl+T)" />
+      <Button Grid.Column="2" x:Name="NewRepositoryTabButton" AutomationProperties.AutomationId="NewRepositoryTabButton" Content="+" Classes="quiet" MinHeight="30" Padding="12,0" FontSize="18" AutomationProperties.Name="Open another repository tab" ToolTip.Tip="Choose a local repository (Ctrl+T)" />
+      <ComboBox Grid.Column="3" x:Name="ThemeSelector" AutomationProperties.AutomationId="ThemeSelector" Width="86" Margin="4,3,10,3" AutomationProperties.Name="Appearance theme" ToolTip.Tip="Appearance theme" />
     </Grid>
-    <Grid x:Name="WorkspaceHeader" Grid.Row="1" ColumnDefinitions="Auto,*,Auto" Margin="12,4" Height="34">
-      <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-        <Border Width="28" Height="28" Background="{DynamicResource Accent.Soft}" BorderBrush="{DynamicResource Border.Default}" BorderThickness="1" CornerRadius="12">
-          <Path Data="M9,6 L9,22 M9,15 C9,10 21,15 21,8 M6,6 A3,3 0 1 0 12,6 A3,3 0 1 0 6,6 M18,5 A3,3 0 1 0 24,5 A3,3 0 1 0 18,5 M6,25 A3,3 0 1 0 12,25 A3,3 0 1 0 6,25"
-                Width="22" Height="24" Stretch="Uniform" Stroke="{DynamicResource Accent.Primary}" StrokeThickness="1.7" HorizontalAlignment="Center" VerticalAlignment="Center" />
-        </Border>
-        <TextBlock Text="treesi" FontSize="19" FontWeight="SemiBold" VerticalAlignment="Center" LetterSpacing="-0.6" />
-        <Border Width="1" Height="18" Background="{DynamicResource Border.Default}" Margin="6,0" />
-        <TextBlock x:Name="WorkspaceContext" Text="Workspace" Classes="eyebrow" VerticalAlignment="Center" />
+    <Grid x:Name="WorkspaceHeader" Grid.Row="1" ColumnDefinitions="190,*,Auto" Height="40" Background="{DynamicResource Surface.Window}">
+      <StackPanel Spacing="1" Margin="14,0,10,0" VerticalAlignment="Center" ToolTip.Tip="Inspect the active local repository">
+        <TextBlock x:Name="RepositoryName" Text="No repository open" FontWeight="SemiBold" FontSize="13" TextTrimming="CharacterEllipsis" />
+        <TextBlock x:Name="RepositoryLocation" Text="Choose a local Git working tree" Classes="secondary" FontSize="9" TextTrimming="CharacterEllipsis" />
       </StackPanel>
-      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
-        <Button x:Name="RecentWorkspacesButton" AutomationProperties.AutomationId="RecentWorkspacesButton" Content="Recents" Classes="quiet" ToolTip.Tip="Open a recent local workspace" />
+      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" Margin="10,0" VerticalAlignment="Center">
+        <Border Background="{DynamicResource Surface.Selected}" CornerRadius="5" Padding="11,5"><TextBlock x:Name="WorkspaceContext" Text="Changes" FontSize="12" /></Border>
+        <Button x:Name="HistoryButton" AutomationProperties.AutomationId="HistoryButton" Content="History" Classes="quiet" Padding="9,4" IsEnabled="False" ToolTip.Tip="Browse local repository or file history" />
         <Button x:Name="CompareRevisionsButton" AutomationProperties.AutomationId="CompareRevisionsButton" Content="Compare" Classes="quiet" IsEnabled="False" ToolTip.Tip="Compare existing local commits, branches or tags" />
+      </StackPanel>
+      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" Margin="0,0,12,0" VerticalAlignment="Center">
         <Button x:Name="OpenFileButton" AutomationProperties.AutomationId="OpenFileButton" Content="Open file" Classes="quiet" ToolTip.Tip="Open a file inside a repository" />
-        <Button x:Name="OpenFolderButton" AutomationProperties.AutomationId="OpenFolderButton" Classes="primary">
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <Path Data="M2,5 L9,5 L11,7 L22,7 L22,20 L2,20 Z" Width="16" Height="16" Stretch="Uniform" Stroke="{DynamicResource Accent.Contrast}" StrokeThickness="1.6" VerticalAlignment="Center" />
-            <TextBlock Text="Open repository" />
-          </StackPanel>
-        </Button>
-        <Border Width="1" Background="{DynamicResource Border.Default}" Margin="8,5" />
-        <ComboBox x:Name="ThemeSelector" AutomationProperties.AutomationId="ThemeSelector" Width="108" AutomationProperties.Name="Appearance theme" ToolTip.Tip="Appearance theme" />
+        <Button x:Name="OpenFolderButton" AutomationProperties.AutomationId="OpenFolderButton" Content="Open repository" Classes="quiet" ToolTip.Tip="Open a local repository (Ctrl+O)" />
       </StackPanel>
     </Grid>
     <ProgressBar x:Name="BusyIndicator" Grid.Row="1" IsVisible="False" IsIndeterminate="False" Value="100" Height="2" VerticalAlignment="Bottom" Margin="12,0" Foreground="{DynamicResource Accent.Primary}" Background="Transparent" AutomationProperties.Name="Inspection in progress" />
-    <Border x:Name="WorkspaceFrame" Grid.Row="2" Margin="6,0,6,2" CornerRadius="10" ClipToBounds="True" BorderThickness="1" BorderBrush="{DynamicResource Border.Default}" BoxShadow="0 8 30 0 #14000000">
+    <Border x:Name="WorkspaceFrame" Grid.Row="2" Margin="0" CornerRadius="0" ClipToBounds="True" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Border.Default}">
       <Grid x:Name="WorkspaceColumns" ColumnDefinitions="190,1,*">
-        <Grid x:Name="FilesPanel" Grid.Column="0" RowDefinitions="Auto,Auto,Auto,*,Auto" Background="{DynamicResource Surface.Sidebar}">
-          <Border Margin="8,8,8,12" Padding="10" CornerRadius="10" BorderThickness="1" BorderBrush="{DynamicResource Border.Default}" Background="{DynamicResource Surface.Control}">
-            <StackPanel Spacing="5">
-              <StackPanel Orientation="Horizontal" Spacing="7">
-                <Ellipse Width="5" Height="5" Fill="{DynamicResource Accent.Primary}" VerticalAlignment="Center" />
-                <TextBlock Text="LOCAL REPOSITORY" Classes="eyebrow" FontSize="9" />
-              </StackPanel>
-              <TextBlock x:Name="RepositoryName" Text="No repository open" FontWeight="SemiBold" FontSize="13" TextTrimming="CharacterEllipsis" />
-              <TextBlock x:Name="RepositoryLocation" Text="A local view of your changes" Classes="secondary" FontSize="10" TextTrimming="CharacterEllipsis" />
-            </StackPanel>
-          </Border>
-          <Grid x:Name="ChangesNavigationHeader" Grid.Row="1" ColumnDefinitions="*,Auto" Margin="12,0,8,6">
+        <Grid x:Name="FilesPanel" Grid.Column="0" RowDefinitions="Auto,Auto,*,Auto" Background="{DynamicResource Surface.Sidebar}">
+          <Grid x:Name="ChangesNavigationHeader" Grid.Row="0" ColumnDefinitions="*,Auto" Margin="14,10,8,7">
             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-              <TextBlock x:Name="ChangesHeading" Text="Changes" FontWeight="SemiBold" VerticalAlignment="Center" />
+              <TextBlock x:Name="ChangesHeading" Text="Changed files" FontSize="11" FontWeight="Medium" VerticalAlignment="Center" />
               <Border Background="{DynamicResource Surface.Hover}" CornerRadius="4" Padding="6,2">
                 <TextBlock x:Name="FileCount" Text="0" FontSize="11" Classes="secondary" />
               </Border>
             </StackPanel>
             <Button Grid.Column="1" x:Name="RefreshButton" Content="↻" Classes="quiet" Padding="8,4" MinHeight="28" FontSize="18" IsEnabled="False" ToolTip.Tip="Refresh changes (Ctrl+R)" AutomationProperties.Name="Refresh changes" />
           </Grid>
-          <TextBox Grid.Row="2" x:Name="FileFilter" AutomationProperties.AutomationId="FileFilter" PlaceholderText="Filter by file or path…" Margin="8,0,8,8" AutomationProperties.Name="Filter changed files by path" />
-          <ListBox Grid.Row="3" x:Name="ChangedFiles" AutomationProperties.AutomationId="ChangedFiles" Background="Transparent" BorderThickness="0" AutomationProperties.Name="Changed files">
+          <TextBox Grid.Row="1" x:Name="FileFilter" AutomationProperties.AutomationId="FileFilter" PlaceholderText="Filter files…" Margin="12,0,12,12" AutomationProperties.Name="Filter changed files by path" />
+          <ListBox Grid.Row="2" x:Name="ChangedFiles" Classes="changed-files" AutomationProperties.AutomationId="ChangedFiles" Background="Transparent" BorderThickness="0" AutomationProperties.Name="Changed files">
             <ListBox.ItemTemplate>
               <DataTemplate x:DataType="local:ChangedFileItem">
-                <Grid ColumnDefinitions="24,*" ColumnSpacing="7">
-                  <Border Width="24" Height="26" CornerRadius="6" Background="{DynamicResource Accent.Soft}" VerticalAlignment="Top" Margin="0,1,0,0">
-                    <TextBlock Text="{Binding Status}" Classes="file-status" Classes.added="{Binding IsAdded}" Classes.removed="{Binding IsRemoved}" FontFamily="monospace" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                  </Border>
-                  <StackPanel Grid.Column="1" Spacing="5">
-                    <TextBlock Text="{Binding Name}" Foreground="{DynamicResource Text.Primary}" FontSize="12" FontWeight="Medium" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Path}" />
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" ToolTip.Tip="{Binding State}">
+                  <StackPanel Spacing="2">
+                    <TextBlock Text="{Binding Name}" Foreground="{DynamicResource Text.Primary}" FontSize="12" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Path}" />
                     <TextBlock Text="{Binding Directory}" Classes="secondary" FontSize="10" TextTrimming="CharacterEllipsis" />
-                    <TextBlock Text="{Binding State}" Classes="secondary" FontSize="10" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding State}" />
                   </StackPanel>
+                  <TextBlock Grid.Column="1" Text="{Binding Status}" Classes="file-status" Classes.added="{Binding IsAdded}" Classes.removed="{Binding IsRemoved}" FontFamily="monospace" FontSize="10" VerticalAlignment="Center" />
                 </Grid>
               </DataTemplate>
             </ListBox.ItemTemplate>
           </ListBox>
-          <Grid x:Name="HistorySidebar" Grid.Row="1" Grid.RowSpan="3" IsVisible="False" Background="{DynamicResource Surface.Sidebar}" RowDefinitions="Auto,Auto,Auto,Auto,*,Auto" Margin="6,0,6,6" RowSpacing="6">
+          <Grid x:Name="HistorySidebar" Grid.Row="0" Grid.RowSpan="3" Classes="history-navigation" IsVisible="False" Background="{DynamicResource Surface.Sidebar}" RowDefinitions="Auto,Auto,Auto,Auto,*,Auto" Margin="6,0,6,6" RowSpacing="6">
             <Grid ColumnDefinitions="*,Auto">
               <TextBlock Text="History" FontWeight="SemiBold" VerticalAlignment="Center" Margin="6,0" />
               <Button Grid.Column="1" x:Name="HistoryFilesButton" AutomationProperties.AutomationId="HistoryFilesButton" Content="Files" Classes="quiet" Padding="8,4" ToolTip.Tip="Show files in the current comparison" />
@@ -116,34 +102,31 @@
               <Button Grid.Column="1" x:Name="NextHistoryButton" AutomationProperties.AutomationId="NextHistoryButton" Content="Next" Classes="quiet" Padding="6,4" IsEnabled="False" />
             </Grid>
           </Grid>
-          <Border Grid.Row="4" Padding="12,8" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Border.Default}">
-            <Grid ColumnDefinitions="*,Auto">
-              <TextBlock x:Name="WorkspaceScopeHint" Text="Local workspace" Classes="secondary" FontSize="9" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-              <Button Grid.Column="1" x:Name="HistoryButton" AutomationProperties.AutomationId="HistoryButton" Content="History" Classes="quiet" Padding="6,3" MinHeight="24" IsEnabled="False" ToolTip.Tip="Browse local repository or file history" />
-            </Grid>
+          <Border Grid.Row="3" Padding="14,10" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Border.Default}">
+            <TextBlock x:Name="WorkspaceScopeHint" Text="Local changes · read only" Classes="secondary" FontSize="10" TextTrimming="CharacterEllipsis" />
           </Border>
         </Grid>
         <Border x:Name="FilesSeparator" Grid.Column="1" Background="{DynamicResource Border.Default}" />
         <Grid Grid.Column="2" RowDefinitions="Auto,Auto,*" Background="{DynamicResource Surface.Panel}">
-          <Grid x:Name="FileHeading" Margin="10,4" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10" Height="34">
+          <Grid x:Name="FileHeading" Margin="12,0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10" Height="34">
             <StackPanel Spacing="1" VerticalAlignment="Center">
               <TextBlock x:Name="FileTitle" AutomationProperties.AutomationId="FileTitle" Text="Change inspection" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
               <TextBlock x:Name="ComparisonDescription" AutomationProperties.AutomationId="ComparisonDescription" Text="Select a repository to start reviewing." Classes="secondary" FontSize="10" TextTrimming="CharacterEllipsis" />
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
-              <Border CornerRadius="5" Padding="6,3" Background="{DynamicResource Diff.AddBackground}"><TextBlock x:Name="AddedCount" AutomationProperties.AutomationId="AddedCount" Text="+0" Classes="added" FontFamily="monospace" FontSize="11" /></Border>
-              <Border CornerRadius="5" Padding="6,3" Background="{DynamicResource Diff.RemoveBackground}"><TextBlock x:Name="RemovedCount" AutomationProperties.AutomationId="RemovedCount" Text="−0" Classes="removed" FontFamily="monospace" FontSize="11" /></Border>
+              <Border CornerRadius="0" Padding="2,3" Background="Transparent"><TextBlock x:Name="AddedCount" AutomationProperties.AutomationId="AddedCount" Text="+0" Classes="added" FontFamily="monospace" FontSize="11" /></Border>
+              <Border CornerRadius="0" Padding="2,3" Background="Transparent"><TextBlock x:Name="RemovedCount" AutomationProperties.AutomationId="RemovedCount" Text="−0" Classes="removed" FontFamily="monospace" FontSize="11" /></Border>
               <Border x:Name="WhitespaceNotice" IsVisible="False" CornerRadius="5" Padding="6,3" BorderBrush="{DynamicResource Status.Warning}" BorderThickness="1">
                 <TextBlock x:Name="WhitespaceWarningText" AutomationProperties.AutomationId="WhitespaceWarningText" Text="WS ignored" Foreground="{DynamicResource Status.Warning}" FontSize="10" />
               </Border>
             </StackPanel>
             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
               <TextBox x:Name="DiffSearch" AutomationProperties.AutomationId="DiffSearch" PlaceholderText="Find in diff…" Width="140" AutomationProperties.Name="Find text in diff" AutomationProperties.HelpText="Enter or F3 finds the next match; Shift+Enter or Shift+F3 finds the previous match." />
-              <Button x:Name="FindNextButton" AutomationProperties.AutomationId="FindNextButton" Content="Find" ToolTip.Tip="Find the next occurrence" />
-              <Button x:Name="DiffOptionsButton" AutomationProperties.AutomationId="DiffOptionsButton" Content="Options" IsEnabled="False" AutomationProperties.Name="Comparison options" />
+              <Button x:Name="FindNextButton" AutomationProperties.AutomationId="FindNextButton" Content="Find" Classes="quiet" ToolTip.Tip="Find the next occurrence" />
+              <Button x:Name="DiffOptionsButton" AutomationProperties.AutomationId="DiffOptionsButton" Content="Options" Classes="quiet" IsEnabled="False" AutomationProperties.Name="Comparison options" />
             </StackPanel>
           </Grid>
-          <Border x:Name="ComparisonToolbar" Grid.Row="1" Background="{DynamicResource Surface.Panel}" BorderThickness="0,1,0,1" BorderBrush="{DynamicResource Border.Default}" Padding="6,3">
+          <Border x:Name="ComparisonToolbar" Grid.Row="1" Background="{DynamicResource Surface.Window}" BorderThickness="0,1,0,1" BorderBrush="{DynamicResource Border.Default}" Padding="6,3">
             <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto" ColumnSpacing="5">
               <Button x:Name="ToggleFilesButton" AutomationProperties.AutomationId="ToggleFilesButton" Content="☰" Classes="quiet" Width="30" AutomationProperties.Name="Hide file panel" ToolTip.Tip="Show or hide files (Ctrl+B)" />
               <Grid Grid.Column="1" Width="192">
@@ -168,7 +151,7 @@
               <Button Grid.Column="6" x:Name="NextBlockButton" AutomationProperties.AutomationId="NextBlockButton" Content="↓" Classes="quiet" Width="28" ToolTip.Tip="Next change block (Alt+Down)" AutomationProperties.Name="Next change block" />
             </Grid>
           </Border>
-          <Border x:Name="DiffSurface" Grid.Row="2" Margin="4" Background="{DynamicResource Diff.Canvas}" BorderThickness="1" CornerRadius="10" ClipToBounds="True">
+          <Border x:Name="DiffSurface" Grid.Row="2" Margin="0" Background="{DynamicResource Diff.Canvas}" BorderThickness="1" CornerRadius="0" ClipToBounds="True">
           <Grid Background="{DynamicResource Diff.Canvas}">
             <Grid x:Name="EmptyState" Margin="36">
               <StackPanel MaxWidth="380" Spacing="14" VerticalAlignment="Center" HorizontalAlignment="Center">
@@ -183,17 +166,17 @@
             <local:ReadOnlyDiffEditor x:Name="DiffEditor" IsVisible="False" IsReadOnly="True" ShowLineNumbers="False"
                                FontFamily="Cascadia Mono,Consolas,Menlo,monospace" FontSize="13"
                                Background="{DynamicResource Diff.Canvas}" Foreground="{DynamicResource Text.Primary}"
-                               Padding="0,14,0,24" WordWrap="False" AutomationProperties.Name="Read-only unified diff" />
-            <Grid x:Name="SplitView" IsVisible="False" ColumnDefinitions="*,1,*" RowDefinitions="32,*">
-              <Border Background="{DynamicResource Diff.Gutter}" Padding="12,7" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Border.Default}">
+                               Padding="0,8,0,16" WordWrap="False" AutomationProperties.Name="Read-only unified diff" />
+            <Grid x:Name="SplitView" IsVisible="False" ColumnDefinitions="*,1,*" RowDefinitions="26,*">
+              <Border Background="{DynamicResource Diff.Gutter}" Padding="12,4" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Border.Default}">
                 <TextBlock x:Name="BeforeLabel" Text="BEFORE" Classes="eyebrow" FontSize="10" />
               </Border>
-              <Border Grid.Column="2" Background="{DynamicResource Diff.Gutter}" Padding="12,7" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Border.Default}">
+              <Border Grid.Column="2" Background="{DynamicResource Diff.Gutter}" Padding="12,4" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Border.Default}">
                 <TextBlock x:Name="AfterLabel" Text="AFTER" Classes="eyebrow" FontSize="10" />
               </Border>
               <Border Grid.Column="1" Grid.RowSpan="2" Background="{DynamicResource Border.Default}" />
-              <local:ReadOnlyDiffEditor x:Name="BeforeEditor" Grid.Row="1" IsReadOnly="True" ShowLineNumbers="False" FontFamily="Cascadia Mono,Consolas,Menlo,monospace" FontSize="13" Background="{DynamicResource Diff.Canvas}" Foreground="{DynamicResource Text.Primary}" Padding="0,14,0,24" WordWrap="False" AutomationProperties.Name="Read-only before diff" />
-              <local:ReadOnlyDiffEditor x:Name="AfterEditor" Grid.Row="1" Grid.Column="2" IsReadOnly="True" ShowLineNumbers="False" FontFamily="Cascadia Mono,Consolas,Menlo,monospace" FontSize="13" Background="{DynamicResource Diff.Canvas}" Foreground="{DynamicResource Text.Primary}" Padding="0,14,0,24" WordWrap="False" AutomationProperties.Name="Read-only after diff" />
+              <local:ReadOnlyDiffEditor x:Name="BeforeEditor" Grid.Row="1" IsReadOnly="True" ShowLineNumbers="False" FontFamily="Cascadia Mono,Consolas,Menlo,monospace" FontSize="13" Background="{DynamicResource Diff.Canvas}" Foreground="{DynamicResource Text.Primary}" Padding="0,8,0,16" WordWrap="False" AutomationProperties.Name="Read-only before diff" />
+              <local:ReadOnlyDiffEditor x:Name="AfterEditor" Grid.Row="1" Grid.Column="2" IsReadOnly="True" ShowLineNumbers="False" FontFamily="Cascadia Mono,Consolas,Menlo,monospace" FontSize="13" Background="{DynamicResource Diff.Canvas}" Foreground="{DynamicResource Text.Primary}" Padding="0,8,0,16" WordWrap="False" AutomationProperties.Name="Read-only after diff" />
             </Grid>
           </Grid>
           </Border>

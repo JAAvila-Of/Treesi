@@ -2,6 +2,8 @@
 
 The workspace provides Light and Dark themes with neutral graphite or white/gray surfaces, a restrained green accent, clear type hierarchy, compact actions, and distinct repository, file-list, and diff surfaces. Selections and broad surfaces stay neutral so source colors and graph/diff semantics remain prominent. Theme changes apply immediately and preserve the current file, comparison, filter, and text selection.
 
+The native shell places the local repository chooser, repository tabs and theme control in one top row. The second row identifies the actual repository and exposes the existing Changes/Revisions, History, Compare and open-location actions. A flat file list replaces repository/file cards; the comparison canvas runs to the panel edges. Sidebar width follows compact/wide layouts (180/210 logical pixels), aligned with the repository chooser and context. The chooser and theme remain available on Home after the final tab closes. This implements the Changes composition; named workspace groups and a commit-graph view are still pending.
+
 The visual shell uses a rounded workspace frame, a compact repository card, a small file heading, colored addition/removal counters, and a framed diff canvas. A single-row toolbar exposes endpoints, Unified and Side by side, file-panel visibility and change-block navigation. Search stays beside the file heading. Selected files and keyboard focus have explicit outlines; color is accompanied by status text and diff prefixes.
 
 The diff is the primary surface. Geometry checks require it to occupy at least 80% of the workspace body's height and 60% of its area in both layouts and themes, at 900 × 560 and 1180 × 740. These are layout checks, not accessibility or performance acceptance. Long headings are trimmed rather than allowed to shrink the code area; editor text remains 13 px.
@@ -22,7 +24,7 @@ Headless checks cover metadata round trips and limits, stale requests, cancellat
 
 ## Motion
 
-Buttons respond to hover and press with 120 ms transitions. File selection and layout segments blend their backgrounds over 140 ms. Loaded diffs and layout changes use a single 180 ms ease-out reveal with a four-pixel translation and opacity from 0.88 to 1. Theme changes briefly reveal the file heading. Text is never scaled or animated during scrolling, and there are no decorative idle loops. The activity line animates only while inspection is busy.
+Buttons respond to hover and press with 120 ms transitions. File selection and layout segments blend their backgrounds over 140 ms. Loaded diffs and layout changes use a single 150 ms ease-out opacity reveal from 0.88 to 1, without translating the code. Theme changes briefly reveal the file heading. Text is never scaled or animated during scrolling, and there are no decorative idle loops. The activity line animates only while inspection is busy.
 
 `WorkspaceMotion` owns cancellation: replacing an animation, showing a non-diff state, reducing motion, or closing the window stops the previous reveal. Content, focus, and text selection remain immediately available; actions never wait for a decorative transition. No animation library or additional runtime dependency is required.
 

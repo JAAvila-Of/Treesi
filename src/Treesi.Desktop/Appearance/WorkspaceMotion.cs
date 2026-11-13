@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
-using Avalonia.Media;
 using Avalonia.Styling;
 
 namespace Treesi.Desktop.Appearance;
@@ -35,19 +34,17 @@ public sealed class WorkspaceMotion(Control owner) : IDisposable
     {
         var animation = new Animation
         {
-            Duration = TimeSpan.FromMilliseconds(180),
+            Duration = TimeSpan.FromMilliseconds(150),
             Easing = new CubicEaseOut(),
             Children =
             {
                 new KeyFrame { Cue = new Cue(0), Setters =
                 {
-                    new Setter(Visual.OpacityProperty, 0.88d),
-                    new Setter(TranslateTransform.YProperty, 4d)
+                    new Setter(Visual.OpacityProperty, 0.88d)
                 } },
                 new KeyFrame { Cue = new Cue(1), Setters =
                 {
-                    new Setter(Visual.OpacityProperty, 1d),
-                    new Setter(TranslateTransform.YProperty, 0d)
+                    new Setter(Visual.OpacityProperty, 1d)
                 } }
             }
         };

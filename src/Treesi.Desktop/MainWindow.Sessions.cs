@@ -240,7 +240,7 @@ public sealed partial class MainWindow
             _repositoryName.Text = "No repository open"; _repositoryLabel.Text = "A local view of your changes";
             _refresh.IsEnabled = _filter.IsEnabled = _comparison.IsEnabled = false;
             Required<Button>("CompareRevisionsButton").IsEnabled = Required<Button>("HistoryButton").IsEnabled = false;
-            Required<Control>("RepositoryTabBar").IsVisible = false;
+            Required<Control>("RepositoryTabBar").IsVisible = true;
             ShowRecentWorkspaces();
         }
     }

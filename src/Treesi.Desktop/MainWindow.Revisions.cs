@@ -200,9 +200,9 @@ public sealed partial class MainWindow
         var endpoints = _revisionComparison?.Endpoints;
         _comparison.IsVisible = endpoints is null;
         var button = Required<Button>("RevisionEndpointsButton"); button.IsVisible = endpoints is not null;
-        Required<TextBlock>("ChangesHeading").Text = endpoints is null ? "Changes" : "Between commits";
-        Required<TextBlock>("WorkspaceScopeHint").Text = endpoints is null ? "Local workspace" : "Pinned local commits";
-        Required<TextBlock>("WorkspaceContext").Text = endpoints is null ? "Workspace" : "Revisions";
+        Required<TextBlock>("ChangesHeading").Text = endpoints is null ? "Changed files" : "Between commits";
+        Required<TextBlock>("WorkspaceScopeHint").Text = endpoints is null ? "Local changes · read only" : "Pinned local commits";
+        Required<TextBlock>("WorkspaceContext").Text = endpoints is null ? "Changes" : "Revisions";
         if (endpoints is null) return;
         var kind = endpoints.IsRootComparison ? "Empty tree" : _historyCommit is not null ? $"Parent {_historyParent}" : endpoints.Mode == RevisionComparisonMode.MergeBase ? "Merge base" : "Direct";
         button.Content = endpoints.IsRootComparison ? $"Empty tree → {endpoints.TargetCommitId[..6]}" : $"{kind} {endpoints.EffectiveBaseCommitId[..6]} → {endpoints.TargetCommitId[..6]}";

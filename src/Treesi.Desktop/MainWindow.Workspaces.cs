@@ -112,7 +112,7 @@ public sealed partial class MainWindow
         Required<Control>("WorkspaceFrame").IsVisible = true;
         Required<Button>("FocusWorkspaceButton").IsEnabled = true;
         Required<Button>("FocusWorkspaceButton").IsVisible = true;
-        Required<TextBlock>("WorkspaceContext").Text = _revisionComparison is null ? "Workspace" : "Revisions";
+        Required<TextBlock>("WorkspaceContext").Text = _revisionComparison is null ? "Changes" : "Revisions";
         FocusComparison();
     }
 

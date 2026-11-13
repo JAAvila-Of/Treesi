@@ -13,6 +13,8 @@ public sealed partial class MainWindow
     {
         Required<Button>("ToggleFilesButton").Click += (_, _) => ToggleFilesPanel();
         Required<Button>("FocusWorkspaceButton").Click += (_, _) => SetFocusMode(!_focusMode);
+        SizeChanged += (_, _) => ApplyPresentation();
+        ApplyPresentation();
     }
 
     private void ToggleFilesPanel()
@@ -42,8 +44,11 @@ public sealed partial class MainWindow
         panel.IsVisible = visible;
         Required<Control>("FilesSeparator").IsVisible = visible;
         var columns = Required<Grid>("WorkspaceColumns").ColumnDefinitions;
-        columns[0].Width = new GridLength(visible ? 190 : 0);
+        var sidebarWidth = (ClientSize.Width > 0 ? ClientSize.Width : Width) < 1000 ? 180 : 210;
+        columns[0].Width = new GridLength(visible ? sidebarWidth : 0);
         columns[1].Width = new GridLength(visible ? 1 : 0);
+        Required<Grid>("RepositoryTabBar").ColumnDefinitions[0].Width = new GridLength(sidebarWidth);
+        Required<Grid>("WorkspaceHeader").ColumnDefinitions[0].Width = new GridLength(sidebarWidth);
         header.IsVisible = !_focusMode;
         var focusButton = Required<Button>("FocusWorkspaceButton");
         focusButton.Content = _focusMode ? "Exit focus" : "Focus";
