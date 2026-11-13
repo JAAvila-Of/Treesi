@@ -8,6 +8,7 @@
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <VersionPrefix>0.1.0</VersionPrefix>
     <VersionSuffix>preview.1</VersionSuffix>
+    <TreesiBundleBuildVersion>1.0.0</TreesiBundleBuildVersion>
     <Product>Treesi</Product>
     <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
     <NuGetLockFilePath Condition="'$(TreesiPackageLockDirectory)' != ''">$(TreesiPackageLockDirectory)/$(MSBuildProjectName).lock.json</NuGetLockFilePath>

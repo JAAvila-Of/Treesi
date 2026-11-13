@@ -8,6 +8,11 @@ permissions:
 
 jobs:
   package:
+    if: github.repository == 'JAAvila-Of/Treesi' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     strategy:
       fail-fast: false
       matrix:
@@ -29,6 +34,8 @@ jobs:
         shell: pwsh
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
         with:
           global-json-file: global.json
@@ -62,8 +69,20 @@ jobs:
           $env:DOTNET_ROOT = '${{ runner.temp }}/no-external-runtime'
           $env:DOTNET_ROOT_X64 = $env:DOTNET_ROOT
           $env:DOTNET_ROOT_ARM64 = $env:DOTNET_ROOT
-          $hostName = if ($IsWindows) { 'Treesi.Cli.exe' } else { 'Treesi.Cli' }
-          $response = & (Join-Path $directory.FullName $hostName) capabilities
+          $cli = Join-Path $directory.FullName $manifest.entryPoints.cli
+          if ($IsMacOS) {
+            $plist = Join-Path $directory.FullName 'Treesi.app/Contents/Info.plist'
+            & /usr/bin/plutil -lint $plist
+            if ($LASTEXITCODE) { throw 'Invalid macOS property list.' }
+            $executable = & /usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' $plist
+            if ($LASTEXITCODE -or $executable -ne 'Treesi.Desktop') { throw 'Invalid bundle executable.' }
+            $desktop = Join-Path $directory.FullName $manifest.entryPoints.desktop
+            $architecture = & /usr/bin/lipo -archs $desktop
+            $expectedArchitecture = if ('${{ matrix.rid }}' -eq 'osx-arm64') { 'arm64' } else { 'x86_64' }
+            if ($LASTEXITCODE -or $architecture.Trim() -ne $expectedArchitecture) { throw 'Unexpected macOS apphost architecture.' }
+            if (([IO.File]::GetUnixFileMode($desktop) -band [IO.UnixFileMode]::UserExecute) -eq 0) { throw 'Desktop execute permission was lost.' }
+          }
+          $response = & $cli capabilities
           if ($LASTEXITCODE) { throw 'Extracted CLI failed.' }
           $envelope = $response | ConvertFrom-Json
           if (!$envelope.ok -or $envelope.schemaVersion -ne '1') { throw 'Invalid capabilities envelope.' }
@@ -73,8 +92,35 @@ jobs:
           & git -c init.defaultBranch=main init --quiet $fixture.FullName
           if ($LASTEXITCODE) { throw 'Git fixture creation failed.' }
           'portable inspection fixture' | Set-Content (Join-Path $fixture.FullName 'sample.txt')
-          $inspection = & (Join-Path $directory.FullName $hostName) inspect $fixture.FullName
+          if ($IsMacOS) {
+            $relocated = Join-Path '${{ runner.temp }}' 'relocated bundle with spaces'
+            New-Item -ItemType Directory $relocated | Out-Null
+            Move-Item -LiteralPath (Join-Path $directory.FullName 'Treesi.app') -Destination $relocated
+            $cli = Join-Path $relocated 'Treesi.app/Contents/MacOS/Treesi.Cli'
+            foreach ($required in @('LICENSE-MIT', 'LICENSE-APACHE', 'third-party/dependencies.json', 'build-info.json')) {
+              if (!(Test-Path -LiteralPath (Join-Path $relocated "Treesi.app/Contents/Resources/$required"))) { throw 'Bundle legal/provenance files were lost.' }
+            }
+          }
+          $inspection = & $cli inspect $fixture.FullName
           if ($LASTEXITCODE -or !($inspection | ConvertFrom-Json).ok) { throw 'Extracted CLI inspection failed.' }
+          "TREESI_PORTABLE_ARCHIVE=$($archive.FullName)" >> $env:GITHUB_ENV
+      - name: Attest the tested archive
+        id: provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: ${{ env.TREESI_PORTABLE_ARCHIVE }}
+      - name: Verify expected source and builder before publishing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ATTESTATION_BUNDLE: ${{ steps.provenance.outputs.bundle-path }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $verified = & gh attestation verify $env:TREESI_PORTABLE_ARCHIVE --bundle $env:ATTESTATION_BUNDLE `
+            --repo JAAvila-Of/Treesi --signer-workflow JAAvila-Of/Treesi/.github/workflows/portable.yml `
+            --source-ref refs/heads/main --source-digest '${{ github.sha }}' --format json
+          if ($LASTEXITCODE) { throw 'Build provenance verification failed.' }
+          $verified | Set-Content '${{ runner.temp }}/portable/output/provenance-verification.json'
+          Copy-Item -LiteralPath $env:ATTESTATION_BUNDLE -Destination "$env:TREESI_PORTABLE_ARCHIVE.sigstore.json"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: portable-${{ matrix.rid }}

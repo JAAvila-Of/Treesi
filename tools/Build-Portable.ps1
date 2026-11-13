@@ -20,6 +20,7 @@ $commit = (& git rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw 'A Git source commit is required.' }
 [xml]$properties = Get-Content Directory.Build.props -Raw
 $version = "$($properties.Project.PropertyGroup.VersionPrefix)-$($properties.Project.PropertyGroup.VersionSuffix)"
+$bundleBuildVersion = $properties.Project.PropertyGroup.TreesiBundleBuildVersion
 $locks = Join-Path $work 'locks'
 $property = "-p:TreesiPackageLockDirectory=$locks"
 Invoke-Dotnet @('restore', 'Treesi.slnx', '--locked-mode')
@@ -49,5 +50,5 @@ Copy-Item $locks -Destination "$legal/build-locks" -Recurse
 $name = "Treesi-$version-$Runtime-$($commit.Substring(0, 8))"
 $extension = if ($Runtime -eq 'linux-x64') { '.tar.gz' } else { '.zip' }
 $output = New-Item -ItemType Directory -Path "$work/output"
-Invoke-Dotnet @($tool, 'assemble', "$work/Desktop", "$work/Cli", "$work/legal", "$work/$name", "$output/$name$extension", $commit, $Runtime, $version)
+Invoke-Dotnet @($tool, 'assemble', "$work/Desktop", "$work/Cli", "$work/legal", "$work/$name", "$output/$name$extension", $commit, $Runtime, $version, $bundleBuildVersion)
 Write-Output "Portable candidate: $output/$name$extension"

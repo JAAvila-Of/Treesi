@@ -59,10 +59,11 @@ public static class PackageFiles
             sourceCommit = commit,
             runtimeIdentifier = rid,
             productVersion = version,
+            entryPoints = PortableLayout.EntryPoints(rid),
             productLicense = "MIT OR Apache-2.0",
-            signing = "Unsigned experimental build; not notarized or publisher-authenticated.",
+            signing = "No OS publisher signature or notarization. SDK apphosts may carry ad-hoc signatures.",
             files,
-            scope = "Inventory excludes this manifest. Checksums establish byte integrity, not publisher authenticity. Git is required separately."
+            scope = "Inventory excludes this manifest. Checksums establish byte integrity, not publisher authenticity. Official workflow build attestations are separate archive sidecars. Git is required separately."
         }, new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true }));
     }
 

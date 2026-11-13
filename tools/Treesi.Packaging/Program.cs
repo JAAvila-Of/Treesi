@@ -21,12 +21,12 @@ internal static class Program
                 DependencyNotices.Collect(runtimeCache, [new(id, "11.0.0", metadata.RootElement.GetProperty("contentHash").GetString()!)], runtimeSources, runtimeDestination);
                 File.WriteAllText(Path.Combine(runtimeDestination, "SCOPE.txt"), "SDK-selected .NET 11.0.0 runtime pack. Content hash comes from NuGet restore metadata, not the application lock graph. Original notices are extracted from the integrity-checked archive.\n");
             }
-            else if (args is ["assemble", var desktop, var cli, var legal, var root, var output, var commit, var rid, var version])
+            else if (args is ["assemble", var desktop, var cli, var legal, var root, var output, var commit, var rid, var version, var bundleBuildVersion])
             {
                 if (Directory.Exists(root) || !System.Text.RegularExpressions.Regex.IsMatch(commit, "\\A[0-9a-f]{40}\\z")
                     || rid is not ("win-x64" or "linux-x64" or "osx-arm64" or "osx-x64")) throw new InvalidDataException("Invalid or occupied package destination or build identity.");
                 Directory.CreateDirectory(root);
-                PackageFiles.Merge(desktop, root); PackageFiles.Merge(cli, root); PackageFiles.Merge(legal, root);
+                PortableLayout.Stage(desktop, cli, legal, root, rid, version, bundleBuildVersion, commit);
                 PackageFiles.WriteInventory(root, commit, rid, version);
                 PackageFiles.Archive(root, output, rid != "linux-x64");
                 File.WriteAllText(output + ".sha256", PackageFiles.Hash(output) + "  " + Path.GetFileName(output) + "\n");
@@ -35,10 +35,11 @@ internal static class Program
                     sourceCommit = commit,
                     runtimeIdentifier = rid,
                     productVersion = version,
+                    bundleBuildVersion = rid.StartsWith("osx-", StringComparison.Ordinal) ? bundleBuildVersion : null,
                     archiveBytes = new FileInfo(output).Length,
                     extractedBytes = Directory.GetFiles(root, "*", SearchOption.AllDirectories).Sum(path => new FileInfo(path).Length),
                     sha256 = PackageFiles.Hash(output),
-                    signing = "unsigned; not notarized"
+                    signing = "no OS publisher signature; not notarized"
                 }, new JsonSerializerOptions { WriteIndented = true }));
             }
             else throw new ArgumentException("Expected verify-graph, notices or assemble with the documented arguments.");
