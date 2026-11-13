@@ -1,0 +1,8 @@
+{
+  "version": "10.0.750501",
+  "packageUrl": "https://api.nuget.org/v3-flatcontainer/dotnet-trace/10.0.750501/dotnet-trace.10.0.750501.nupkg",
+  "packageSha512": "bHcFw2upDrhkR920Se8V0fgX19kLLA0+Chn/NDWiLfiyCkA4/b6zlPtroBJJPCLjU1GWbyynuwR3qxuFehun2w==",
+  "license": "MIT",
+  "licenseUrl": "https://raw.githubusercontent.com/dotnet/diagnostics/v10.0.750501/LICENSE.TXT",
+  "scope": "Managed EventPipe stack sampling of the owned synthetic-fixture process, after unprofiled resource phases in the isolated Windows VM. No product dependency."
+}

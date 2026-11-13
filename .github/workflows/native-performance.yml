@@ -67,6 +67,27 @@ jobs:
           Copy-Item -LiteralPath eng/performance-tools/presentmon.json -Destination "$env:TREESI_NATIVE_RESULTS/presentmon-manifest.json"
           "TREESI_PRESENTMON_EXE=$executable" >> $env:GITHUB_ENV
           "TREESI_PRESENTMON_SHA256=$($manifest.sha256)" >> $env:GITHUB_ENV
+      - name: Prepare the pinned managed stack sampler
+        shell: pwsh
+        run: |
+          $manifest = Get-Content eng/performance-tools/dotnet-trace.json -Raw | ConvertFrom-Json
+          $feed = Join-Path $env:RUNNER_TEMP 'treesi-diagnostics-feed'
+          $tools = Join-Path $env:RUNNER_TEMP 'treesi-diagnostics'
+          New-Item -ItemType Directory -Force $feed | Out-Null
+          $package = Join-Path $feed "dotnet-trace.$($manifest.version).nupkg"
+          Invoke-WebRequest -Uri $manifest.packageUrl -OutFile $package
+          $digest = [Convert]::ToBase64String([Security.Cryptography.SHA512]::HashData([IO.File]::ReadAllBytes($package)))
+          if ($digest -cne $manifest.packageSha512) { throw 'dotnet-trace package SHA-512 verification failed.' }
+          dotnet tool install dotnet-trace --tool-path $tools --source $feed --version $manifest.version --allow-roll-forward
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $installed = Join-Path $tools ".store/dotnet-trace/$($manifest.version)/dotnet-trace/$($manifest.version)"
+          if ((Get-Content "$installed/dotnet-trace.$($manifest.version).nupkg.sha512" -Raw).Trim() -cne $manifest.packageSha512) { throw 'Installed sampler package digest differs.' }
+          Copy-Item -LiteralPath "$installed/THIRD-PARTY-NOTICES.txt" -Destination "$env:TREESI_NATIVE_RESULTS/dotnet-trace-THIRD-PARTY-NOTICES.txt"
+          Invoke-WebRequest -Uri $manifest.licenseUrl -OutFile "$env:TREESI_NATIVE_RESULTS/dotnet-trace-LICENSE.txt"
+          Copy-Item -LiteralPath eng/performance-tools/dotnet-trace.json -Destination "$env:TREESI_NATIVE_RESULTS/dotnet-trace-manifest.json"
+          & "$tools/dotnet-trace.exe" --version | Out-File "$env:TREESI_NATIVE_RESULTS/dotnet-trace-version.txt"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          "TREESI_DOTNET_TRACE=$tools/dotnet-trace.exe" >> $env:GITHUB_ENV
       - name: Record environment and run the isolated process measurements
         shell: pwsh
         run: |

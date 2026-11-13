@@ -2,7 +2,7 @@
 
 The isolated Windows performance workflow additionally exercises eight worktrees in one owned Treesi process. Each working folder contains 1,000 background files and its own modified probe; all share a repository with 10,000 imported linear commits. Every tab explicitly loads a 1,000-commit graph. Fixture setup is outside measurement, and no user repository participates.
 
-The report `native-session-performance.json` (schema version 2) retains five resource phases:
+The report `native-session-performance.json` (schema version 3) retains five resource phases:
 
 | Phase | Open tabs | Idle sampling |
 | --- | ---: | --- |
@@ -17,6 +17,14 @@ Every phase first settles for three seconds. No input or UIA queries are sent du
 The first post-close phase preserves focus in the graph search input left by Ctrl+W navigation. The final phase focuses the graph in the same process, then repeats the 60-second observation. Both results remain in the report. This separates two user-visible idle states without disabling the caret, animations or runtime behavior. It does not isolate every source of CPU activity or establish causation from one run.
 
 Provisional observation thresholds are 512 MiB sampled working set, 600 MiB private committed memory and 2% idle CPU on the one-core scale. Flags are reported per phase, without becoming shared-runner correctness gates. Existing process ownership, admission, counter definitions and cleanup rules follow the [native process protocol](NATIVE_PERFORMANCE.md). The measurement excludes aggregate Git-child peaks, and three 60-second windows are not a long-duration soak test.
+
+## Managed stack profiles
+
+After all five unprofiled resource phases, the same owned process receives two additional 30-second EventPipe collections: first with the graph search input focused, then with the graph focused. Each settles for three seconds. No input or UIA queries occur during collection. These are diagnostic captures, excluded from resource thresholds and comparisons because the profiler changes the workload.
+
+The VM installs [dotnet-trace 10.0.750501](https://github.com/dotnet/diagnostics/releases/tag/v10.0.750501) from a SHA-512-verified NuGet package declared in `eng/performance-tools/dotnet-trace.json`. The package is the only installation source; no global tool, service or product dependency is added. Its MIT license and packaged third-party notices accompany results. Each command owns its process, has a 120-second timeout and retains stdout/stderr. Collection uses `dotnet-sampled-thread-time`, a 16 MiB dropping buffer and a 30-second duration; completed trace files above 64 MiB are rejected. No heap dump, forced GC, native profiler or machine-wide trace is requested.
+
+Raw `.nettrace` files and inclusive/exclusive top-40 reports are retained separately by focus state. [Managed thread sampling](https://learn.microsoft.com/en-us/dotnet/core/diagnostics/dotnet-trace) estimates sampled thread time: waits and native boundaries can appear in stacks. Report percentages are **not process CPU percentages**. These traces do not resolve native rendering stacks or measure presentation, input latency or FPS. Compare the stacks with the preceding unprofiled process counters before attributing a cause; a periodic caret callback alone does not establish where rendering cost occurs.
 
 ## Presentation capture
 
