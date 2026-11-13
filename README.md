@@ -78,6 +78,12 @@ See [tool integration](docs/INTEGRATION.md), [architecture](docs/ARCHITECTURE.md
 
 See [test execution and isolation](docs/TESTING.md) for hosted CI, native Windows verification, and the separate benchmark harness. The regular test solution never executes native UI automation or benchmarks.
 
+## License and portable candidates
+
+Treesi is available under **MIT OR Apache-2.0**, at your option. See [MIT](LICENSE-MIT), [Apache-2.0](LICENSE-APACHE), and [third-party dependency licensing](docs/DEPENDENCIES.md).
+
+See [experimental portable builds](docs/PORTABLE.md) for self-contained Desktop/CLI candidates, checksums, limitations and reproduction instructions.
+
 ## Prototype boundaries
 
 - Inspection only: no staging, commit creation, remote access, or conflict resolution yet. Local history and revision comparison are available without fetching objects.

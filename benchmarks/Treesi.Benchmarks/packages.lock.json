@@ -133,7 +133,7 @@
       "treesi.application": {
         "type": "Project",
         "dependencies": {
-          "Treesi.Domain": "[1.0.0, )"
+          "Treesi.Domain": "[0.1.0-preview.1, )"
         }
       },
       "treesi.domain": {
@@ -142,7 +142,7 @@
       "treesi.git": {
         "type": "Project",
         "dependencies": {
-          "Treesi.Application": "[1.0.0, )"
+          "Treesi.Application": "[0.1.0-preview.1, )"
         }
       },
       "treesi.testsupport": {

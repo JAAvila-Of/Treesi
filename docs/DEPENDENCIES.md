@@ -19,6 +19,8 @@ Package versions are centralized in `Directory.Packages.props`. The SDK version 
 | dotnet-trace | 10.0.750501, NuGet SHA-512 pinned in the tool manifest | MIT with packaged third-party notices retained | Managed stack sampling after resource measurements in the isolated VM; no global install or product dependency |
 | Microsoft.Diagnostics.Tracing.TraceEvent | 4.0.0 | MIT | Isolated native provider probe, target-only stack export and public symbol lookup; not a product dependency |
 | Microsoft.NET.Test.Sdk | 18.12.0 | MIT | Test host |
+| NuGet.Packaging | 8.0.0 | Apache-2.0 | Build-time package content-hash and signed-archive integrity checks only |
+| System.Security.Cryptography.Pkcs | 11.0.0 | MIT | Packaging-only cryptography override; avoids the older vulnerable transitive version |
 | Git | Supplied by the user | GPL-2.0 and upstream notices | Separate CLI process |
 
 The NuGet license metadata of the resolved graph was inspected. Managed dependencies declare MIT or Apache-2.0. ANGLE native assets supply a BSD-style license file that permits redistribution subject to preserving its notices. Native binaries can carry additional third-party notices; package metadata is not a substitute for collecting those notices for a distributed installer.
@@ -36,6 +38,6 @@ dotnet list Treesi.slnx package --outdated --include-transitive
 dotnet list Treesi.slnx package --vulnerable --include-transitive
 ```
 
-Use lock-file updates as reviewable changes, retain copyright/license/NOTICE material when distributing, and recheck the graph after each dependency update. Treesi's own product license remains to be selected; using these dependencies does not select that license.
+Use lock-file updates as reviewable changes, retain copyright/license/NOTICE material when distributing, and recheck the graph after each dependency update. Treesi's own code is dual-licensed under **MIT OR Apache-2.0**, at your option; see [MIT](../LICENSE-MIT) and [Apache-2.0](../LICENSE-APACHE). Third-party components retain their own licenses. The [portable build process](PORTABLE.md) collects original license and notice files separately.
 
 Primary references: [.NET license](https://github.com/dotnet/runtime/blob/main/LICENSE.TXT), [Avalonia license](https://github.com/AvaloniaUI/Avalonia/blob/master/licence.md), [FluentOperations package and license](https://www.nuget.org/packages/JAAvila.FluentOperations), [Git license](https://git-scm.com/about/free-and-open-source).

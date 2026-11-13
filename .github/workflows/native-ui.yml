@@ -46,16 +46,23 @@ jobs:
           dotnet publish tools/Treesi.RenderingLab -c Release --self-contained false --no-restore --output "$env:RUNNER_TEMP/treesi-drag-source"
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           "TREESI_NATIVE_DRAG_SOURCE=$env:RUNNER_TEMP/treesi-drag-source/Treesi.RenderingLab.exe" >> $env:GITHUB_ENV
-      - name: Publish application and compile native tests
+      - name: Extract the portable candidate and compile native tests
         shell: pwsh
         run: |
-          dotnet publish src/Treesi.Desktop --configuration Release --runtime win-x64 --self-contained true --output "$env:RUNNER_TEMP/treesi-app"
+          ./tools/Build-Portable.ps1 -Runtime win-x64 -WorkDirectory "$env:RUNNER_TEMP/treesi-portable"
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $archive = @(Get-ChildItem "$env:RUNNER_TEMP/treesi-portable/output" -Filter '*.zip')
+          if ($archive.Count -ne 1) { throw 'Expected one portable archive.' }
+          Expand-Archive -LiteralPath $archive[0].FullName -DestinationPath "$env:RUNNER_TEMP/treesi-app"
+          $directory = @(Get-ChildItem "$env:RUNNER_TEMP/treesi-app" -Directory)
+          if ($directory.Count -ne 1) { throw 'Expected one extracted application directory.' }
+          $manifest = Get-Content (Join-Path $directory[0].FullName 'package-manifest.json') -Raw | ConvertFrom-Json
+          if ($manifest.sourceCommit -ne $env:GITHUB_SHA) { throw 'Portable source identity mismatch.' }
           dotnet restore tests/Treesi.Native.Tests --locked-mode
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           dotnet build tests/Treesi.Native.Tests --configuration Release --no-restore
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          "TREESI_NATIVE_APP=$env:RUNNER_TEMP/treesi-app/Treesi.Desktop.exe" >> $env:GITHUB_ENV
+          "TREESI_NATIVE_APP=$($directory[0].FullName)/Treesi.Desktop.exe" >> $env:GITHUB_ENV
       - name: Install pinned Appium tools only inside this VM
         shell: pwsh
         run: |

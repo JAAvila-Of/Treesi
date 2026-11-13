@@ -29,7 +29,7 @@ public static partial class CommandLine
                 ["capabilities"] => new
                 {
                     product = "Treesi",
-                    version = "0.1.0",
+                    version = typeof(CommandLine).Assembly.GetCustomAttributes(false).OfType<System.Reflection.AssemblyInformationalVersionAttribute>().Single().InformationalVersion,
                     provider = "git",
                     readOnly = true,
                     commands = AvailableCommands(revisions, history, graphs, worktrees),

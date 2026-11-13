@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/tools/">
+    <Project Path="tools/Treesi.Packaging/Treesi.Packaging.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Treesi.Cli/Treesi.Cli.csproj" />
     <Project Path="src/Treesi.Domain/Treesi.Domain.csproj" />
