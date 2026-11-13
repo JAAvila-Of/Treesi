@@ -22,6 +22,7 @@ Package versions are centralized in `Directory.Packages.props`. The SDK version 
 | NuGet.Packaging | 8.0.0 | Apache-2.0 | Build-time package content-hash and signed-archive integrity checks only |
 | System.Security.Cryptography.Pkcs | 11.0.0 | MIT | Packaging-only cryptography override; avoids the older vulnerable transitive version |
 | actions/attest | 4.2.2, commit pinned in the portable workflow | MIT | Hosted build provenance only; no product dependency |
+| NSIS | 3.13, official ZIP size/SHA-256 pinned in the installer tool manifest | zlib/libpng for core/UI and selected zlib compression; original COPYING retained | Per-user Windows installer compiler and installer/uninstaller stubs; no installed background component |
 | Git | Supplied by the user | GPL-2.0 and upstream notices | Separate CLI process |
 
 The NuGet license metadata of the resolved graph was inspected. Managed dependencies declare MIT or Apache-2.0. ANGLE native assets supply a BSD-style license file that permits redistribution subject to preserving its notices. Native binaries can carry additional third-party notices; package metadata is not a substitute for collecting those notices for a distributed installer.

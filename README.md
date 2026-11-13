@@ -84,6 +84,8 @@ Treesi is available under **MIT OR Apache-2.0**, at your option. See [MIT](LICEN
 
 See [experimental portable builds](docs/PORTABLE.md) for self-contained Desktop/CLI candidates, checksums, limitations and reproduction instructions.
 
+An [experimental Windows installer](docs/WINDOWS_INSTALLER.md) adds per-user setup and bounded removal after isolated native acceptance.
+
 ## Prototype boundaries
 
 - Inspection only: no staging, commit creation, remote access, or conflict resolution yet. Local history and revision comparison are available without fetching objects.

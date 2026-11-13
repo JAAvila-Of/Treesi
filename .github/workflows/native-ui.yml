@@ -14,6 +14,11 @@ concurrency:
 
 jobs:
   native-windows:
+    if: github.repository == 'JAAvila-Of/Treesi' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     runs-on: windows-latest
     timeout-minutes: 25
     env:
@@ -62,7 +67,25 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           dotnet build tests/Treesi.Native.Tests --configuration Release --no-restore
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          "TREESI_NATIVE_APP=$($directory[0].FullName)/Treesi.Desktop.exe" >> $env:GITHUB_ENV
+          ./tools/Build-WindowsInstaller.ps1 -PortableDirectory $directory[0].FullName -WorkDirectory "$env:RUNNER_TEMP/treesi-installer"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $installer = @(Get-ChildItem "$env:RUNNER_TEMP/treesi-installer/output" -Filter '*-setup.exe')
+          if ($installer.Count -ne 1) { throw 'Expected one installer.' }
+          "TREESI_NATIVE_INSTALLER=$($installer[0].FullName)" >> $env:GITHUB_ENV
+      - name: Verify per-user installation and bounded removal in this VM
+        shell: pwsh
+        run: |
+          dotnet test tests/Treesi.Native.Tests -c Release --no-build --filter 'TestCategory=NativeInstaller' --logger trx --results-directory "$env:TREESI_NATIVE_RESULTS/installer-tests"
+          if ($LASTEXITCODE) { throw 'Installer lifecycle verification failed.' }
+      - name: Install the verified candidate for native UI acceptance
+        shell: pwsh
+        run: |
+          if ($env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or -not [Environment]::UserInteractive) { throw 'Installation requires the isolated VM.' }
+          $process = Start-Process -FilePath $env:TREESI_NATIVE_INSTALLER -ArgumentList '/S' -WindowStyle Hidden -PassThru -Wait
+          if ($process.ExitCode) { throw 'Per-user installation failed.' }
+          $application = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'Programs/Treesi Preview/Treesi.Desktop.exe'
+          if (!(Test-Path -LiteralPath $application)) { throw 'The installed application is missing.' }
+          "TREESI_NATIVE_APP=$application" >> $env:GITHUB_ENV
       - name: Install pinned Appium tools only inside this VM
         shell: pwsh
         run: |
@@ -84,12 +107,35 @@ jobs:
               Start-Sleep -Seconds 1
             }
             if (-not $ready) { throw 'Appium did not become ready on loopback.' }
-            dotnet test tests/Treesi.Native.Tests --configuration Release --no-build --filter 'TestCategory!=NativePerformance|TestCategory=NativeUiPreference|TestCategory=NativeUiDrop' --logger trx --results-directory "$env:TREESI_NATIVE_RESULTS/tests"
+            dotnet test tests/Treesi.Native.Tests --configuration Release --no-build --filter '(TestCategory!=NativePerformance|TestCategory=NativeUiPreference|TestCategory=NativeUiDrop)&TestCategory!=NativeInstaller' --logger trx --results-directory "$env:TREESI_NATIVE_RESULTS/tests"
             if ($LASTEXITCODE) { throw "Native UI tests failed (exit $LASTEXITCODE)." }
           }
           finally {
             if (-not $server.HasExited) { $server.Kill($true) }
           }
+      - name: Attest the installer tested in this VM
+        id: installer-provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: ${{ env.TREESI_NATIVE_INSTALLER }}
+      - name: Verify installer source and builder before publishing
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ATTESTATION_BUNDLE: ${{ steps.installer-provenance.outputs.bundle-path }}
+        run: |
+          $verified = & gh attestation verify $env:TREESI_NATIVE_INSTALLER --bundle $env:ATTESTATION_BUNDLE `
+            --repo JAAvila-Of/Treesi --signer-workflow JAAvila-Of/Treesi/.github/workflows/native-ui.yml `
+            --source-ref refs/heads/main --source-digest '${{ github.sha }}' --format json
+          if ($LASTEXITCODE) { throw 'Installer provenance failed.' }
+          $verified | Set-Content "$env:RUNNER_TEMP/treesi-installer/output/provenance-verification.json"
+          Copy-Item -LiteralPath $env:ATTESTATION_BUNDLE -Destination "$env:TREESI_NATIVE_INSTALLER.sigstore.json"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: installer-windows-x64
+          path: ${{ runner.temp }}/treesi-installer/output
+          retention-days: 1
+          if-no-files-found: error
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:

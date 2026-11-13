@@ -12,6 +12,8 @@ internal static class Program
                 DependencyNotices.VerifyGraph(DependencyNotices.ReadLocks([baselineDesktop, baselineCli]), DependencyNotices.ReadLocks([restoredDesktop, restoredCli]));
             else if (args is ["notices", var cache, var sources, var destination, var desktopLock, var cliLock])
                 DependencyNotices.Collect(cache, DependencyNotices.ReadLocks([desktopLock, cliLock]), sources, destination);
+            else if (args is ["windows-installer", var candidate, var nsisLicense, var template, var installerWork])
+                WindowsInstaller.Generate(candidate, nsisLicense, template, installerWork);
             else if (args is ["runtime-notices", var runtimeCache, var runtimeSources, var runtimeDestination, var runtimeRid])
             {
                 if (runtimeRid is not ("win-x64" or "linux-x64" or "osx-arm64" or "osx-x64")) throw new ArgumentException("Unsupported runtime.");

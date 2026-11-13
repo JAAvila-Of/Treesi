@@ -2,7 +2,7 @@
 
 ## Current behavior
 
-Treesi currently distributes experimental self-contained portable candidates through the manually triggered [portable workflow](../.github/workflows/portable.yml). The application does not check for updates, download executables, replace its own files, install services, request elevation or register a startup task. There is no hidden network operation or update timer. Git remains a separate installation requirement.
+Treesi currently distributes experimental self-contained portable candidates through the manually triggered [portable workflow](../.github/workflows/portable.yml), plus a [per-user Windows installer](WINDOWS_INSTALLER.md) after isolated installer/UI acceptance. The application does not check for updates, download executables, replace its own files, install services, request elevation or register a startup task. There is no hidden network operation or update timer. Git remains a separate installation requirement.
 
 To try another candidate, download it separately, verify its build attestation and checksums as described in [portable builds](PORTABLE.md), close the running application, and extract it into a new directory. On macOS, keep the complete `.app` bundle together. Retain the previous directory until the replacement is accepted. Do not mix files from different packages or overwrite an application while it is running. Workspace preferences are user-local data and are not carried in archives; manual rollback does not guarantee compatibility with a future preferences schema.
 
