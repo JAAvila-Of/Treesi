@@ -44,11 +44,12 @@ public sealed partial class NativePerformanceTests
             WaitUntil(() => Element(driver, "DiffSearch").Enabled && Element(driver, "FileTitle").Text == "sample.txt");
             LoadGraph1000(driver);
             phases.Add(new("one-tab-graph", 1, await ObserveIdleAsync(process)));
-            foreach (var root in roots.Skip(1))
+            for (var index = 1; index < roots.Length; index++)
             {
+                var root = roots[index];
                 Element(driver, "WorkspacePickerButton").Click(); Element(driver, "DiscoverWorktreesButton").Click();
                 WaitUntil(() => Element(driver, "WorktreeNotice").Text.StartsWith("8 registered locations", StringComparison.Ordinal));
-                Element(driver, "RelatedWorktrees").FindElements(By.Name(Path.GetFileName(root))).Single(item => item.Displayed).Click();
+                Element(driver, "RelatedWorktrees").SendKeys(Keys.Home + string.Concat(Enumerable.Repeat(Keys.ArrowDown, index)));
                 Element(driver, "OpenWorktreeButton").Click();
                 WaitUntil(() => Element(driver, "RepositoryName").Text == Path.GetFileName(root) && Element(driver, "DiffSearch").Displayed && Element(driver, "DiffSearch").Enabled);
                 LoadGraph1000(driver);
