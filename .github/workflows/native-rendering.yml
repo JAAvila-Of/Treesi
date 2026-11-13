@@ -39,9 +39,9 @@ jobs:
       - name: Publish the isolated renderer launcher and compile native tests
         shell: pwsh
         run: |
-          dotnet restore tools/Treesi.RenderingLab --locked-mode --runtime win-x64
+          dotnet restore tools/Treesi.RenderingLab --locked-mode
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          dotnet publish tools/Treesi.RenderingLab --configuration Release --runtime win-x64 --self-contained true --no-restore --output "$env:RUNNER_TEMP/treesi-rendering-lab"
+          dotnet publish tools/Treesi.RenderingLab --configuration Release --self-contained false --no-restore --output "$env:RUNNER_TEMP/treesi-rendering-lab"
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           dotnet restore tests/Treesi.Native.Tests --locked-mode
           if ($LASTEXITCODE) { exit $LASTEXITCODE }

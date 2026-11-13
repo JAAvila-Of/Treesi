@@ -54,7 +54,7 @@ public sealed partial class NativePerformanceTests
     {
         var prefix = $"renderer-{sequence}-{renderer}";
         var diagnostic = Path.Combine(directory, prefix + ".json");
-        var start = new ProcessStartInfo(executable) { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(executable)!, RedirectStandardOutput = true, RedirectStandardError = true };
+        var start = new ProcessStartInfo(executable) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = Path.GetDirectoryName(executable)!, RedirectStandardOutput = true, RedirectStandardError = true };
         foreach (var argument in new[] { renderer, diagnostic, fixture }) start.ArgumentList.Add(argument);
         using var process = Process.Start(start) ?? throw new InvalidOperationException("The isolated rendering launcher did not start.");
         var stdout = process.StandardOutput.ReadToEndAsync(); var stderr = process.StandardError.ReadToEndAsync();
