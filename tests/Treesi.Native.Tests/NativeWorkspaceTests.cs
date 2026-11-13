@@ -71,9 +71,20 @@ public sealed class NativeWorkspaceTests
     {
         SelectCombo("ThemeSelector", "Light");
         WaitUntil(() => ComboText("ThemeSelector").Contains("Light", StringComparison.Ordinal));
+        SaveThemeDiagnostic("light");
         SelectCombo("ThemeSelector", "Dark");
         WaitUntil(() => ComboText("ThemeSelector").Contains("Dark", StringComparison.Ordinal));
+        SaveThemeDiagnostic("dark");
         Element("FileTitle").Text.Test().Be("sample.txt");
+    }
+
+    private void SaveThemeDiagnostic(string theme)
+    {
+        var directory = Environment.GetEnvironmentVariable("TREESI_NATIVE_RESULTS")
+            ?? throw new InvalidOperationException("The isolated diagnostic directory must be configured.");
+        Directory.CreateDirectory(directory);
+        Thread.Sleep(250);
+        _driver!.GetScreenshot().SaveAsFile(Path.Combine(directory, "native-theme-" + theme + ".png"));
     }
 
     [Test]
