@@ -2,8 +2,10 @@
   <Project Path="src/Treesi.Domain/Treesi.Domain.csproj" />
   <Project Path="src/Treesi.Application/Treesi.Application.csproj" />
   <Project Path="src/Treesi.Git/Treesi.Git.csproj" />
+  <Project Path="src/Treesi.Desktop/Treesi.Desktop.csproj" />
   <Project Path="tests/Treesi.TestSupport/Treesi.TestSupport.csproj" />
   <Project Path="tests/Treesi.Native.Tests/Treesi.Native.Tests.csproj" />
   <Project Path="benchmarks/Treesi.Benchmarks/Treesi.Benchmarks.csproj" />
   <Project Path="tools/Treesi.NativeProfiler/Treesi.NativeProfiler.csproj" />
+  <Project Path="tools/Treesi.RenderingLab/Treesi.RenderingLab.csproj" />
 </Solution>
