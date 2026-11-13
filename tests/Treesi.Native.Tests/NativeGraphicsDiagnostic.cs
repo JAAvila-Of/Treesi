@@ -26,8 +26,8 @@ internal static class NativeGraphicsDiagnostic
             schemaVersion = "1",
             sourceCommit = Environment.GetEnvironmentVariable("GITHUB_SHA"),
             hasUsableHardwareAdapter = hardware,
-            expectedStartupPolicy = hardware == false ? "direct-software" : "framework-defaults",
-            scope = "Published product probe in the isolated test host outside resource measurement windows. This is not the application's actual selected renderer or presentation evidence."
+            hardwareFallbackWouldApply = hardware == false,
+            scope = "Published hardware capability probe in the isolated test host outside resource measurement windows. Ignores saved graphics preferences; this is not the application's actual selected renderer or presentation evidence."
         }, new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true }));
     }
 }

@@ -2,6 +2,12 @@ name: Native Windows process performance
 
 on:
   workflow_dispatch:
+    inputs:
+      graphics_mode:
+        description: Saved product graphics preference in the disposable VM
+        type: choice
+        options: [automatic, software]
+        default: automatic
 
 permissions:
   contents: read
@@ -19,6 +25,7 @@ jobs:
       TESTINGPLATFORM_TELEMETRY_OPTOUT: '1'
       TREESI_ISOLATED_SUITE: native-performance
       TREESI_NATIVE_CAPTURE_SCOPE: disposable-vm-pid-export
+      TREESI_LAB_GRAPHICS_MODE: ${{ inputs.graphics_mode }}
     steps:
       - name: Require a disposable interactive hosted VM
         shell: pwsh
@@ -97,6 +104,14 @@ jobs:
           & "$tools/dotnet-trace.exe" --version | Out-File "$env:TREESI_NATIVE_RESULTS/dotnet-trace-version.txt"
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           "TREESI_DOTNET_TRACE=$tools/dotnet-trace.exe" >> $env:GITHUB_ENV
+      - name: Prepare the saved product graphics preference in this disposable VM
+        shell: pwsh
+        run: |
+          if ($env:TREESI_LAB_GRAPHICS_MODE -notin @('automatic', 'software')) { throw 'Unknown graphics preference.' }
+          $settings = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'Treesi'
+          New-Item -ItemType Directory -Force $settings | Out-Null
+          @{ Mode = $env:TREESI_LAB_GRAPHICS_MODE } | ConvertTo-Json -Compress | Set-Content -Encoding utf8 (Join-Path $settings 'graphics.json')
+          Copy-Item -LiteralPath (Join-Path $settings 'graphics.json') -Destination "$env:TREESI_NATIVE_RESULTS/requested-graphics-preference.json"
       - name: Record environment and run the isolated process measurements
         shell: pwsh
         run: |
@@ -120,7 +135,7 @@ jobs:
               Start-Sleep -Seconds 1
             }
             if (-not $ready) { throw 'Appium did not become ready on loopback.' }
-            dotnet test tests/Treesi.Native.Tests --configuration Release --no-build --filter 'TestCategory=NativePerformance&TestCategory!=NativeRenderingComparison' --logger trx --results-directory "$env:TREESI_NATIVE_RESULTS/tests"
+            dotnet test tests/Treesi.Native.Tests --configuration Release --no-build --filter 'TestCategory=NativePerformance&TestCategory!=NativeRenderingComparison&TestCategory!=NativeUiPreference' --logger trx --results-directory "$env:TREESI_NATIVE_RESULTS/tests"
             if ($LASTEXITCODE) { throw "Native UI tests failed (exit $LASTEXITCODE)." }
           }
           finally {

@@ -1,0 +1,36 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Treesi.Desktop.GraphicsSettingsWindow" Classes="workspace"
+        Title="Treesi settings" Width="460" Height="410" CanResize="False"
+        WindowStartupLocation="CenterOwner" Background="{DynamicResource Surface.Window}"
+        AutomationProperties.AutomationId="GraphicsSettingsWindow">
+  <Grid Margin="24" RowDefinitions="*,Auto" RowSpacing="20" KeyboardNavigation.TabNavigation="Cycle">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Spacing="12">
+        <TextBlock Text="Graphics" FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource Text.Primary}" />
+        <TextBlock Text="Automatic is recommended for most computers. Try software compatibility if graphics cause high CPU use or display issues."
+                   Classes="secondary" TextWrapping="Wrap" FontSize="12" />
+        <StackPanel Spacing="6" Margin="0,6,0,0">
+          <TextBlock Text="Rendering mode" FontWeight="Medium" FontSize="12" Foreground="{DynamicResource Text.Primary}" />
+          <ComboBox x:Name="GraphicsModeSelector" AutomationProperties.AutomationId="GraphicsModeSelector"
+                    AutomationProperties.Name="Rendering mode" HorizontalAlignment="Stretch">
+            <ComboBoxItem Content="Automatic (recommended)" /><ComboBoxItem Content="Software compatibility" />
+          </ComboBox>
+          <TextBlock x:Name="GraphicsCurrentMode" AutomationProperties.AutomationId="GraphicsCurrentMode" Classes="secondary" FontSize="11" />
+        </StackPanel>
+        <Border Background="{DynamicResource Surface.Hover}" CornerRadius="6" Padding="12">
+          <TextBlock x:Name="GraphicsRestartNotice" AutomationProperties.AutomationId="GraphicsRestartNotice"
+                     Text="Changes take effect the next time you open Treesi. Your open repositories stay as they are."
+                     TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource Text.Primary}" />
+        </Border>
+        <TextBlock x:Name="GraphicsSaveError" AutomationProperties.AutomationId="GraphicsSaveError" AutomationProperties.LiveSetting="Assertive"
+                   Text="Could not save the preference. Check access to your application settings and try again."
+                   TextWrapping="Wrap" FontSize="12" IsVisible="False" Foreground="{DynamicResource Text.Primary}" />
+      </StackPanel>
+    </ScrollViewer>
+    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+      <Button x:Name="CancelGraphicsSettingsButton" AutomationProperties.AutomationId="CancelGraphicsSettingsButton" Content="Cancel" Classes="quiet" />
+      <Button x:Name="SaveGraphicsSettingsButton" AutomationProperties.AutomationId="SaveGraphicsSettingsButton" Content="Save preference" Classes="primary" IsDefault="True" />
+    </StackPanel>
+  </Grid>
+</Window>

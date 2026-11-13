@@ -9,7 +9,7 @@
         Title="Treesi — Change inspection" Width="1180" Height="740" MinWidth="900" MinHeight="560"
         WindowStartupLocation="CenterScreen">
   <Grid RowDefinitions="Auto,Auto,*,26">
-    <Grid x:Name="RepositoryTabBar" ColumnDefinitions="190,*,Auto,Auto" Background="{DynamicResource Surface.Sidebar}" Height="36">
+    <Grid x:Name="RepositoryTabBar" ColumnDefinitions="190,*,Auto,Auto,Auto" Background="{DynamicResource Surface.Sidebar}" Height="36">
       <Button x:Name="WorkspacePickerButton" AutomationProperties.AutomationId="WorkspacePickerButton" Classes="quiet workspace-picker" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" ToolTip.Tip="Choose a local workspace; groups organize shortcuts without opening repositories">
         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
           <Path Data="M9,6 L9,22 M9,15 C9,10 21,15 21,8 M6,6 A3,3 0 1 0 12,6 A3,3 0 1 0 6,6 M18,5 A3,3 0 1 0 24,5 A3,3 0 1 0 18,5" Width="17" Height="20" Stretch="Uniform" Stroke="{DynamicResource Accent.Primary}" StrokeThickness="1.6" VerticalAlignment="Center" />
@@ -31,6 +31,7 @@
       </ScrollViewer>
       <Button Grid.Column="2" x:Name="NewRepositoryTabButton" AutomationProperties.AutomationId="NewRepositoryTabButton" Content="+" Classes="quiet" MinHeight="30" Padding="12,0" FontSize="18" AutomationProperties.Name="Open another repository tab" ToolTip.Tip="Choose a local repository (Ctrl+T)" />
       <ComboBox Grid.Column="3" x:Name="ThemeSelector" AutomationProperties.AutomationId="ThemeSelector" Width="86" Margin="4,3,10,3" AutomationProperties.Name="Appearance theme" ToolTip.Tip="Appearance theme" />
+      <Button Grid.Column="4" x:Name="SettingsButton" AutomationProperties.AutomationId="SettingsButton" Content="Settings" Classes="quiet" Margin="0,3,8,3" AutomationProperties.Name="Graphics settings" IsVisible="False" />
     </Grid>
     <Grid x:Name="WorkspaceHeader" Grid.Row="1" ColumnDefinitions="190,*,Auto" Height="40" Background="{DynamicResource Surface.Window}">
       <StackPanel Spacing="1" Margin="14,0,10,0" VerticalAlignment="Center" ToolTip.Tip="Inspect the active local repository">

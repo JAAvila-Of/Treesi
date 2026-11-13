@@ -106,6 +106,7 @@ public sealed partial class NativePerformanceTests
                     schemaVersion = "5",
                     ownedProcessId = process.Id,
                     sourceCommit = Environment.GetEnvironmentVariable("GITHUB_SHA"),
+                    requestedGraphicsPreference = Environment.GetEnvironmentVariable("TREESI_LAB_GRAPHICS_MODE") ?? "automatic",
                     measuredAtUtc = DateTimeOffset.UtcNow,
                     completed = failure is null && phases.Count == 5 && managedProfiles.Count == 2 && nativeProfiles.Count == 2,
                     failure,

@@ -33,7 +33,7 @@ public sealed partial class MainWindow : Window
     public Task PendingInspection { get; private set; } = Task.CompletedTask;
     public Task PendingMotion => _motion.Pending;
 
-    public MainWindow(IInspectionService inspector, string? initialPath, ThemeController appearance, IMotionPreferenceStore? motionPreferences = null, IWorkspaceHistoryStore? workspaceHistory = null, IRevisionService? revisions = null, IHistoryService? history = null, IWorkspaceCatalogStore? workspaceCatalog = null, IGraphService? graphs = null, IWorktreeService? worktrees = null)
+    public MainWindow(IInspectionService inspector, string? initialPath, ThemeController appearance, IMotionPreferenceStore? motionPreferences = null, IWorkspaceHistoryStore? workspaceHistory = null, IRevisionService? revisions = null, IHistoryService? history = null, IWorkspaceCatalogStore? workspaceCatalog = null, IGraphService? graphs = null, IWorktreeService? worktrees = null, GraphicsPreferences? graphics = null)
     {
         _inspector = inspector;
         _revisions = revisions;
@@ -78,6 +78,17 @@ public sealed partial class MainWindow : Window
         InitializeGraph();
         InitializeAccessibility();
         InitializeSessions();
+        var settings = Required<Button>("SettingsButton");
+        settings.IsVisible = graphics is not null;
+        settings.Click += async (_, _) =>
+        {
+            if (graphics is null) return;
+            var dialog = new GraphicsSettingsWindow(graphics);
+            await dialog.ShowDialog(this);
+            if (dialog.PreferenceSaved)
+                _status.Text = graphics.RequiresRestart ? "Graphics preference saved. Restart Treesi when you are ready to apply it." : "Graphics preference saved; no restart is needed.";
+            if (!_closed) settings.Focus(NavigationMethod.Tab);
+        };
         _themes.ItemsSource = ThemeCatalog.All;
         _themes.SelectedItem = appearance.Current;
         _themes.SelectionChanged += (_, _) =>

@@ -50,6 +50,7 @@ public sealed partial class NativePerformanceTests
             {
                 schemaVersion = "2",
                 sourceCommit = commit,
+                requestedGraphicsPreference = Environment.GetEnvironmentVariable("TREESI_LAB_GRAPHICS_MODE") ?? "automatic",
                 measuredAtUtc = DateTimeOffset.UtcNow,
                 completed = failure is null && observations.Count == 3,
                 failure,
