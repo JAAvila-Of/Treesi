@@ -107,7 +107,7 @@ jobs:
               Start-Sleep -Seconds 1
             }
             if (-not $ready) { throw 'Appium did not become ready on loopback.' }
-            dotnet test tests/Treesi.Native.Tests --configuration Release --no-build --filter '(TestCategory!=NativePerformance|TestCategory=NativeUiPreference|TestCategory=NativeUiDrop)&TestCategory!=NativeInstaller' --logger trx --results-directory "$env:TREESI_NATIVE_RESULTS/tests"
+            dotnet test tests/Treesi.Native.Tests --configuration Release --no-build --filter '(TestCategory!=NativePerformance|TestCategory=NativeUiPreference|TestCategory=NativeUiDrop)&TestCategory!=NativeInstaller&TestCategory!=LinuxNative' --logger trx --results-directory "$env:TREESI_NATIVE_RESULTS/tests"
             if ($LASTEXITCODE) { throw "Native UI tests failed (exit $LASTEXITCODE)." }
           }
           finally {

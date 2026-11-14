@@ -1,0 +1,66 @@
+name: Native Linux launch
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-linux-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  launch:
+    if: github.repository == 'JAAvila-Of/Treesi' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      TESTINGPLATFORM_TELEMETRY_OPTOUT: '1'
+      TREESI_ISOLATED_SUITE: linux-native-ui
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          global-json-file: global.json
+      - name: Require disposable Linux VM and install native lab dependencies
+        run: |
+          test "$RUNNER_ENVIRONMENT" = github-hosted
+          test "$RUNNER_OS" = Linux
+          mkdir -p "$RUNNER_TEMP/linux-native-results"
+          echo "TREESI_NATIVE_RESULTS=$RUNNER_TEMP/linux-native-results" >> "$GITHUB_ENV"
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y xvfb xauth x11-utils xdotool openbox imagemagick dbus-x11 fonts-dejavu-core libfontconfig1 libegl1 libgl1-mesa-dri desktop-file-utils
+      - name: Compile native suite without executing UI
+        run: |
+          dotnet restore tests/Treesi.Native.Tests --locked-mode
+          dotnet build tests/Treesi.Native.Tests -c Release --no-restore
+      - name: Build and extract the real Linux portable
+        shell: pwsh
+        run: |
+          ./tools/Build-Portable.ps1 -Runtime linux-x64 -WorkDirectory "$env:RUNNER_TEMP/native-package"
+          if ($LASTEXITCODE) { throw 'Portable build failed.' }
+          $archive = @(Get-ChildItem "$env:RUNNER_TEMP/native-package/output" -Filter '*.tar.gz')
+          if ($archive.Count -ne 1) { throw 'Expected one Linux archive.' }
+          New-Item -ItemType Directory "$env:RUNNER_TEMP/native-extracted" | Out-Null
+          tar -xzf $archive[0].FullName -C "$env:RUNNER_TEMP/native-extracted"
+          if ($LASTEXITCODE) { throw 'Linux extraction failed.' }
+          $directory = @(Get-ChildItem "$env:RUNNER_TEMP/native-extracted" -Directory)
+          if ($directory.Count -ne 1) { throw 'Expected one extracted product directory.' }
+          $target = "$env:RUNNER_TEMP/Treesi native application with spaces"
+          Move-Item -LiteralPath $directory[0].FullName -Destination $target
+          "TREESI_NATIVE_APP=$target/Treesi.Desktop" >> $env:GITHUB_ENV
+      - name: Launch through the desktop entry on the owned virtual display
+        run: dbus-run-session -- bash eng/linux-native/session.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: native-linux-results
+          path: ${{ runner.temp }}/linux-native-results
+          retention-days: 3
+          if-no-files-found: error

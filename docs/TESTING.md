@@ -9,6 +9,7 @@ Treesi separates normal verification, native desktop automation, and performance
 | Domain, application, Git, CLI, architecture, isolation policy | `Treesi.slnx` | Local terminal or hosted CI |
 | Theme, layout, search, filtering, rendered diff checks | `Treesi.slnx` | Avalonia Headless, in memory |
 | Real Windows accessibility and interactions | `Treesi.Native.Tests` | Explicitly enabled interactive GitHub-hosted Windows VM |
+| Linux desktop-entry native Home startup | `LinuxNative` category, `native-linux.yml` | Explicitly enabled disposable hosted Linux VM with an owned Xvfb display |
 | Observed Windows launch and idle process resources | `NativePerformance` category, manual `native-performance.yml` | Separate interactive GitHub-hosted Windows VM with its own opt-in |
 | Git inspection and selected diff benchmarks | `Treesi.Benchmarks` | Hosted smoke job or a configured macOS performance host |
 
@@ -51,7 +52,7 @@ dotnet restore Treesi.Isolated.slnx --locked-mode
 dotnet build Treesi.Isolated.slnx --configuration Release --no-restore
 ```
 
-Do not run native UI tests on a personal desktop, attach to a desktop-root session, or register a persistent public-repository runner on a workstation. The current native suite targets Windows; native macOS/Linux integration and assistive-technology testing remain additional coverage.
+Do not run native UI tests on a personal desktop, attach to a desktop-root session, or register a persistent public-repository runner on a workstation. The separate [Linux native lab](LINUX_NATIVE_LAB.md) covers desktop-entry Home launch on an owned virtual X11 display. Windows filters exclude `LinuxNative`; Linux runs only that category. Native macOS, full Linux interactions and assistive-technology testing remain additional coverage.
 
 ## Performance measurements
 

@@ -8,6 +8,16 @@ namespace Treesi.Tests;
 public sealed class IsolationPolicyTests
 {
     [Test]
+    public void LinuxNativeAdmissionRequiresHostedLinuxOptInAndLocalVirtualDisplay()
+    {
+        var admitted = new LabEnvironment(true, "github-hosted", "Linux", false, 0, false, "linux-native-ui", ":177");
+        IsolatedExecution.Refusal("linux-native-ui", admitted).Test().BeNull();
+        foreach (var denied in new[] { admitted with { GitHubActions = false }, admitted with { RunnerEnvironment = "self-hosted" }, admitted with { RunnerOs = "Windows" },
+            admitted with { Mode = "native-ui" }, admitted with { Display = null }, admitted with { Display = ":0" }, admitted with { Display = "remote:177" }, admitted with { MacOs = true } })
+            IsolatedExecution.Refusal("linux-native-ui", denied).Test().NotBeNull();
+    }
+
+    [Test]
     public void DeveloperDesktopCannotRunNativeTestsEvenWithAnOptIn()
     {
         var desktop = new LabEnvironment(false, null, "Windows", true, 1, false, "native-ui");
