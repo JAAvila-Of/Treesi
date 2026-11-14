@@ -14,6 +14,8 @@ Verify the [archive provenance and checksums](PORTABLE.md) before extraction. Pl
 
 Keep the complete portable folder together. The menu entry points to its absolute Desktop executable. Unregister before relocating or replacing the folder, then register again at the new location. If you have already moved it, the helper at the new location can still unregister the old entry using its embedded identity. Only one preview entry is registered at a time; a different candidate must be unregistered first.
 
+The version 2 descriptor also references the package's `treesi-icon.png` using an absolute `Icon` path. Spaces and backslashes use desktop-entry string escaping; icon paths do not use `Exec` field-code expansion. The helper validates both the Desktop executable and icon against the package inventory before registration. It does not copy icons into the user theme or delete package files when unregistering.
+
 Registration is optional. The helper does not copy binaries, change `PATH`, install system packages, request elevation, add file/URL associations, change Git configuration or create a background process. Running it as root is refused. The main Git CLI remains a separate inspection interface.
 
 ## Ownership and failure behavior
@@ -21,6 +23,8 @@ Registration is optional. The helper does not copy binaries, change `PATH`, inst
 Registration uses a new-file operation; existing foreign or modified entries are retained. Repeating registration for the exact same package location and commit is idempotent. `status` creates no directories or files. Linked data/application directories or desktop-entry files are refused. Installation paths containing control characters or `=` are rejected; the latter is prohibited in executable paths by the [desktop-entry Exec specification](https://specifications.freedesktop.org/desktop-entry/latest/exec-variables.html). Arguments use the specification's quoting and field-code escaping, without invoking a shell.
 
 The entry keeps its source commit and UTF-8 installation path in versioned `X-Treesi-*` metadata. The path is Base64-encoded to preserve literal characters; this is not encryption and the executable path is already present in `Exec`. Unregister accepts only the exact bytes of a descriptor reconstructed from that metadata. Its only deletion target is the fixed user menu entry: package files, preferences, other menu entries and repositories are retained. A customized or oversized entry requires explicit manual review/removal. No saved receipt or recursive cleanup is used.
+
+The current helper recognizes exact version 1 descriptors with the earlier generic icon as well as version 2 descriptors. An existing version 1 descriptor is retained rather than silently rewritten: unregister it with the current helper, then register the new candidate. A changed icon path, unknown descriptor version or any other modification still fails closed. Reading/removing a recognized old descriptor does not require the former package or icon to remain at its original location.
 
 Checks are intended to prevent accidental overwrite/removal, not to sandbox a hostile process running as the same user or guarantee a transaction across concurrent filesystem changes. A manifest check is not a publisher signature: build provenance must be verified before running the helper. Windows/macOS menu or installer behavior is unchanged.
 

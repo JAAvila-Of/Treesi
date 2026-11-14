@@ -12,7 +12,7 @@
     <Grid x:Name="RepositoryTabBar" ColumnDefinitions="190,*,Auto,Auto,Auto" Background="{DynamicResource Surface.Sidebar}" Height="36">
       <Button x:Name="WorkspacePickerButton" AutomationProperties.AutomationId="WorkspacePickerButton" Classes="quiet workspace-picker" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" ToolTip.Tip="Choose a local workspace; groups organize shortcuts without opening repositories">
         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-          <Path Data="M9,6 L9,22 M9,15 C9,10 21,15 21,8 M6,6 A3,3 0 1 0 12,6 A3,3 0 1 0 6,6 M18,5 A3,3 0 1 0 24,5 A3,3 0 1 0 18,5" Width="17" Height="20" Stretch="Uniform" Stroke="{DynamicResource Accent.Primary}" StrokeThickness="1.6" VerticalAlignment="Center" />
+          <Image Source="/Assets/treesi.png" Width="17" Height="20" Stretch="Uniform" VerticalAlignment="Center" />
           <TextBlock Grid.Column="1" x:Name="WorkspacePickerCaption" AutomationProperties.AutomationId="WorkspacePickerCaption" Text="Local repositories" MaxWidth="128" TextTrimming="CharacterEllipsis" FontSize="12" VerticalAlignment="Center" />
           <Path Grid.Column="2" Data="M1,1 L5,5 L9,1" Width="8" Height="4" Stroke="{DynamicResource Text.Secondary}" StrokeThickness="1.4" VerticalAlignment="Center" />
         </Grid>

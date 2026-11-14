@@ -6,6 +6,7 @@ Authoring-only requirements: CairoSVG and Pillow. Not used during product builds
 from io import BytesIO
 from pathlib import Path
 import struct
+import xml.etree.ElementTree as ET
 
 import cairosvg
 from PIL import Image
@@ -13,7 +14,21 @@ from PIL import Image
 
 root = Path(__file__).resolve().parent.parent
 brand = root / "assets" / "brand"
-source = brand / "treesi.svg"
+namespace = "{http://www.w3.org/2000/svg}"
+ET.register_namespace("", namespace[1:-1])
+native = ET.parse(brand / "treesi.svg").getroot()
+width, height = map(float, native.attrib["viewBox"].split()[2:])
+native.attrib.update(viewBox="0 0 512 512", width="512", height="512")
+native.find(namespace + "title").text = "Treesi approved full-detail desktop icon"
+shapes = [child for child in native if child.tag not in (namespace + "title", namespace + "defs")]
+for shape in shapes:
+    native.remove(shape)
+native.append(ET.Element(namespace + "rect", {"width": "512", "height": "512", "rx": "108", "fill": "#101e2b"}))
+group = ET.SubElement(native, namespace + "g", {"transform": f"translate({(512 - width * 512 * .82 / height) / 2} {512 * .09}) scale({512 * .82 / height})"})
+for shape in shapes:
+    group.append(shape)
+source = brand / "treesi-app-icon.svg"
+source.write_text(ET.tostring(native, encoding="unicode"), encoding="utf-8")
 sizes = (16, 20, 24, 32, 40, 48, 64, 128, 256, 512, 1024)
 images = {}
 for size in sizes:

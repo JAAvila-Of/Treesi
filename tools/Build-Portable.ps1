@@ -48,6 +48,7 @@ Copy-Item LICENSE-MIT, LICENSE-APACHE -Destination $legal
 if ($Runtime.StartsWith('osx-')) { Copy-Item assets/brand/treesi.icns -Destination "$legal/treesi.icns" }
 Copy-Item docs/PORTABLE.md -Destination "$legal/README.txt"
 if ($Runtime -eq 'linux-x64') { Copy-Item docs/LINUX_DESKTOP.md -Destination "$legal/LINUX-DESKTOP.txt" }
+if ($Runtime -eq 'linux-x64') { Copy-Item assets/brand/treesi.png -Destination "$legal/treesi-icon.png" }
 Invoke-Dotnet @($tool, 'notices', "$repo/.packages", "$PSScriptRoot/Treesi.Packaging/licenses", "$legal/third-party", "$locks/Treesi.Desktop.lock.json", "$locks/Treesi.Cli.lock.json")
 $runtimePackage = Join-Path $repo ".packages/microsoft.netcore.app.runtime.$Runtime/11.0.0"
 if (!(Test-Path -LiteralPath $runtimePackage)) { throw 'The pinned .NET 11.0.0 runtime package is missing.' }

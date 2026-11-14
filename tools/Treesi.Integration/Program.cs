@@ -51,10 +51,16 @@ internal static class Program
         var version = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;
         if (value.GetProperty("schemaVersion").GetString() != "1" || value.GetProperty("runtimeIdentifier").GetString() != "linux-x64" || !version.EndsWith("+" + commit, StringComparison.Ordinal))
             throw new InvalidDataException("Package identity does not match this integration helper.");
-        var member = value.GetProperty("files").EnumerateArray().Single(entry => entry.GetProperty("path").GetString() == "Treesi.Desktop");
-        using var stream = File.OpenRead(desktop);
-        if (stream.Length != member.GetProperty("bytes").GetInt64() || Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant() != member.GetProperty("sha256").GetString())
-            throw new InvalidDataException("The Desktop executable differs from the package inventory.");
+        foreach (var name in new[] { "Treesi.Desktop", "treesi-icon.png" })
+        {
+            var path = Path.Combine(root, name);
+            DesktopRegistration.RefuseLink(path, false);
+            var member = value.GetProperty("files").EnumerateArray().Single(entry => entry.GetProperty("path").GetString() == name);
+            using var stream = File.OpenRead(path);
+            if (name == "treesi-icon.png" && stream.Length > 1024 * 1024) throw new InvalidDataException("The desktop icon exceeds its limit.");
+            if (stream.Length != member.GetProperty("bytes").GetInt64() || Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant() != member.GetProperty("sha256").GetString())
+                throw new InvalidDataException("A desktop entry asset differs from the package inventory.");
+        }
         return (root, commit);
     }
 

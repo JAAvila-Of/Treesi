@@ -30,4 +30,6 @@ if not success or arguments != [sys.argv[2]] or entry.get_name() != "Treesi Prev
     raise RuntimeError(f"GLib interpreted unexpected launch arguments: {arguments!r}")
 if entry.get_boolean("Terminal") or entry.get_boolean("StartupNotify"):
     raise RuntimeError("Unexpected desktop activation flags")
+if entry.get_string("Icon") != sys.argv[3] or entry.get_icon().get_file().get_path() != sys.argv[3]:
+    raise RuntimeError("GLib interpreted an unexpected desktop icon path")
 print("GLib desktop entry parsing passed; no application was launched.")

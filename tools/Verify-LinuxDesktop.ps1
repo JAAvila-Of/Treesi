@@ -12,7 +12,7 @@ $work = [IO.Path]::GetFullPath($WorkDirectory)
 if (!$candidate.StartsWith($temporary, [StringComparison]::Ordinal) -or !$work.StartsWith($temporary, [StringComparison]::Ordinal)) { throw 'Acceptance paths must be inside the owned runner temp directory.' }
 if (Test-Path -LiteralPath $work) { throw 'Use a new acceptance work directory.' }
 New-Item -ItemType Directory $work | Out-Null
-$application = Join-Path $work 'application with spaces'
+$application = Join-Path $work 'application with spaces %U #; dollar$ quote"'
 Move-Item -LiteralPath $candidate -Destination $application
 $helper = Join-Path $application 'Treesi.Integration'
 $env:DOTNET_ROOT = Join-Path $work 'no-external-runtime'
@@ -33,6 +33,13 @@ $foreign = Join-Path $applications.FullName 'other.desktop'
 New-Item -ItemType Directory $env:XDG_CONFIG_HOME | Out-Null
 $preferences = Join-Path $env:XDG_CONFIG_HOME 'preferences.keep'
 [IO.File]::WriteAllText($preferences, 'saved preferences')
+$icon = Join-Path $application 'treesi-icon.png'
+$iconBytes = [IO.File]::ReadAllBytes($icon)
+try {
+    [IO.File]::WriteAllBytes($icon, [byte[]]@(1, 2, 3))
+    Invoke-Integration 'register' $false | Out-Null
+    if (Test-Path -LiteralPath (Join-Path $applications.FullName 'io.github.jaavila-of.treesi.preview.desktop')) { throw 'An altered icon authorized registration.' }
+} finally { [IO.File]::WriteAllBytes($icon, $iconBytes) }
 $registration = Invoke-Integration 'register'
 if ($registration.data.status -ne 'registered' -or $registration.data.installation -ne $application) { throw 'Registration identity mismatch.' }
 $entry = $registration.data.entryPath
@@ -42,7 +49,7 @@ Invoke-Integration 'register' | Out-Null
 if ([IO.File]::GetLastWriteTimeUtc($entry) -ne $timestamp) { throw 'Idempotent registration rewrote the entry.' }
 & desktop-file-validate $entry
 if ($LASTEXITCODE) { throw 'The desktop entry failed freedesktop validation.' }
-& /usr/bin/python3 (Join-Path $PSScriptRoot 'check-linux-desktop.py') $entry (Join-Path $application 'Treesi.Desktop')
+& /usr/bin/python3 (Join-Path $PSScriptRoot 'check-linux-desktop.py') $entry (Join-Path $application 'Treesi.Desktop') (Join-Path $application 'treesi-icon.png')
 if ($LASTEXITCODE) { throw 'GLib desktop entry parsing failed.' }
 [IO.File]::AppendAllText($entry, "X-User-Note=retain`n")
 $modified = [IO.File]::ReadAllText($entry)
@@ -59,5 +66,5 @@ if ($refused.error.code -ne 'linked_path') { throw 'A linked desktop entry was a
 Remove-Item -LiteralPath $entry
 if ([IO.File]::ReadAllText($foreign) -ne 'foreign desktop entry' -or [IO.File]::ReadAllText($preferences) -ne 'saved preferences') { throw 'Foreign files or preferences were changed.' }
 if ((Invoke-Integration 'unregister').data.status -ne 'absent') { throw 'Repeated removal failed.' }
-@{schemaVersion='1';entryValidated=$true;glibParsed=$true;modifiedEntryRetained=$true;linkedEntryRefused=$true;unregisterAfterMove=$true;foreignFilesAndPreferencesRetained=$true;externalRuntimeConfigured=$false;desktopLaunched=$false} |
+@{schemaVersion='1';entryValidated=$true;glibParsed=$true;iconPathParsed=$true;alteredIconRefused=$true;modifiedEntryRetained=$true;linkedEntryRefused=$true;unregisterAfterMove=$true;foreignFilesAndPreferencesRetained=$true;externalRuntimeConfigured=$false;desktopLaunched=$false} |
     ConvertTo-Json | Set-Content -LiteralPath $ReportPath

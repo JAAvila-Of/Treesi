@@ -34,17 +34,53 @@ public sealed class DesktopRegistrationTests
         File.GetLastWriteTimeUtc(registry.EntryPath).Test().Be(time);
     }
 
-    [Test]
-    public void UnregisterUsesEmbeddedIdentityAfterApplicationFolderWasMoved()
+    [TestCase(1)]
+    [TestCase(2)]
+    public void UnregisterUsesEmbeddedIdentityAfterApplicationFolderWasMoved(int entryVersion)
     {
         var registry = new DesktopRegistration(data);
         Directory.CreateDirectory(installation);
-        registry.Register(installation, Commit);
+        Directory.CreateDirectory(Path.GetDirectoryName(registry.EntryPath)!);
+        File.WriteAllText(registry.EntryPath, DesktopRegistration.Render(installation, Commit, entryVersion));
         Directory.Move(installation, Path.Combine(root, "relocated application"));
         registry.Status().Installation.Test().Be(installation);
         registry.Unregister().Status.Test().Be("absent");
         registry.Unregister().Status.Test().Be("absent");
         Directory.Exists(Path.Combine(root, "relocated application")).Test().BeTrue();
+    }
+
+    [Test]
+    public void LegacyDescriptorIsRecognizedButNotSilentlyReplaced()
+    {
+        var registry = new DesktopRegistration(data);
+        Directory.CreateDirectory(Path.GetDirectoryName(registry.EntryPath)!);
+        var legacy = DesktopRegistration.Render(installation, Commit, 1);
+        File.WriteAllText(registry.EntryPath, legacy);
+        registry.Status().Status.Test().Be("registered");
+        Action register = () => registry.Register(installation, Commit);
+        register.Test().Throw<DesktopRegistrationException>();
+        File.ReadAllText(registry.EntryPath).Test().Be(legacy);
+        registry.Unregister().Status.Test().Be("absent");
+        registry.Register(installation, Commit).Status.Test().Be("registered");
+        File.ReadAllText(registry.EntryPath).Test().Contain("X-Treesi-EntryVersion=2\n");
+    }
+
+    [TestCase(1)]
+    [TestCase(2)]
+    public void ChangedIconOrUnknownVersionCannotAuthorizeRemoval(int entryVersion)
+    {
+        var registry = new DesktopRegistration(data);
+        Directory.CreateDirectory(Path.GetDirectoryName(registry.EntryPath)!);
+        var original = DesktopRegistration.Render(installation, Commit, entryVersion);
+        var icon = original.Split('\n').Single(line => line.StartsWith("Icon=", StringComparison.Ordinal));
+        foreach (var modified in new[] { original.Replace(icon, "Icon=/other/application.png", StringComparison.Ordinal), original.Replace("X-Treesi-EntryVersion=" + entryVersion, "X-Treesi-EntryVersion=3", StringComparison.Ordinal) })
+        {
+            File.WriteAllText(registry.EntryPath, modified);
+            registry.Status().Status.Test().Be("modified");
+            Action remove = () => registry.Unregister();
+            remove.Test().Throw<DesktopRegistrationException>();
+            File.ReadAllText(registry.EntryPath).Test().Be(modified);
+        }
     }
 
     [Test]

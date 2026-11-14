@@ -71,17 +71,20 @@ public sealed class DesktopRegistration
         return new("absent", EntryPath);
     }
 
-    public static string Render(string installation, string commit)
+    public static string Render(string installation, string commit, int entryVersion = 2)
     {
         var root = Absolute(installation);
+        if (entryVersion is not (1 or 2)) throw new ArgumentException("Unsupported desktop entry version.");
         if (!Regex.IsMatch(commit, "\\A[0-9a-f]{40}\\z")) throw new ArgumentException("Invalid source commit.");
         var executable = Path.Combine(root, "Treesi.Desktop");
         if (executable.Contains('=')) throw new ArgumentException("Desktop executable paths containing '=' are not supported by the desktop entry specification.");
         var argument = "\"" + executable.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal)
             .Replace("`", "\\`", StringComparison.Ordinal).Replace("$", "\\$", StringComparison.Ordinal).Replace("%", "%%", StringComparison.Ordinal) + "\"";
         var command = argument.Replace("\\", "\\\\", StringComparison.Ordinal);
+        var icon = entryVersion == 1 ? "application-x-executable" : Path.Combine(root, "treesi-icon.png")
+            .Replace("\\", "\\\\", StringComparison.Ordinal).Replace(" ", "\\s", StringComparison.Ordinal);
         return "[Desktop Entry]\nType=Application\nVersion=1.0\nName=Treesi Preview\nComment=Inspect local Git changes\nExec=" + command
-            + "\nIcon=application-x-executable\nTerminal=false\nStartupNotify=false\nCategories=Development;\nKeywords=Git;Diff;History;\nX-Treesi-EntryVersion=1\n" + RootKey
+            + "\nIcon=" + icon + "\nTerminal=false\nStartupNotify=false\nCategories=Development;\nKeywords=Git;Diff;History;\nX-Treesi-EntryVersion=" + entryVersion + "\n" + RootKey
             + Convert.ToBase64String(Utf8.GetBytes(root)) + "\n" + CommitKey + commit + "\n";
     }
 
@@ -126,7 +129,8 @@ public sealed class DesktopRegistration
             var encodedRoot = lines.Single(line => line.StartsWith(RootKey, StringComparison.Ordinal))[RootKey.Length..];
             var commit = lines.Single(line => line.StartsWith(CommitKey, StringComparison.Ordinal))[CommitKey.Length..];
             var root = Utf8.GetString(Convert.FromBase64String(encodedRoot));
-            return bytes.AsSpan().SequenceEqual(Utf8.GetBytes(Render(root, commit))) ? (root, commit) : null;
+            var version = lines.Single(line => line.StartsWith("X-Treesi-EntryVersion=", StringComparison.Ordinal))["X-Treesi-EntryVersion=".Length..];
+            return version is "1" or "2" && bytes.AsSpan().SequenceEqual(Utf8.GetBytes(Render(root, commit, int.Parse(version, System.Globalization.CultureInfo.InvariantCulture)))) ? (root, commit) : null;
         }
         catch (Exception error) when (error is ArgumentException or InvalidOperationException or FormatException) { return null; }
     }
