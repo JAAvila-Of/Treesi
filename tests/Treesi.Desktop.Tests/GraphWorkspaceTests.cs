@@ -4,6 +4,8 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.NUnit;
 using Avalonia.Interactivity;
+using Avalonia.Input;
+using Avalonia.Input.Raw;
 using Avalonia.VisualTree;
 using JAAvila.FluentOperations;
 using NUnit.Framework;
@@ -22,7 +24,7 @@ public sealed class GraphWorkspaceTests
     private static string Id(int number) => number.ToString("x40");
     private static T Get<T>(Window window, string name) where T : Control => window.FindControl<T>(name)!;
     private static void Click(Window window, string name) => Get<Button>(window, name).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-    private static MainWindow Create(Graphs graphs, History? history = null, Revisions? revisions = null, string theme = "dark") => new(new Working(), null,
+    private static MainWindow Create(IGraphService graphs, History? history = null, Revisions? revisions = null, string theme = "dark") => new(new Working(), null,
         new ThemeController(Avalonia.Application.Current!, new Preferences(theme)), revisions: revisions ?? new(), history: history ?? new(), graphs: graphs);
 
     [AvaloniaTest]
@@ -92,6 +94,59 @@ public sealed class GraphWorkspaceTests
     }
 
     [AvaloniaTest]
+    [TestCase("dark")]
+    [TestCase("light")]
+    public async Task WideGraphPansLanesWhileKeepingCommitInformationFixed(string theme)
+    {
+        var window = Create(new WideGraphs(), theme: theme);
+        window.Width = 900; window.Height = 560;
+        try
+        {
+            window.Show(); await window.OpenRepositoryAsync(Root);
+            Click(window, "GraphViewButton"); await window.PendingInspection;
+            Get<CheckBox>(window, "ReduceMotionToggle").IsChecked = true;
+            using (window.CaptureRenderedFrame()) { }
+            var list = Get<ListBox>(window, "GraphCommits");
+            list.Items.Count.Test().Be(200);
+            (list.GetVisualDescendants().OfType<ListBoxItem>().Count() < 40).Test().BeTrue();
+            var scroll = Get<ScrollBar>(window, "GraphLaneScroll");
+            scroll.IsVisible.Test().BeTrue(); scroll.Maximum.Test().Be(198d);
+            var lane = list.GetVisualDescendants().OfType<GraphLaneCanvas>().First();
+            lane.Bounds.Width.Test().Be(240d);
+            var headings = Get<Grid>(window, "GraphColumnHeadings");
+            var headingBefore = headings.TranslatePoint(default, window)!.Value.X;
+            var laneBefore = lane.TranslatePoint(default, window)!.Value.X;
+            scroll.Value = 100;
+            using (window.CaptureRenderedFrame()) { }
+            GraphLaneCanvas.GetHorizontalOffset(lane).Test().Be(100d);
+            (headingBefore - headings.TranslatePoint(default, window)!.Value.X).Test().Be(0d);
+            (laneBefore - lane.TranslatePoint(default, window)!.Value.X).Test().Be(0d);
+            Click(window, "GraphDetailsButton"); scroll.Value.Test().Be(100d);
+            Click(window, "CloseGraphDetailsButton"); scroll.Value.Test().Be(100d);
+            scroll.Focus().Test().BeTrue();
+            window.KeyPress(Key.Right, RawInputModifiers.None, PhysicalKey.None, null);
+            window.KeyRelease(Key.Right, RawInputModifiers.None, PhysicalKey.None, null);
+            scroll.Value.Test().Be(118d);
+            list.SelectedIndex = 23;
+            (scroll.Value > 118).Test().BeTrue();
+            (12 + 23 * 18 - scroll.Value <= scroll.ViewportSize - 8).Test().BeTrue();
+            list.SelectedIndex = 80; list.ScrollIntoView(list.SelectedItem!);
+            scroll.Value = 100;
+            using (window.CaptureRenderedFrame()) { }
+            Click(window, "GraphReviewButton"); await window.PendingInspection;
+            Click(window, "BackToGraphButton");
+            using (window.CaptureRenderedFrame()) { }
+            scroll.Value.Test().Be(100d); list.SelectedIndex.Test().Be(80);
+            await window.OpenRepositoryAsync(Root + "-other");
+            Get<TabStrip>(window, "RepositoryTabs").SelectedIndex = 0;
+            using (window.CaptureRenderedFrame()) { }
+            scroll.Value.Test().Be(100d); list.SelectedIndex.Test().Be(80);
+            SaveFrame(window, $"graph-{theme}-wide-lanes.png");
+        }
+        finally { window.Close(); }
+    }
+
+    [AvaloniaTest]
     public async Task ChangedPrefixIsRefusedAndReferenceScopeCanBeNarrowed()
     {
         var graphs = new Graphs(); var window = Create(graphs);
@@ -118,7 +173,8 @@ public sealed class GraphWorkspaceTests
         rows[2].Segments.Any(segment => segment.From != segment.To && !segment.Incoming).Test().BeTrue();
         rows.Last().Continues.Test().BeFalse();
         GraphLayout.Create(new(scope, [Commit(4, 3, 2)], 1, true, false)).Single().Continues.Test().BeTrue();
-        Action tooWide = () => GraphLayout.Create(new(scope, [Commit(100, Enumerable.Range(1, 13).ToArray())], 1, false, false));
+        GraphLayout.Create(new(scope, [Commit(100, Enumerable.Range(1, GraphLayout.MaximumLanes).ToArray())], 1, false, false)).Single().LaneCount.Test().Be(GraphLayout.MaximumLanes);
+        Action tooWide = () => GraphLayout.Create(new(scope, [Commit(100, Enumerable.Range(1, GraphLayout.MaximumLanes + 1).ToArray())], 1, false, false));
         tooWide.Test().Throw<InspectionException>();
     }
 
@@ -149,6 +205,13 @@ public sealed class GraphWorkspaceTests
             return Delayed?.Task ?? Task.FromResult(page);
         }
     }
+    private sealed class WideGraphs : IGraphService
+    {
+        public Task<CommitGraphPage> ReadAsync(string repository, GraphQuery query, CancellationToken cancellationToken = default) =>
+            Task.FromResult(new CommitGraphPage(new(repository, Enumerable.Range(0, 24).Select(index => Id(10000 - index)).ToArray(), [], null),
+                Enumerable.Range(0, 200).Select(index => new GraphCommit(Id(10000 - index), [Id(9976 - index)], $"Parallel history {index}", "Treesi Example", "2026-01-10T12:00:00Z")).ToArray(), 200, false, false));
+    }
+
     private sealed class History : IHistoryService
     {
         public TaskCompletionSource<CommitDetail>? Delayed { get; set; }

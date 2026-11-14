@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using AvaloniaEdit;
 using JAAvila.FluentOperations;
 using NUnit.Framework;
@@ -21,6 +22,49 @@ public sealed class AppearanceTests
 {
     private static readonly string Root = Path.Combine(Path.GetPathRoot(Path.GetTempPath())!, "workspace", "treesi");
     private const string Patch = "diff --git a/src/ChangeSummary.cs b/src/ChangeSummary.cs\nindex 20f9d32..fe89263 100644\n--- a/src/ChangeSummary.cs\n+++ b/src/ChangeSummary.cs\n@@ -1,7 +1,10 @@\n namespace Treesi;\n \n public static class ChangeSummary\n {\n-    public static string Describe(int files) => $\"Changes: {files}\";\n+    public static string Describe(int files)\n+    {\n+        ArgumentOutOfRangeException.ThrowIfNegative(files);\n+        return files == 1 ? \"1 changed file\" : $\"{files} changed files\";\n+    }\n }\n";
+
+    [AvaloniaTest]
+    [TestCase("dark")]
+    [TestCase("light")]
+    public async Task ButtonEdgesRemainStationaryAndContentIsCenteredAcrossInteractionStates(string theme)
+    {
+        var appearance = new ThemeController(Avalonia.Application.Current!, new MemoryPreferences());
+        appearance.Apply(ThemeCatalog.Resolve(theme));
+        var window = new MainWindow(new FixtureInspector(), null, appearance);
+        try
+        {
+            window.Show(); await window.OpenRepositoryAsync(Root); await window.PendingMotion;
+            foreach (var size in new[] { new Size(900, 560), new Size(1180, 740) })
+            {
+                window.Width = size.Width; window.Height = size.Height;
+                using (window.CaptureRenderedFrame()) { }
+                foreach (var name in new[] { "OpenFolderButton", "FindNextButton", "RefreshButton", "PreviousBlockButton", "NextBlockButton", "NewRepositoryTabButton" })
+                {
+                    var button = window.FindControl<Button>(name)!;
+                    button.IsEnabled.Test().BeTrue();
+                    var origin = button.TranslatePoint(default, window)!.Value;
+                    var edge = origin + new Vector(button.Bounds.Width / 2, button.Bounds.Height - 0.25);
+                    window.MouseMove(edge);
+                    await Task.Delay(180);
+                    using (window.CaptureRenderedFrame()) { }
+                    (button.RenderTransform?.Value ?? Matrix.Identity).Test().Be(Matrix.Identity);
+                    button.IsPointerOver.Test().BeTrue();
+                    var label = button.GetVisualDescendants().OfType<TextBlock>().First();
+                    var labelOrigin = label.TranslatePoint(default, button)!.Value;
+                    (Math.Abs(labelOrigin.X + label.Bounds.Width / 2 - button.Bounds.Width / 2) <= 1).Test().BeTrue();
+                    (Math.Abs(labelOrigin.Y + label.Bounds.Height / 2 - button.Bounds.Height / 2) <= 1).Test().BeTrue();
+                    (label.Bounds.Width + 0.5 >= label.DesiredSize.Width).Test().BeTrue();
+                    window.MouseDown(edge, MouseButton.Left);
+                    using (window.CaptureRenderedFrame()) { }
+                    (button.RenderTransform?.Value ?? Matrix.Identity).Test().Be(Matrix.Identity);
+                    // Release outside so navigation and file pickers are not invoked.
+                    window.MouseMove(new Point(1, window.ClientSize.Height - 1));
+                    window.MouseUp(new Point(1, window.ClientSize.Height - 1), MouseButton.Left);
+                }
+            }
+        }
+        finally { window.Close(); }
+    }
 
     [AvaloniaTest]
     public async Task CodeCanvasDominatesBothLayoutsAndThemesAtCompactAndWideSizes()

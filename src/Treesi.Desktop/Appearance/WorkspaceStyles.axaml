@@ -87,16 +87,16 @@
     <Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="6" />
     <Setter Property="Padding" Value="9,5" /><Setter Property="MinHeight" Value="30" />
     <Setter Property="FontSize" Value="12" /><Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="RenderTransform" Value="none" />
   </Style>
-  <Style Selector="Window.workspace.motion-enabled Button">
-    <Setter Property="RenderTransform" Value="translate(0px, 0px)" />
-    <Setter Property="RenderTransformOrigin" Value="50%,50%" />
-    <Setter Property="Transitions">
-      <Transitions><TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" Easing="CubicEaseOut" /></Transitions>
-    </Setter>
+  <Style Selector="Button:pressed"><Setter Property="RenderTransform" Value="none" /></Style>
+  <Style Selector="Button.icon">
+    <Setter Property="Width" Value="30" /><Setter Property="Height" Value="30" />
+    <Setter Property="MinHeight" Value="30" /><Setter Property="Padding" Value="0" />
+    <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
-  <Style Selector="Window.workspace.motion-enabled Button:pointerover"><Setter Property="RenderTransform" Value="translate(0px, -1px)" /></Style>
-  <Style Selector="Window.workspace.motion-enabled Button:pressed"><Setter Property="RenderTransform" Value="scale(0.98)" /></Style>
   <Style Selector="Window.workspace.motion-enabled Button /template/ ContentPresenter">
     <Setter Property="Transitions">
       <Transitions>
@@ -118,6 +118,11 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Border.Default}" />
     <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
   </Style>
+  <Style Selector="Button:pressed /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Surface.Selected}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Border.Default}" />
+    <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
+  </Style>
   <Style Selector="Button.primary">
     <Setter Property="Background" Value="{DynamicResource Accent.Primary}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Accent.Primary}" />
@@ -127,6 +132,11 @@
     <Setter Property="Background" Value="{DynamicResource Accent.Hover}" />
     <Setter Property="Foreground" Value="{DynamicResource Accent.Contrast}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Accent.Hover}" />
+  </Style>
+  <Style Selector="Button.primary:pressed /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Accent.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Accent.Contrast}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Accent.Primary}" />
   </Style>
   <Style Selector="Button.quiet">
     <Setter Property="Background" Value="Transparent" /><Setter Property="BorderBrush" Value="Transparent" />

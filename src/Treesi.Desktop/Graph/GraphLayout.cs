@@ -11,6 +11,8 @@ public sealed record GraphRow(GraphCommit Commit, int Lane, int LaneCount, IRead
     public string Date => Commit.AuthoredAt.Length >= 10 ? Commit.AuthoredAt[..10] : Commit.AuthoredAt;
     public string AccessibleName => $"{Subject}. {Identity}. {Commit.Parents.Count} parents. {Author}.";
     public string ReferenceLabel => HistoryCommitItem.Preview(References, 80);
+    public double LaneWidth => Math.Max(144, 24 + 18 * (LaneCount - 1));
+    public double LaneViewportWidth => Math.Min(240, LaneWidth);
 }
 
 public sealed record GraphReferenceChoice(GraphReference Reference)
@@ -21,7 +23,7 @@ public sealed record GraphReferenceChoice(GraphReference Reference)
 
 public static class GraphLayout
 {
-    public const int MaximumLanes = 12;
+    public const int MaximumLanes = 256;
     public static IReadOnlyList<GraphRow> Create(CommitGraphPage page)
     {
         var lanes = new List<string?>(); var rows = new List<GraphRow>(); var width = 1;
@@ -55,7 +57,7 @@ public static class GraphLayout
         {
             var slot = lanes.IndexOf(null);
             if (slot >= 0) { lanes[slot] = id; return slot; }
-            if (lanes.Count == MaximumLanes) throw new InspectionException("graph_complexity", "More than 12 simultaneous lanes are needed. Select a reference to inspect a narrower history.");
+            if (lanes.Count == MaximumLanes) throw new InspectionException("graph_complexity", $"More than {MaximumLanes} simultaneous lanes are needed. Select a reference to inspect a narrower history.");
             lanes.Add(id); return lanes.Count - 1;
         }
     }

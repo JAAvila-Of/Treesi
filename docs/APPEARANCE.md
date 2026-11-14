@@ -2,7 +2,7 @@
 
 The workspace provides Light and Dark themes with neutral graphite or white/gray surfaces, a restrained green accent, clear type hierarchy, compact actions, and distinct repository, file-list, and diff surfaces. Selections and broad surfaces stay neutral so source colors and graph/diff semantics remain prominent. Theme changes apply immediately and preserve the current file, comparison, filter, and text selection.
 
-The native shell places the local workspace selector, repository tabs and theme control in one top row. The second row identifies the actual repository and exposes the existing Changes/Revisions, History, Compare, Recents and open-location actions. A flat file list replaces repository/file cards; the comparison canvas runs to the panel edges. Sidebar width follows compact/wide layouts (180/210 logical pixels), aligned with the selector and context. The selector and theme remain available on Home after the final tab closes. A contained picker supports [named local groups](LOCAL_WORKSPACES.md), editing and explicit shortcut validation. A commit-graph view is still pending.
+The native shell places the local workspace selector, repository tabs and theme control in one top row. The second row identifies the actual repository and exposes the existing Changes/Revisions, History, Compare, Recents and open-location actions. A flat file list replaces repository/file cards; the comparison canvas runs to the panel edges. Sidebar width follows compact/wide layouts (180/210 logical pixels), aligned with the selector and context. The selector and theme remain available on Home after the final tab closes. A contained picker supports [named local groups](LOCAL_WORKSPACES.md), editing and explicit shortcut validation. The [commit graph](COMMIT_GRAPH.md) keeps local topology in the main workspace.
 
 The visual shell uses flat navigation, a compact file heading, textual addition/removal counters and a continuous diff canvas. A single-row toolbar exposes endpoints, Unified and Side by side, file-panel visibility and change-block navigation. Search stays beside the file heading. Selected rows use a narrow accent edge, and keyboard focus retains a visible border; color is accompanied by status text and diff prefixes.
 
@@ -24,7 +24,7 @@ Headless checks cover metadata round trips and limits, stale requests, cancellat
 
 ## Motion
 
-Buttons respond to hover and press with 120 ms transitions. File selection and layout segments blend their backgrounds over 140 ms. Loaded diffs and layout changes use a single 150 ms ease-out opacity reveal from 0.88 to 1, without translating the code. Theme changes briefly reveal the file heading. Text is never scaled or animated during scrolling, and there are no decorative idle loops. The activity line animates only while inspection is busy.
+Buttons remain stationary on hover and press. Their backgrounds and borders respond with 120 ms transitions, keeping hit targets stable at the edges. Content is centered explicitly, and icon buttons use compact dimensions without text-button padding. File selection and layout segments blend their backgrounds over 140 ms. Loaded diffs and layout changes use a single 150 ms ease-out opacity reveal from 0.88 to 1, without translating the code. Theme changes briefly reveal the file heading. Text is never scaled or animated during scrolling, and there are no decorative idle loops. The activity line animates only while inspection is busy.
 
 `WorkspaceMotion` owns cancellation: replacing an animation, showing a non-diff state, reducing motion, or closing the window stops the previous reveal. Content, focus, and text selection remain immediately available; actions never wait for a decorative transition. No animation library or additional runtime dependency is required.
 
@@ -48,7 +48,7 @@ The layout selector switches between Unified and Side by side without querying G
 
 Before/after labels reflect the selected comparison (HEAD, Index, or Working tree). Search starts in the last focused split pane and continues into the other pane before wrapping. Previous/next block buttons, or Alt+Up/Alt+Down, cycle through hunks and keep the active block when changing layouts. Switching themes preserves the loaded diff and selection. Binary, empty, failed, or oversized previews clear both panes and disable navigation.
 
-Source-language highlighting, word-level comparisons, full-file context, and conflict editing remain separate product work. The existing 200,000-character preview limit remains in force. All editors remain read-only and disable hyperlink activation.
+Bounded [source presentation](SOURCE_PRESENTATION.md) provides lexical C#/JSON highlighting and inline edit emphasis; [full-file context](FULL_CONTEXT.md) expands supported changed text files. Conflict editing remains future work. The existing 200,000-character preview limit remains in force. All editors remain read-only and disable hyperlink activation.
 
 ## Local revision workspace
 
