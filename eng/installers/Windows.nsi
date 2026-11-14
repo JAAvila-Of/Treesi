@@ -11,6 +11,8 @@ ShowUninstDetails show
 !include "x64.nsh"
 !include "payload.nsh"
 !define UNINSTALL_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\TreesiPreview"
+!define MUI_ICON "treesi.ico"
+!define MUI_UNICON "treesi.ico"
 !define MUI_WELCOMEPAGE_TEXT "Review local Git changes with Treesi.$\r$\n$\r$\nThis experimental build installs for your Windows account and adds a Start menu shortcut. Git must already be available on PATH.$\r$\n$\r$\nClose Treesi before uninstalling. Your repositories and saved preferences are kept."
 !define MUI_FINISHPAGE_TEXT "Treesi Preview is installed. Open Treesi Preview from the Start menu.$\r$\n$\r$\nGit is a separate requirement. This experimental installer has no OS publisher signature."
 !insertmacro MUI_PAGE_WELCOME

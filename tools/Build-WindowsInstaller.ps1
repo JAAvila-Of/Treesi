@@ -25,6 +25,7 @@ dotnet build tools/Treesi.Packaging -c Release --no-restore
 if ($LASTEXITCODE) { throw 'Packaging tool build failed.' }
 dotnet tools/Treesi.Packaging/bin/Release/net11.0/Treesi.Packaging.dll windows-installer $PortableDirectory "$compiler/COPYING" eng/installers/Windows.nsi "$work/stage"
 if ($LASTEXITCODE) { throw 'Installer payload validation failed.' }
+Copy-Item assets/brand/treesi.ico -Destination "$work/stage/treesi.ico"
 & $maker /V2 /WX /INPUTCHARSET UTF8 "$work/stage/installer.nsi"
 if ($LASTEXITCODE) { throw 'NSIS compilation failed.' }
 $output = New-Item -ItemType Directory "$work/output"

@@ -28,6 +28,7 @@ public sealed class PortableLayoutTests
         foreach (var directory in new[] { desktop, cli }) File.WriteAllText(Path.Combine(directory, "runtime.dll"), "shared runtime");
         File.WriteAllText(Path.Combine(legal, "LICENSE-MIT"), "fixture original license");
         File.WriteAllText(Path.Combine(legal, "README.txt"), "fixture guide");
+        File.WriteAllBytes(Path.Combine(legal, "treesi.icns"), "fixture icon"u8.ToArray());
         if (!OperatingSystem.IsWindows())
             foreach (var (directory, host) in new[] { (desktop, "Treesi.Desktop"), (cli, "Treesi.Cli") })
                 File.SetUnixFileMode(Path.Combine(directory, host), UnixFileMode.UserRead | UnixFileMode.UserExecute);
@@ -48,6 +49,8 @@ public sealed class PortableLayoutTests
         var keys = dictionary.Elements("key").ToDictionary(key => key.Value, key => ((XElement)key.NextNode!).Value);
         keys["CFBundleExecutable"].Test().Be("Treesi.Desktop");
         keys["CFBundleIdentifier"].Test().Be("io.github.jaavila-of.treesi");
+        keys["CFBundleIconFile"].Test().Be("treesi.icns");
+        File.ReadAllBytes(Path.Combine(moved, "Contents/Resources/treesi.icns")).SequenceEqual("fixture icon"u8.ToArray()).Test().BeTrue();
         keys["CFBundleVersion"].Test().Be("1.0.0"); keys["CFBundleShortVersionString"].Test().Be("0.1.0");
         keys["TreesiSourceCommit"].Test().Be(Commit); keys["TreesiProductVersion"].Test().Be("0.1.0-preview.1");
         ((XElement)dictionary.Elements("key").Single(key => key.Value == "NSHighResolutionCapable").NextNode!).Name.LocalName.Test().Be("true");
@@ -92,6 +95,14 @@ public sealed class PortableLayoutTests
     {
         File.Delete(Path.Combine(cli, "Treesi.Cli"));
         Action stage = () => PortableLayout.Stage(desktop, cli, legal, Path.Combine(root, "stage"), "osx-x64", "0.1.0-preview.1", "1.0.0", Commit);
+        stage.Test().Throw<FileNotFoundException>();
+    }
+
+    [Test]
+    public void MissingMacIconCannotProduceABundle()
+    {
+        File.Delete(Path.Combine(legal, "treesi.icns"));
+        Action stage = () => PortableLayout.Stage(desktop, cli, legal, Path.Combine(root, "stage"), "osx-arm64", "0.1.0-preview.1", "1.0.0", Commit);
         stage.Test().Throw<FileNotFoundException>();
     }
 

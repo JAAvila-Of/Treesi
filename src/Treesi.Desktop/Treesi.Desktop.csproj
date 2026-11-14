@@ -1,10 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
+    <ApplicationIcon>../../assets/brand/treesi.ico</ApplicationIcon>
     <!-- The window is constructed by the composition root with injected ports, never by a XAML resource URI. -->
     <NoWarn>$(NoWarn);AVLN3001</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <AvaloniaResource Include="../../assets/brand/treesi.png" Link="Assets/treesi.png" />
     <PackageReference Include="Avalonia" />
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Themes.Fluent" />

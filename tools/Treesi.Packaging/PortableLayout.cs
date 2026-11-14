@@ -33,11 +33,13 @@ public static class PortableLayout
         if (!mac) return;
 
         Directory.CreateDirectory(resources);
+        if (!File.Exists(Path.Combine(resources, "treesi.icns"))) throw new FileNotFoundException("The macOS application icon is missing.");
         var dictionary = new XElement("dict");
         foreach (var (key, value) in new[]
         {
             ("CFBundleIdentifier", "io.github.jaavila-of.treesi"), ("CFBundleName", "Treesi"), ("CFBundleDisplayName", "Treesi"),
             ("CFBundleExecutable", "Treesi.Desktop"), ("CFBundlePackageType", "APPL"), ("CFBundleInfoDictionaryVersion", "6.0"),
+            ("CFBundleIconFile", "treesi.icns"),
             ("CFBundleShortVersionString", numericVersion), ("CFBundleVersion", bundleBuildVersion), ("CFBundleDevelopmentRegion", "en"),
             ("TreesiProductVersion", version), ("TreesiSourceCommit", commit)
         }) dictionary.Add(new XElement("key", key), new XElement("string", value));

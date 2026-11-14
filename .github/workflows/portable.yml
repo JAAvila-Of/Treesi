@@ -76,6 +76,11 @@ jobs:
             if ($LASTEXITCODE) { throw 'Invalid macOS property list.' }
             $executable = & /usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' $plist
             if ($LASTEXITCODE -or $executable -ne 'Treesi.Desktop') { throw 'Invalid bundle executable.' }
+            $icon = & /usr/libexec/PlistBuddy -c 'Print :CFBundleIconFile' $plist
+            if ($LASTEXITCODE -or $icon -ne 'treesi.icns') { throw 'Invalid bundle icon reference.' }
+            $iconPath = Join-Path $directory.FullName 'Treesi.app/Contents/Resources/treesi.icns'
+            & /usr/bin/iconutil --convert iconset --output '${{ runner.temp }}/verified.iconset' $iconPath
+            if ($LASTEXITCODE) { throw 'The native macOS icon decoder rejected the bundle icon.' }
             $desktop = Join-Path $directory.FullName $manifest.entryPoints.desktop
             $architecture = & /usr/bin/lipo -archs $desktop
             $expectedArchitecture = if ('${{ matrix.rid }}' -eq 'osx-arm64') { 'arm64' } else { 'x86_64' }
@@ -97,7 +102,7 @@ jobs:
             New-Item -ItemType Directory $relocated | Out-Null
             Move-Item -LiteralPath (Join-Path $directory.FullName 'Treesi.app') -Destination $relocated
             $cli = Join-Path $relocated 'Treesi.app/Contents/MacOS/Treesi.Cli'
-            foreach ($required in @('LICENSE-MIT', 'LICENSE-APACHE', 'third-party/dependencies.json', 'build-info.json')) {
+            foreach ($required in @('LICENSE-MIT', 'LICENSE-APACHE', 'third-party/dependencies.json', 'build-info.json', 'treesi.icns')) {
               if (!(Test-Path -LiteralPath (Join-Path $relocated "Treesi.app/Contents/Resources/$required"))) { throw 'Bundle legal/provenance files were lost.' }
             }
           }

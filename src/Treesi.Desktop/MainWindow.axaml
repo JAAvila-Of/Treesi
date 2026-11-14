@@ -7,7 +7,7 @@
         xmlns:graph="clr-namespace:Treesi.Desktop.Graph"
         x:Class="Treesi.Desktop.MainWindow" Classes="workspace"
         Title="Treesi — Change inspection" Width="1180" Height="740" MinWidth="900" MinHeight="560"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen" Icon="/Assets/treesi.png">
   <Grid RowDefinitions="Auto,Auto,*,26">
     <Grid x:Name="RepositoryTabBar" ColumnDefinitions="190,*,Auto,Auto,Auto" Background="{DynamicResource Surface.Sidebar}" Height="36">
       <Button x:Name="WorkspacePickerButton" AutomationProperties.AutomationId="WorkspacePickerButton" Classes="quiet workspace-picker" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" ToolTip.Tip="Choose a local workspace; groups organize shortcuts without opening repositories">

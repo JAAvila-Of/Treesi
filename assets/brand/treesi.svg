@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>Treesi application icon</title>
+  <rect x="64" y="64" width="896" height="896" rx="204" fill="#20252e"/>
+  <rect x="66" y="66" width="892" height="892" rx="202" fill="none" stroke="#465263" stroke-width="4"/>
+  <g fill="none" stroke="#a4e5d1" stroke-width="56" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M364 730V350 M364 586C364 466 660 586 660 376"/>
+  </g>
+  <g fill="#20252e" stroke="#a4e5d1" stroke-width="48">
+    <circle cx="364" cy="326" r="72"/>
+    <circle cx="660" cy="310" r="72"/>
+  </g>
+  <circle cx="364" cy="730" r="34" fill="#a4e5d1"/>
+</svg>

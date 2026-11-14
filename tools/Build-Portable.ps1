@@ -45,6 +45,7 @@ if ($Runtime -eq 'linux-x64') {
     Invoke-Dotnet @($tool, 'merge', "$work/Integration", "$work/Desktop")
 }
 Copy-Item LICENSE-MIT, LICENSE-APACHE -Destination $legal
+if ($Runtime.StartsWith('osx-')) { Copy-Item assets/brand/treesi.icns -Destination "$legal/treesi.icns" }
 Copy-Item docs/PORTABLE.md -Destination "$legal/README.txt"
 if ($Runtime -eq 'linux-x64') { Copy-Item docs/LINUX_DESKTOP.md -Destination "$legal/LINUX-DESKTOP.txt" }
 Invoke-Dotnet @($tool, 'notices', "$repo/.packages", "$PSScriptRoot/Treesi.Packaging/licenses", "$legal/third-party", "$locks/Treesi.Desktop.lock.json", "$locks/Treesi.Cli.lock.json")
