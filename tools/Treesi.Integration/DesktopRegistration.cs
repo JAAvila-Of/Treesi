@@ -41,6 +41,9 @@ public sealed class DesktopRegistration
     public DesktopRegistrationState Register(string installation, string commit)
     {
         var text = Render(installation, commit);
+        // GLib checks the executable before expanding %% in its Exec field.
+        // Keep Render permissive so exact legacy entries remain removable.
+        if (installation.Contains('%')) throw new DesktopRegistrationException("unsupported_location", "GLib cannot load menu entries for executable locations containing '%'. Move the portable folder to a location without '%' before registering.");
         var wanted = Utf8.GetBytes(text);
         if (wanted.Length > MaximumEntryBytes) throw new ArgumentException("The generated desktop entry exceeds its size limit.");
         ValidateStorage();

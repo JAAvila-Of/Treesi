@@ -12,7 +12,7 @@ $work = [IO.Path]::GetFullPath($WorkDirectory)
 if (!$candidate.StartsWith($temporary, [StringComparison]::Ordinal) -or !$work.StartsWith($temporary, [StringComparison]::Ordinal)) { throw 'Acceptance paths must be inside the owned runner temp directory.' }
 if (Test-Path -LiteralPath $work) { throw 'Use a new acceptance work directory.' }
 New-Item -ItemType Directory $work | Out-Null
-$application = Join-Path $work 'application with spaces %U #; dollar$ quote"'
+$application = Join-Path $work 'application with spaces #; dollar$ quote"'
 Move-Item -LiteralPath $candidate -Destination $application
 $helper = Join-Path $application 'Treesi.Integration'
 $env:DOTNET_ROOT = Join-Path $work 'no-external-runtime'
@@ -40,6 +40,16 @@ try {
     Invoke-Integration 'register' $false | Out-Null
     if (Test-Path -LiteralPath (Join-Path $applications.FullName 'io.github.jaavila-of.treesi.preview.desktop')) { throw 'An altered icon authorized registration.' }
 } finally { [IO.File]::WriteAllBytes($icon, $iconBytes) }
+$percentApplication = Join-Path $work 'application %U'
+Move-Item -LiteralPath $application -Destination $percentApplication
+try {
+    $helper = Join-Path $percentApplication 'Treesi.Integration'
+    $refused = Invoke-Integration 'register' $false
+    if ($refused.error.code -ne 'unsupported_location' -or (Test-Path -LiteralPath (Join-Path $applications.FullName 'io.github.jaavila-of.treesi.preview.desktop'))) { throw 'A GLib-incompatible executable location authorized registration.' }
+} finally {
+    Move-Item -LiteralPath $percentApplication -Destination $application
+    $helper = Join-Path $application 'Treesi.Integration'
+}
 $registration = Invoke-Integration 'register'
 if ($registration.data.status -ne 'registered' -or $registration.data.installation -ne $application) { throw 'Registration identity mismatch.' }
 $entry = $registration.data.entryPath
@@ -66,5 +76,5 @@ if ($refused.error.code -ne 'linked_path') { throw 'A linked desktop entry was a
 Remove-Item -LiteralPath $entry
 if ([IO.File]::ReadAllText($foreign) -ne 'foreign desktop entry' -or [IO.File]::ReadAllText($preferences) -ne 'saved preferences') { throw 'Foreign files or preferences were changed.' }
 if ((Invoke-Integration 'unregister').data.status -ne 'absent') { throw 'Repeated removal failed.' }
-@{schemaVersion='1';entryValidated=$true;glibParsed=$true;iconPathParsed=$true;alteredIconRefused=$true;modifiedEntryRetained=$true;linkedEntryRefused=$true;unregisterAfterMove=$true;foreignFilesAndPreferencesRetained=$true;externalRuntimeConfigured=$false;desktopLaunched=$false} |
+@{schemaVersion='1';entryValidated=$true;glibParsed=$true;iconPathParsed=$true;alteredIconRefused=$true;percentLocationRefused=$true;modifiedEntryRetained=$true;linkedEntryRefused=$true;unregisterAfterMove=$true;foreignFilesAndPreferencesRetained=$true;externalRuntimeConfigured=$false;desktopLaunched=$false} |
     ConvertTo-Json | Set-Content -LiteralPath $ReportPath

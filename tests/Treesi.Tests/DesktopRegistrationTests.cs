@@ -109,13 +109,25 @@ public sealed class DesktopRegistrationTests
         registry.Status().SourceCommit.Test().Be(Commit);
     }
 
-    [Test]
-    public void LiteralPercentSequencesAndUnicodeDoNotChangeEmbeddedIdentity()
+    [TestCase(1)]
+    [TestCase(2)]
+    public void LiteralPercentSequencesAndUnicodeRemainRemovableInOlderEntries(int entryVersion)
     {
         var registry = new DesktopRegistration(data);
         var special = Path.Combine(root, "revisión %2F and # marker");
-        registry.Register(special, Commit).Installation.Test().Be(special);
+        Directory.CreateDirectory(Path.GetDirectoryName(registry.EntryPath)!);
+        File.WriteAllText(registry.EntryPath, DesktopRegistration.Render(special, Commit, entryVersion));
+        registry.Status().Installation.Test().Be(special);
         registry.Unregister().Status.Test().Be("absent");
+    }
+
+    [Test]
+    public void PercentExecutableLocationCannotCreateABrokenMenuEntry()
+    {
+        var registry = new DesktopRegistration(data);
+        try { registry.Register(Path.Combine(root, "application %U"), Commit); throw new InvalidOperationException("Registration unexpectedly succeeded."); }
+        catch (DesktopRegistrationException error) { error.Code.Test().Be("unsupported_location"); }
+        Directory.Exists(data).Test().BeFalse();
     }
 
     [Test]
