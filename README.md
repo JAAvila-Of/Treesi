@@ -86,6 +86,8 @@ See [experimental portable builds](docs/PORTABLE.md) for self-contained Desktop/
 
 An [experimental Windows installer](docs/WINDOWS_INSTALLER.md) adds per-user setup and bounded removal after isolated native acceptance.
 
+Linux portable candidates include [optional application menu registration](docs/LINUX_DESKTOP.md) for the current user.
+
 ## Prototype boundaries
 
 - Inspection only: no staging, commit creation, remote access, or conflict resolution yet. Local history and revision comparison are available without fetching objects.

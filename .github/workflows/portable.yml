@@ -104,6 +104,17 @@ jobs:
           $inspection = & $cli inspect $fixture.FullName
           if ($LASTEXITCODE -or !($inspection | ConvertFrom-Json).ok) { throw 'Extracted CLI inspection failed.' }
           "TREESI_PORTABLE_ARCHIVE=$($archive.FullName)" >> $env:GITHUB_ENV
+          "TREESI_EXTRACTED_PACKAGE=$($directory.FullName)" >> $env:GITHUB_ENV
+      - name: Install headless desktop entry validators in the disposable Linux VM
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y desktop-file-utils python3-gi gir1.2-glib-2.0
+          dpkg-query -W desktop-file-utils python3-gi gir1.2-glib-2.0
+      - name: Verify Linux menu integration without launching the desktop
+        if: runner.os == 'Linux'
+        run: ./tools/Verify-LinuxDesktop.ps1 -CandidateDirectory $env:TREESI_EXTRACTED_PACKAGE -WorkDirectory '${{ runner.temp }}/linux-integration-acceptance' -ReportPath '${{ runner.temp }}/portable/output/linux-integration.json'
       - name: Attest the tested archive
         id: provenance
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2

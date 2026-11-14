@@ -219,6 +219,9 @@
           "Treesi.Application": "[0.1.0-preview.1, )"
         }
       },
+      "treesi.integration": {
+        "type": "Project"
+      },
       "treesi.packaging": {
         "type": "Project",
         "dependencies": {

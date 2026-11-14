@@ -98,6 +98,7 @@ public sealed class PortableLayoutTests
     [Test]
     public void LinuxKeepsFlatExecutablesAndLegalFiles()
     {
+        File.WriteAllText(Path.Combine(desktop, "Treesi.Integration"), "fixture integration helper");
         var stage = Path.Combine(root, "stage");
         PortableLayout.Stage(desktop, cli, legal, stage, "linux-x64", "0.1.0-preview.1", "1.0.0", Commit);
         File.Exists(Path.Combine(stage, "Treesi.Desktop")).Test().BeTrue();

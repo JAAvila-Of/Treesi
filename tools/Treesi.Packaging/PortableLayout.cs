@@ -4,14 +4,14 @@ using System.Xml.Linq;
 
 namespace Treesi.Packaging;
 
-public sealed record PackageEntryPoints(string Desktop, string Cli, string Legal);
+public sealed record PackageEntryPoints(string Desktop, string Cli, string Legal, string? Integration = null);
 
 public static class PortableLayout
 {
     public static PackageEntryPoints EntryPoints(string rid) => rid switch
     {
         "win-x64" => new("Treesi.Desktop.exe", "Treesi.Cli.exe", "."),
-        "linux-x64" => new("Treesi.Desktop", "Treesi.Cli", "."),
+        "linux-x64" => new("Treesi.Desktop", "Treesi.Cli", ".", "Treesi.Integration"),
         "osx-arm64" or "osx-x64" => new("Treesi.app/Contents/MacOS/Treesi.Desktop", "Treesi.app/Contents/MacOS/Treesi.Cli", "Treesi.app/Contents/Resources"),
         _ => throw new ArgumentException("Unsupported portable runtime identifier.", nameof(rid))
     };
@@ -29,6 +29,7 @@ public static class PortableLayout
         PackageFiles.Merge(desktop, binaries); PackageFiles.Merge(cli, binaries); PackageFiles.Merge(legal, resources);
         foreach (var host in new[] { paths.Desktop, paths.Cli })
             if (!File.Exists(PackageFiles.Within(root, host))) throw new FileNotFoundException("Published application host is missing: " + host);
+        if (paths.Integration is { } integration && !File.Exists(PackageFiles.Within(root, integration))) throw new FileNotFoundException("The Linux integration host is missing.");
         if (!mac) return;
 
         Directory.CreateDirectory(resources);

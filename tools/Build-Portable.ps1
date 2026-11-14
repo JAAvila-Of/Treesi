@@ -36,8 +36,17 @@ foreach ($app in @('Desktop', 'Cli')) {
         '-p:ContinuousIntegrationBuild=true', '-p:PublishTrimmed=false', '-p:PublishSingleFile=false', '-o', "$work/$app")
 }
 $legal = New-Item -ItemType Directory -Path "$work/legal"
+if ($Runtime -eq 'linux-x64') {
+    Invoke-Dotnet @('restore', 'tools/Treesi.Integration', '-r', $Runtime, '--force-evaluate', $property)
+    Invoke-Dotnet @($tool, 'verify-graph', 'tools/Treesi.Integration/packages.lock.json', 'tools/Treesi.Integration/packages.lock.json', "$locks/Treesi.Integration.lock.json", "$locks/Treesi.Integration.lock.json")
+    Invoke-Dotnet @('restore', 'tools/Treesi.Integration', '-r', $Runtime, '--locked-mode', $property)
+    Invoke-Dotnet @('publish', 'tools/Treesi.Integration', '-r', $Runtime, '-c', 'Release', '--self-contained', 'true', '--no-restore', $property,
+        '-p:ContinuousIntegrationBuild=true', '-p:PublishTrimmed=false', '-p:PublishSingleFile=false', '-o', "$work/Integration")
+    Invoke-Dotnet @($tool, 'merge', "$work/Integration", "$work/Desktop")
+}
 Copy-Item LICENSE-MIT, LICENSE-APACHE -Destination $legal
 Copy-Item docs/PORTABLE.md -Destination "$legal/README.txt"
+if ($Runtime -eq 'linux-x64') { Copy-Item docs/LINUX_DESKTOP.md -Destination "$legal/LINUX-DESKTOP.txt" }
 Invoke-Dotnet @($tool, 'notices', "$repo/.packages", "$PSScriptRoot/Treesi.Packaging/licenses", "$legal/third-party", "$locks/Treesi.Desktop.lock.json", "$locks/Treesi.Cli.lock.json")
 $runtimePackage = Join-Path $repo ".packages/microsoft.netcore.app.runtime.$Runtime/11.0.0"
 if (!(Test-Path -LiteralPath $runtimePackage)) { throw 'The pinned .NET 11.0.0 runtime package is missing.' }

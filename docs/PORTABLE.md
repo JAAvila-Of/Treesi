@@ -39,3 +39,5 @@ The manually triggered **Portable candidates** workflow builds on matching GitHu
 The **Native Windows UI** workflow also builds and extracts the portable archive, then tests that extracted application in its guarded disposable interactive VM. macOS and Linux native desktop acceptance remains separate from the CLI packaging smoke tests.
 
 See [distribution and update policy](DISTRIBUTION.md) for the current manual replacement model and requirements before introducing automatic updates.
+
+Linux candidates also provide [optional application menu registration](LINUX_DESKTOP.md) through the self-contained `Treesi.Integration` helper. It registers only the current user entry, without launching the desktop or installing a service.
